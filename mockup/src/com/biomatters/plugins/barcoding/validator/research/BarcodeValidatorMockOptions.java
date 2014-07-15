@@ -24,7 +24,7 @@ public class BarcodeValidatorMockOptions extends Options {
 
         Options specimenOptions = new Options(BarcodeValidatorMockupPlugin.class);
         addMultiInputOptions(specimenOptions, "Specify any number of specimen data files to validate",
-                "Some help", "specimenInput", "Specimen Data File:");
+                "Accepts: <ul><li>Biocode FIMS (xls)</li><li>BOLD (xls)</li><li>NCBI BarStool</li><ul>", "specimenInput", "Specimen Data File:");
         addCollapsibleChildOptions("specimen", "Specimen Data", "", specimenOptions, false, false);
 
 
@@ -40,11 +40,17 @@ public class BarcodeValidatorMockOptions extends Options {
         addChildOptions("output", "Output", "", outputOptions);
 
         Options validationOptions = new Options(BarcodeValidatorMockupPlugin.class);
-        validationOptions.addChildOptions("specimen", "Specimen", null, new SpecimenValidationOptions());
-        validationOptions.addChildOptions("trim", "Trimming", null, new TrimmingOptions());
-        validationOptions.addChildOptions("cap3", "Assembly", "", new FakeCap3Options());
+        validationOptions.addChildOptions("biocode", "Biocode", null, new SpecimenValidationOptions());
+        validationOptions.addChildOptions("cbol", "CBOL", null, new SpecimenValidationOptions());
+        validationOptions.addChildOptions("standard", "Standards", null, new SpecimenValidationOptions());
         validationOptions.addChildOptionsPageChooser("chooser", "Validation Steps:", Collections.<String>emptyList(), PageChooserType.BUTTONS, true);
-        addChildOptions("validation", "Validation", "", validationOptions);
+        addChildOptions("validation", "Specimen Validation", "", validationOptions);
+
+        Options seqValidationOptions = new Options(BarcodeValidatorMockupPlugin.class);
+        seqValidationOptions.addChildOptions("trim", "Trimming", null, new TrimmingOptions());
+        seqValidationOptions.addChildOptions("cap3", "Assembly", "", new FakeCap3Options());
+        seqValidationOptions.addChildOptionsPageChooser("chooser", "Validation Steps:", Collections.<String>emptyList(), PageChooserType.BUTTONS, true);
+        addChildOptions("seqValidation", "Sequence Data Validation", "", seqValidationOptions);
     }
 
     private int count = 1;
