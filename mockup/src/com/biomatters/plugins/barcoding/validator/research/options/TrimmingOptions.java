@@ -11,6 +11,16 @@ public class TrimmingOptions extends Options {
     public TrimmingOptions() {
         super(BarcodeValidatorMockupPlugin.class);
 
-        addIntegerOption("test", "Test:", 1);
+        beginAlignHorizontally(null, false);
+        BooleanOption useLow = addBooleanOption("useLow", "", false);
+        IntegerOption maxLowQualityBases = addIntegerOption("low", "Maximum low quality bases:", 0);
+        useLow.addDependent(maxLowQualityBases, true);
+        endAlignHorizontally();
+
+        beginAlignHorizontally(null, false);
+        BooleanOption useAmbig = addBooleanOption("useAmbig", "", true);
+        IntegerOption maxAmbig = addIntegerOption("ambig", "Maximum ambiguities:", 2);
+        useAmbig.addDependent(maxAmbig, true);
+        endAlignHorizontally();
     }
 }

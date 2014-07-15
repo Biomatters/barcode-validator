@@ -3,10 +3,7 @@ package com.biomatters.plugins.barcoding.validator.research;
 import com.biomatters.geneious.publicapi.components.Dialogs;
 import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.geneious.publicapi.utilities.IconUtilities;
-import com.biomatters.plugins.barcoding.validator.research.options.FakeCap3Options;
-import com.biomatters.plugins.barcoding.validator.research.options.InputFileOptions;
-import com.biomatters.plugins.barcoding.validator.research.options.SpecimenValidationOptions;
-import com.biomatters.plugins.barcoding.validator.research.options.TrimmingOptions;
+import com.biomatters.plugins.barcoding.validator.research.options.*;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -27,6 +24,12 @@ public class BarcodeValidatorMockOptions extends Options {
                 "Accepts: <ul><li>Biocode FIMS (xls)</li><li>BOLD (xls)</li><li>NCBI BarStool</li><ul>", "specimenInput", "Specimen Data File:");
         addCollapsibleChildOptions("specimen", "Specimen Data", "", specimenOptions, false, false);
 
+        Options validationOptions = new Options(BarcodeValidatorMockupPlugin.class);
+        validationOptions.addChildOptions("biocode", "Biocode", null, new BiocodeValidationOptions());
+        validationOptions.addChildOptions("cbol", "CBOL", null, new SpecimenValidationOptions());
+        validationOptions.addChildOptions("standard", "Standards", null, new StandardValidationOptions());
+        validationOptions.addChildOptionsPageChooser("chooser", "Validation Steps:", Collections.<String>emptyList(), PageChooserType.BUTTONS, true);
+        specimenOptions.addChildOptions("validation", "Validation", "", validationOptions);
 
         Options sequenceDataOptions = new Options(BarcodeValidatorMockupPlugin.class);
         addMultiInputOptions(sequenceDataOptions, "Specify any number of trace files or folders to validate",
@@ -35,22 +38,16 @@ public class BarcodeValidatorMockOptions extends Options {
                 "Some help", "barcodeInput", "Barcode Sequence File:");
         addCollapsibleChildOptions("sequenceData", "Sequence Data", "", sequenceDataOptions, false, false);
 
-        Options outputOptions = new Options(BarcodeValidatorMockupPlugin.class);
-        outputOptions.addFileSelectionOption("output", "Output Folder:", "").setSelectionType(JFileChooser.DIRECTORIES_ONLY);
-        addChildOptions("output", "Output", "", outputOptions);
-
-        Options validationOptions = new Options(BarcodeValidatorMockupPlugin.class);
-        validationOptions.addChildOptions("biocode", "Biocode", null, new SpecimenValidationOptions());
-        validationOptions.addChildOptions("cbol", "CBOL", null, new SpecimenValidationOptions());
-        validationOptions.addChildOptions("standard", "Standards", null, new SpecimenValidationOptions());
-        validationOptions.addChildOptionsPageChooser("chooser", "Validation Steps:", Collections.<String>emptyList(), PageChooserType.BUTTONS, true);
-        addChildOptions("validation", "Specimen Validation", "", validationOptions);
 
         Options seqValidationOptions = new Options(BarcodeValidatorMockupPlugin.class);
         seqValidationOptions.addChildOptions("trim", "Trimming", null, new TrimmingOptions());
         seqValidationOptions.addChildOptions("cap3", "Assembly", "", new FakeCap3Options());
         seqValidationOptions.addChildOptionsPageChooser("chooser", "Validation Steps:", Collections.<String>emptyList(), PageChooserType.BUTTONS, true);
-        addChildOptions("seqValidation", "Sequence Data Validation", "", seqValidationOptions);
+        sequenceDataOptions.addChildOptions("seqValidation", "Validation", "", seqValidationOptions);
+
+        Options outputOptions = new Options(BarcodeValidatorMockupPlugin.class);
+        outputOptions.addFileSelectionOption("output", "Output Folder:", "").setSelectionType(JFileChooser.DIRECTORIES_ONLY);
+        addChildOptions("output", "Output", "", outputOptions);
     }
 
     private int count = 1;
