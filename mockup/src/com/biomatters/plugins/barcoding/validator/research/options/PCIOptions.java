@@ -12,6 +12,6 @@ public class PCIOptions extends Options {
     public PCIOptions() {
         super(BarcodeValidatorMockupPlugin.class);
 
-        addIntegerOption("something", "A Setting:", 100);
+        addLabel("Options to be determined");
     }
 }

@@ -1,7 +1,10 @@
 package com.biomatters.plugins.barcoding.validator.research.options;
 
+import com.biomatters.geneious.publicapi.components.Dialogs;
+import com.biomatters.geneious.publicapi.plugin.Icons;
 import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorMockupPlugin;
+import com.biomatters.plugins.barcoding.validator.research.Utilities;
 
 import java.util.Arrays;
 
@@ -13,6 +16,8 @@ public class FastaCheckOptions extends Options {
 
     public FastaCheckOptions() {
         super(BarcodeValidatorMockupPlugin.class);
+
+        Utilities.addQuestionToOptions(this, "How should the sequence be checked against the generated FASTA?");
 
         OptionValue exactValue = new OptionValue("exact", "Exactly");
         OptionValue ninetyPercentValue = new OptionValue("90%", "90% similar");

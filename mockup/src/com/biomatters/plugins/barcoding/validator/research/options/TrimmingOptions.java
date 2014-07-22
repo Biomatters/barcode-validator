@@ -2,6 +2,7 @@ package com.biomatters.plugins.barcoding.validator.research.options;
 
 import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorMockupPlugin;
+import com.biomatters.plugins.barcoding.validator.research.Utilities;
 
 /**
  * @author Matthew Cheung
@@ -11,8 +12,10 @@ public class TrimmingOptions extends Options {
     public TrimmingOptions() {
         super(BarcodeValidatorMockupPlugin.class);
 
+        Utilities.addQuestionToOptions(this, "What other trimming options are requred?");
+
         beginAlignHorizontally(null, false);
-        BooleanOption useLow = addBooleanOption("useLow", "", false);
+        BooleanOption useLow = addBooleanOption("useLow", "", true);
         IntegerOption maxLowQualityBases = addIntegerOption("low", "Maximum low quality bases:", 0);
         useLow.addDependent(maxLowQualityBases, true);
         endAlignHorizontally();
