@@ -18,20 +18,6 @@ import java.util.Collections;
  */
 public class BarcodeValidatorMockOptions extends Options {
 
-    private static final Options.OptionValue[] VALUES = new Options.OptionValue[] {
-            new Options.OptionValue("0", "1st"),
-            new Options.OptionValue("1", "2nd"),
-            new Options.OptionValue("2", "3rd"),
-            new Options.OptionValue("3", "4th"),
-            new Options.OptionValue("4", "5th"),
-            new Options.OptionValue("5", "6th"),
-            new Options.OptionValue("6", "7th"),
-            new Options.OptionValue("7", "8th"),
-            new Options.OptionValue("8", "9th"),
-            new Options.OptionValue("9", "10th")
-
-    };
-
     public BarcodeValidatorMockOptions() throws DocumentOperationException {
         super(BarcodeValidatorMockupPlugin.class);
 
