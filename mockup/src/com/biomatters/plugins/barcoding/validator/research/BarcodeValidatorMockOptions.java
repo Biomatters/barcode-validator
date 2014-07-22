@@ -18,6 +18,20 @@ import java.util.Collections;
  */
 public class BarcodeValidatorMockOptions extends Options {
 
+    private static final Options.OptionValue[] VALUES = new Options.OptionValue[] {
+            new Options.OptionValue("0", "1st"),
+            new Options.OptionValue("1", "2nd"),
+            new Options.OptionValue("2", "3rd"),
+            new Options.OptionValue("3", "4th"),
+            new Options.OptionValue("4", "5th"),
+            new Options.OptionValue("5", "6th"),
+            new Options.OptionValue("6", "7th"),
+            new Options.OptionValue("7", "8th"),
+            new Options.OptionValue("8", "9th"),
+            new Options.OptionValue("9", "10th")
+
+    };
+
     public BarcodeValidatorMockOptions() throws DocumentOperationException {
         super(BarcodeValidatorMockupPlugin.class);
 
@@ -28,6 +42,18 @@ public class BarcodeValidatorMockOptions extends Options {
         addCollapsibleChildOptions("input", "Input", "", inputOptions, false, false);
         addMultiInputOptions(inputOptions, null, "ab1 files", "traceInput", "Trace(s):");
         addMultiInputOptions(inputOptions, null, "FASTA", "barcodeInput", "Barcode Sequence(s):");
+
+        Options matchOptions = new Options(BarcodeValidatorMockupPlugin.class);
+        Utilities.addQuestionToOptions(inputOptions, "How are these files normally named?");
+        matchOptions.beginAlignHorizontally(null, false);
+        matchOptions.addCustomOption(new NamePartOption("tracePartNum", ""));
+        matchOptions.addCustomOption(new NameSeparatorOption("traceSeparator", "part of trace name separated by "));
+        matchOptions.endAlignHorizontally();
+        matchOptions.beginAlignHorizontally(null, false);
+        matchOptions.addCustomOption(new NamePartOption("seqPartNum", ""));
+        matchOptions.addCustomOption(new NameSeparatorOption("seqSeparator", "part of sequence name separated by "));
+        matchOptions.endAlignHorizontally();
+        inputOptions.addChildOptions("match", "Match traces to sequences by matching", "", matchOptions);
 
         addCollapsibleChildOptions("trim", "Trimming", "", new TrimmingOptions(), false, true);
 
