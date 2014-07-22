@@ -1,11 +1,13 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.components.Dialogs;
+import com.biomatters.geneious.publicapi.components.GPanel;
 import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.geneious.publicapi.utilities.IconUtilities;
 import com.biomatters.plugins.barcoding.validator.research.options.*;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collections;
@@ -16,37 +18,69 @@ import java.util.Collections;
  */
 public class BarcodeValidatorMockOptions extends Options {
 
+    private int widthOfArrowLine = 20;
+    private int widthOfArrowTriangle = 40;
+    private int heightOfArrow = 40;
+
     public BarcodeValidatorMockOptions() {
         super(BarcodeValidatorMockupPlugin.class);
 
-        Options specimenOptions = new Options(BarcodeValidatorMockupPlugin.class);
-        addMultiInputOptions(specimenOptions, "Specify any number of specimen data files to validate",
-                "Accepts: <ul><li>Biocode FIMS (xls)</li><li>BOLD (xls)</li><li>NCBI BarStool</li><ul>", "specimenInput", "Specimen Data File:");
-        addCollapsibleChildOptions("specimen", "Specimen Data", "", specimenOptions, false, false);
+        Options traceOptions = new Options(BarcodeValidatorMockupPlugin.class);
+        addCollapsibleChildOptions("traceValidation", "Trace Validation", "", traceOptions, false, false);
 
-        Options validationOptions = new Options(BarcodeValidatorMockupPlugin.class);
-        validationOptions.addChildOptions("biocode", "Biocode", null, new BiocodeValidationOptions());
-        validationOptions.addChildOptions("cbol", "CBOL", null, new SpecimenValidationOptions());
-        validationOptions.addChildOptions("standard", "Standards", null, new StandardValidationOptions());
-        validationOptions.addChildOptionsPageChooser("chooser", "Validation Steps:", Collections.<String>emptyList(), PageChooserType.BUTTONS, true);
-        specimenOptions.addChildOptions("validation", "Validation", "", validationOptions);
-
-        Options sequenceDataOptions = new Options(BarcodeValidatorMockupPlugin.class);
-        addMultiInputOptions(sequenceDataOptions, "Specify any number of trace files or folders to validate",
+        Options traceInputOptions = new Options(BarcodeValidatorMockupPlugin.class);
+        addMultiInputOptions(traceInputOptions, "Specify any number of trace files or folders to validate",
                 "Some help", "traceInput", "Trace File/Folder:");
-        addMultiInputOptions(sequenceDataOptions, "Specify any number of barcode files to validate",
+        traceOptions.addCollapsibleChildOptions("sequenceInput", "Input", "", traceInputOptions, false, false);
+
+        Options traceValidationOptions = new Options(BarcodeValidatorMockupPlugin.class);
+        traceOptions.addChildOptions("barcodeValidation", null, "", traceValidationOptions);
+        traceValidationOptions.addChildOptions("quality", "Quality", null, new TraceQualityOptions());
+        traceValidationOptions.addChildOptionsPageChooser("chooser", "Validation Steps:", Collections.<String>emptyList(), PageChooserType.BUTTONS, true);
+
+//        addCustomComponent(new GPanel() {
+//            @Override
+//            public void paint(Graphics g) {
+//                super.paint(g);
+//                int width = getWidth();
+//                int middleOfPanel = getX() + width/2;
+//                g.setColor(Color.BLUE);
+//                g.fillRect(middleOfPanel - widthOfArrowLine / 2, getY(), widthOfArrowLine, getHeight());
+//            }
+//
+//            @Override
+//            public Dimension getPreferredSize() {
+//                return new Dimension(widthOfArrowTriangle, heightOfArrow);
+//            }
+//
+//            @Override
+//            public int getHeight() {
+//                return heightOfArrow;
+//            }
+//        });
+
+
+        addCollapsibleChildOptions("trim", "Trimming", "", new TrimmingOptions(), false, false);
+        addCollapsibleChildOptions("assembly", "Assembly", "", new FakeCap3Options(), false, false);
+        addCollapsibleChildOptions("consensus", "Consensus Generation", "", new FakeCap3Options(), false, false);
+
+        Options barcodeOptions = new Options(BarcodeValidatorMockupPlugin.class);
+        addCollapsibleChildOptions("barcodeValidation", "Barcode Validation", "", barcodeOptions, false, false);
+
+        Options barcodeInputOptions = new Options(BarcodeValidatorMockupPlugin.class);
+        addMultiInputOptions(barcodeInputOptions, "Specify any number of barcode files to validate",
                 "Some help", "barcodeInput", "Barcode Sequence File:");
-        addCollapsibleChildOptions("sequenceData", "Sequence Data", "", sequenceDataOptions, false, false);
+        barcodeOptions.addCollapsibleChildOptions("sequenceInput", "Input", "", barcodeInputOptions, false, false);
 
-
-        Options seqValidationOptions = new Options(BarcodeValidatorMockupPlugin.class);
-        seqValidationOptions.addChildOptions("trim", "Trimming", null, new TrimmingOptions());
-        seqValidationOptions.addChildOptions("cap3", "Assembly", "", new FakeCap3Options());
-        seqValidationOptions.addChildOptionsPageChooser("chooser", "Validation Steps:", Collections.<String>emptyList(), PageChooserType.BUTTONS, true);
-        sequenceDataOptions.addChildOptions("seqValidation", "Validation", "", seqValidationOptions);
+        Options barcodeValidationOptions = new Options(BarcodeValidatorMockupPlugin.class);
+        barcodeOptions.addChildOptions("barcodeValidation", null, "", barcodeValidationOptions);
+        barcodeValidationOptions.addChildOptions("pci", "PCI", "", new PCIOptions());
+        barcodeValidationOptions.addChildOptions("fasta", "FASTA Check", "", new FastaCheckOptions());
+        barcodeValidationOptions.addChildOptionsPageChooser("chooser", "Validation Steps:", Collections.<String>emptyList(), PageChooserType.BUTTONS, true);
 
         Options outputOptions = new Options(BarcodeValidatorMockupPlugin.class);
         outputOptions.addFileSelectionOption("output", "Output Folder:", "").setSelectionType(JFileChooser.DIRECTORIES_ONLY);
+        outputOptions.addBooleanOption("reportAmbig", "Report # ambiguous bases:", true);  // todo Do we need this?  Maybe it's always on
         addChildOptions("output", "Output", "", outputOptions);
     }
 
