@@ -30,7 +30,7 @@ public class BarcodeValidatorMockOptions extends Options {
         addMultiInputOptions(inputOptions, null, "FASTA", "barcodeInput", "Barcode Sequence(s):");
 
         Options matchOptions = new Options(BarcodeValidatorMockupPlugin.class);
-        Utilities.addQuestionToOptions(inputOptions, "How are these files normally named?");
+        Utilities.addToDoToOptions(inputOptions, "Support BOLD and GenBank formats in addition to this free form one.");
         matchOptions.beginAlignHorizontally(null, false);
         matchOptions.addCustomOption(new NamePartOption("tracePartNum", ""));
         matchOptions.addCustomOption(new NameSeparatorOption("traceSeparator", "part of trace name separated by "));
