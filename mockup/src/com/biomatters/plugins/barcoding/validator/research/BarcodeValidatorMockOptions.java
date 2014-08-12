@@ -10,6 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -29,23 +30,33 @@ public class BarcodeValidatorMockOptions extends Options {
         addMultiInputOptions(inputOptions, null, "ab1 files", "traceInput", "Trace(s):");
         addMultiInputOptions(inputOptions, null, "FASTA", "barcodeInput", "Barcode Sequence(s):");
 
-        Options matchOptions = new Options(BarcodeValidatorMockupPlugin.class);
-        Utilities.addToDoToOptions(inputOptions, "Support BOLD and GenBank formats in addition to this free form one.");
-        matchOptions.beginAlignHorizontally(null, false);
-        matchOptions.addCustomOption(new NamePartOption("tracePartNum", ""));
-        matchOptions.addCustomOption(new NameSeparatorOption("traceSeparator", "part of trace name separated by "));
-        matchOptions.endAlignHorizontally();
-        matchOptions.beginAlignHorizontally(null, false);
-        matchOptions.addCustomOption(new NamePartOption("seqPartNum", ""));
-        matchOptions.addCustomOption(new NameSeparatorOption("seqSeparator", "part of sequence name separated by "));
-        matchOptions.endAlignHorizontally();
-        inputOptions.addChildOptions("match", "Match traces to sequences by matching", "", matchOptions);
+
+        Options matchFromBoldListOptions = new Options(BarcodeValidatorMockupPlugin.class);
+        matchFromBoldListOptions.addFileSelectionOption("traceList", "Trace List: ", "");
+        inputOptions.addChildOptions("bold", "tracelist.txt (BOLD)", "", matchFromBoldListOptions);
+
+        Options matchFromGenbankXmlOptions = new Options(BarcodeValidatorMockupPlugin.class);
+        matchFromGenbankXmlOptions.addFileSelectionOption("xmlFile", "XML File: ", "");
+        inputOptions.addChildOptions("genbank", "XML File (Genbank)", "", matchFromGenbankXmlOptions);
+
+        Options matchNamesOptions = new Options(BarcodeValidatorMockupPlugin.class);
+        matchNamesOptions.beginAlignHorizontally(null, false);
+        matchNamesOptions.addCustomOption(new NamePartOption("tracePartNum", ""));
+        matchNamesOptions.addCustomOption(new NameSeparatorOption("traceSeparator", "part of trace name separated by "));
+        matchNamesOptions.endAlignHorizontally();
+        matchNamesOptions.beginAlignHorizontally(null, false);
+        matchNamesOptions.addCustomOption(new NamePartOption("seqPartNum", ""));
+        matchNamesOptions.addCustomOption(new NameSeparatorOption("seqSeparator", "part of sequence name separated by "));
+        matchNamesOptions.endAlignHorizontally();
+        inputOptions.addChildOptions("names", "part of names", "", matchNamesOptions);
+
+        inputOptions.addChildOptionsPageChooser("method", "Match traces to seqeunces by: ", Collections.<String>emptyList(), PageChooserType.COMBO_BOX, false);
 
         addCollapsibleChildOptions("trim", "Trimming", "", new TrimmingOptions(), false, true);
 
         Options traceOptions = new Options(BarcodeValidatorMockupPlugin.class);
 
-        Utilities.addQuestionToOptions(traceOptions, "Traces validated after trimming?");
+        Utilities.addQuestionToOptions(traceOptions, "Traces validated after or before trimming?");
         addCollapsibleChildOptions("traceValidation", "Trace Validation", "", traceOptions, false, true);
 
         Options traceValidationOptions = new Options(BarcodeValidatorMockupPlugin.class);
@@ -71,6 +82,7 @@ public class BarcodeValidatorMockOptions extends Options {
         Options barcodeValidationOptions = new Options(BarcodeValidatorMockupPlugin.class);
         barcodeOptions.addChildOptions("barcodeValidation", null, "", barcodeValidationOptions);
         barcodeValidationOptions.addChildOptions("fasta", "FASTA Check", "", new FastaCheckOptions());
+        barcodeValidationOptions.addChildOptions("quality", "Quality", "", new TraceQualityOptions());
         barcodeValidationOptions.addChildOptions("pci", "PCI", "", new PCIOptions());
         barcodeValidationOptions.addChildOptionsPageChooser("chooser", "Validation Steps:", Collections.<String>emptyList(), PageChooserType.BUTTONS, true);
 

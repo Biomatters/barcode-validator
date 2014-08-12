@@ -12,7 +12,9 @@ public class TrimmingOptions extends Options {
     public TrimmingOptions() {
         super(BarcodeValidatorMockupPlugin.class);
 
-        Utilities.addQuestionToOptions(this, "What other trimming options are requred?");
+        Utilities.addQuestionToOptions(this, "Use modified Mott algorithm?");
+        Utilities.addNoteToOptions(this, "Also include primer trimming");
+
 
         beginAlignHorizontally(null, false);
         BooleanOption useLow = addBooleanOption("useLow", "", true);

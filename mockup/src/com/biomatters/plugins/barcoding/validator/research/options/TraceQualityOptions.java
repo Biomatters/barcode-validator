@@ -20,5 +20,11 @@ public class TraceQualityOptions extends Options {
 
         addBooleanOption("acceptNs", "Accept Ns:", true);
         addIntegerOption("qualityIndex", "Quality Index:?", 60);  // todo I don't know what this is. Ask Richard
+
+        OptionValue asIs = new OptionValue("asIs", "is");
+        OptionValue asN = new OptionValue("N", "N");
+        OptionValue asQuestionMark = new OptionValue("?", "?");
+
+//        addComboBoxOption("manualEdits", "Treat manual edits as:", Arrays.asList(asIs, asN, asQuestionMark), asIs);
     }
 }

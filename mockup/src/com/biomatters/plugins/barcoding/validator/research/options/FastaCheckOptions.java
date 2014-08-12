@@ -22,8 +22,12 @@ public class FastaCheckOptions extends Options {
         OptionValue exactValue = new OptionValue("exact", "Exactly");
         OptionValue ninetyPercentValue = new OptionValue("90%", "90% similar");
 
-        addBooleanOption("enable", "Check FASTA matches generated barcode", true ) ;
-        addComboBoxOption("matches", "FASTA matches generated barcode:", Arrays.asList(exactValue, ninetyPercentValue), exactValue);
+        BooleanOption checkMatches = addBooleanOption("enable", "Check FASTA matches generated barcode:", true);
+        ComboBoxOption<OptionValue> matchesOption = addComboBoxOption("matches", "FASTA matches generated barcode:", Arrays.asList(exactValue, ninetyPercentValue), exactValue);
+        checkMatches.addDependent(matchesOption, true, true);
+
+        addBooleanOption("human", "Check for human DNA", true);
+        addBooleanOption("stopCodons", "Check for stop codons", true);
 
     }
 }

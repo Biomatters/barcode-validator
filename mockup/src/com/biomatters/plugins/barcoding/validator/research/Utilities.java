@@ -16,8 +16,8 @@ public class Utilities {
                             new Icons(Dialogs.DialogIcon.QUESTION.getIcon()));
     }
 
-    public static void addToDoToOptions(Options options, String message) {
-        options.addLabelWithIcon("<html><b>TODO</b>: " + message + "</html>",
-                            new Icons(Dialogs.DialogIcon.WARNING.getIcon()));
+    public static void addNoteToOptions(Options options, String message) {
+        options.addLabelWithIcon("<html><b>Note</b>: " + message + "</html>",
+                new Icons(Dialogs.DialogIcon.INFORMATION.getIcon()));
     }
 }
