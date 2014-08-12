@@ -25,6 +25,6 @@ public class TraceQualityOptions extends Options {
         OptionValue asN = new OptionValue("N", "N");
         OptionValue asQuestionMark = new OptionValue("?", "?");
 
-        addComboBoxOption("manualEdits", "Treat manual edits as:", Arrays.asList(asIs, asN, asQuestionMark), asIs);
+//        addComboBoxOption("manualEdits", "Treat manual edits as:", Arrays.asList(asIs, asN, asQuestionMark), asIs);
     }
 }

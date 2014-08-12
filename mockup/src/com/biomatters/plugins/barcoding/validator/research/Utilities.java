@@ -15,4 +15,9 @@ public class Utilities {
         options.addLabelWithIcon("<html><b>Question</b>: " + question + "</html>",
                             new Icons(Dialogs.DialogIcon.QUESTION.getIcon()));
     }
+
+    public static void addNoteToOptions(Options options, String message) {
+        options.addLabelWithIcon("<html><b>Note</b>: " + message + "</html>",
+                new Icons(Dialogs.DialogIcon.INFORMATION.getIcon()));
+    }
 }
