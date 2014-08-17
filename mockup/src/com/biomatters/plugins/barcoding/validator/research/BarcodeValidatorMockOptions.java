@@ -5,6 +5,7 @@ import com.biomatters.geneious.publicapi.components.GPanel;
 import com.biomatters.geneious.publicapi.plugin.*;
 import com.biomatters.geneious.publicapi.utilities.IconUtilities;
 import com.biomatters.plugins.barcoding.validator.research.options.*;
+import com.biomatters.plugins.cap3.Cap3AssemblerOptions;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,6 +20,7 @@ import java.util.Collections;
  */
 public class BarcodeValidatorMockOptions extends Options {
 
+    Cap3AssemblerOptions cap3Options;
     public BarcodeValidatorMockOptions() throws DocumentOperationException {
         super(BarcodeValidatorMockupPlugin.class);
 
@@ -64,7 +66,8 @@ public class BarcodeValidatorMockOptions extends Options {
         traceValidationOptions.addChildOptions("quality", "Quality", null, new TraceQualityOptions());
         traceValidationOptions.addChildOptionsPageChooser("chooser", "Validation Steps:", Collections.<String>emptyList(), PageChooserType.BUTTONS, true);
 
-        addCollapsibleChildOptions("assembly", "Assembly", "", new FakeCap3Options(), false, true);
+        cap3Options = new Cap3AssemblerOptions(null);
+        addCollapsibleChildOptions("assembly", "Assembly", "", cap3Options, false, true);
 
         DocumentOperation op = PluginUtilities.getDocumentOperation("Generate_Consensus");
         Options consensusOptions;
@@ -111,5 +114,9 @@ public class BarcodeValidatorMockOptions extends Options {
                     }
                 });
         options.endAlignHorizontally();
+    }
+
+    Cap3AssemblerOptions getCap3Options() {
+        return  cap3Options;
     }
 }

@@ -1,10 +1,19 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
-import com.biomatters.geneious.publicapi.components.Dialogs;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
+import com.biomatters.geneious.publicapi.documents.XMLSerializerImplementation;
+import com.biomatters.geneious.publicapi.documents.sequence.DefaultSequenceListDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
+import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideSequence;
 import com.biomatters.geneious.publicapi.plugin.*;
+import com.biomatters.geneious.publicapi.utilities.ImportUtiltiesThatImportsFastaFiles;
+import com.biomatters.plugins.cap3.Cap3Assembler;
+import com.biomatters.plugins.cap3.Cap3AssemblerOptions;
 import jebl.util.ProgressListener;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,6 +45,60 @@ public class BarcodeValidatorMockOperation extends DocumentOperation {
 
     @Override
     public List<AnnotatedPluginDocument> performOperation(AnnotatedPluginDocument[] annotatedDocuments, ProgressListener progressListener, Options options) throws DocumentOperationException {
+
+        Cap3Assembler assembler = new Cap3Assembler();
+        assembler.assemble(
+                ((BarcodeValidatorMockOptions)options).getCap3Options(),
+                new AssemblerInput(Arrays.asList(annotatedDocuments),
+                        Collections.<AssemblerInput.ReferenceSequence>emptyList(), false), ProgressListener.EMPTY,
+                new Assembler.Callback() {
+                    @Override
+                    public void addContigDocument(SequenceAlignmentDocument contig, NucleotideSequenceDocument contigConsensus, boolean isThisTheOnlyContigGeneratedByDeNovoAssembly, ProgressListener progressListener) throws DocumentOperationException {
+                        System.out.println("Generated! " + contig.getName());
+                    }
+
+                    @Override
+                    public void addUnusedRead(AssemblerInput.Read read, ProgressListener progressListener) throws DocumentOperationException {
+                        System.out.println("Read not used!");
+                    }
+                });
         return Collections.emptyList();
+    }
+
+
+    public static void main(String[] args) throws DocumentOperationException {
+        // A test to see if it is possible to run the Biomatters CAP3 plugin with just the Public API
+
+        XMLSerializerImplementation.setup();
+        ImportUtiltiesThatImportsFastaFiles.setupImporter();
+        PluginUtilitiesImplementationThatReturnsAceImporter.set();
+
+        Cap3AssemblerOptions options = new Cap3AssemblerOptions(null);
+        options.setValue("EXE", "/home/matthew/Downloads/CAP3/cap3");
+        Cap3Assembler assembler = new Cap3Assembler();
+
+        DefaultNucleotideSequence seq1 = new DefaultNucleotideSequence("test", "GTGGACTAGATTCGGTACACTGTATATTTTATTCGGGATATGATCTGGATTAGTTGGAACGGCTTTGAGGCTCCTGATTCGAGCAGAGCTCGGGCAGCCGGGAGCCCTACTGGGTGATGATCAATTATATAACGTAATTGTAACAGCACATGCTTTTGTAATAATTTTTTTCTTAGTAATGCCTATGATAATTGGAGGATTTGGTAACTGGTTAGTTCCTCTTATATTAGGGGCTCCTGATATGGCTTTCCCTCGACTGAATAACATGAGTTTTTGACTTCTACCTCCTGCTTTATTGCTTTTATTATCTTCTGCAGCAGTTGAGAGAGGGGTAGGAACAGGCTGAACAGTCTATCCTCCGTTAGCGGGAAATCTTGCACATGCCGGAGGTTCAGTAGATCTTGCAATTTTTTCTCTCCACTTAGCGGGGGTGTCTTCAATTTTAGGTGCAGTAAATTTTATTACAACTATTATTAATATGCGATGACAGGGAATACAGTTTGAACGGCTCCCTCTGTTCGTTTGATCCGTAAAGATTACAGCTGTTCTCTTGTTACTTTCTCTACCCGTCTTAGCCGGAGCCATTACCATGCTTTTGACTGACCGTAACTTTAATACTGCTTTCTTCGATCCAGCAGGAGGTGGTGATCCTATTTTGTATCAGCATTTATTTTGATTCTTTGGTCACCCTGAAGTTTACCTGTGTGAAAGTGTTGTCCCA");
+        DefaultNucleotideSequence seq2 = new DefaultNucleotideSequence("test", "CCACGGAGAAAGATCAAATAAATGCTGATACAAAATAGGATCACCACCTCCTGCTGGATCGAAGAAAGCAGTATTAAAGTTACGGTCAGTCAAAAGCATGGTAATGGCTCCGGCTAAGACGGGTAGAGAAAGTAACAAGAGAACAGCTGTAATCTTTACGGATCAAACGAACAGAGGGAGCCGTTCAAACTGTATTCCCTGTCATCGCATATTAATAATAGTTGTAATAAAATTTACTGCACCTAAAATTGAAGACACCCCCGCTAAGTGGAGAGAAAAAATTGCAAGATCTACTGAACCTCCGGCATGTGCAAGATTTCCCGCTAACGGAGGATAGACTGTTCAGCCTGTTCCTACCCCTCTCTCAACTGCTGCAGAAGATAATAAAAGCAATAAAGCAGGAGGTAGAAGTCAAAAACTCATGTTATTCAGTCGAGGGAAAGCCATATCAGGAGCCCCTAATATAAGAGGAACTAACCAGTTACCAAATCCTCCAATTATCATAGGCATTACTAAGAAAAAAATTATTACAAAAGCATGTGCTGTTACAATTACGTTATATAATTGATCATCACCCAGTAGGGCTCCCGGCTGCCCGAGCTCTGCTCGAATCAGGAGCCTCAAAGCCGTTCCAACTAATCCAGATCATATCCCGAATAAAATATACAGTGTACCGATGTCTTTATGATTTGTTGACCGTCGTTTTAAAACGTCGTGAGGG");
+        DefaultSequenceListDocument list = DefaultSequenceListDocument.forNucleotideSequences(Arrays.<NucleotideSequenceDocument>asList(seq1, seq2));
+        AssemblerInput input = new AssemblerInput(Collections.<NucleotideSequenceDocument>emptyList(), list);
+        input.setGenerateContigs(false);
+
+        assembler.assemble(options, input, ProgressListener.EMPTY, new Assembler.Callback() {
+            @Override
+            public void addContigDocument(SequenceAlignmentDocument contig, NucleotideSequenceDocument contigConsensus, boolean isThisTheOnlyContigGeneratedByDeNovoAssembly, ProgressListener progressListener) throws DocumentOperationException {
+                System.out.println("Generated! " + contig.getName());
+                for (SequenceDocument sequenceDocument : contig.getSequences()) {
+                    System.out.println(sequenceDocument.getName() + ": " + sequenceDocument.getCharSequence());
+                }
+            }
+
+            @Override
+            public void addUnusedRead(AssemblerInput.Read read, ProgressListener progressListener) throws DocumentOperationException {
+                NucleotideSequenceDocument notUsed = read.getRead();
+                System.out.println("Read not used! " + notUsed.getName() + ": " + notUsed.getCharSequence());
+            }
+        });
+        System.exit(0);
+
     }
 }
