@@ -1,10 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
-import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.plugin.*;
-import jebl.util.ProgressListener;
-
-import java.util.List;
 
 /**
  * @author Gen Li
@@ -29,6 +25,6 @@ public class BiocodeValidatorResearchToolOperation extends DocumentOperation {
 
     @Override
     public Options getOptions(DocumentOperationInput operationInput) throws DocumentOperationException {
-        return new BarcodeValidatorResearchToolOptions();
+        return null;
     }
 }
