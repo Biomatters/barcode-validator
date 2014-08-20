@@ -1,0 +1,85 @@
+<project name="BarcodeValidator" xmlns:ivy="antlib:org.apache.ivy.ant" default="create-plugin" basedir=".">
+
+    <property name="version-regex-pattern" value=".*PLUGIN_VERSION\s+=\s+&quot;(\d+\.\d+\.\d+)&quot;;.*"/>
+
+    <loadfile property="plugin.version" srcfile="src/com/biomatters/plugins/barcoding/validator/research/BarcodeValidatorPlugin.java">
+        <filterchain>
+            <linecontainsregexp>
+                <regexp pattern="${version-regex-pattern}"/>
+            </linecontainsregexp>
+            <replaceregex pattern="${version-regex-pattern}" replace="\1"/>
+            <replacestring from="." to="_"/>
+            <striplinebreaks/>
+        </filterchain>
+    </loadfile>
+
+    <property name="plugin-name" value="com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorPlugin"/>
+    <property name="short-plugin-name" value="BarcodeValidator_${plugin.version}"/>
+
+    <!-- folders -->
+    <property name="src" location="src"/>
+    <property name="build" location="build"/>
+    <property name="classes" location="classes"/>
+    <property name="lib" location="lib"/>
+
+    <!-- setup reference to the Ivy Ant tasks library -->
+    <path id="ivy.lib.path">
+        <fileset dir="tools" includes="ivy*.jar"/>
+    </path>
+
+    <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+
+    <!-- load ivy settings -->
+    <ivy:settings file="ivysettings.xml" id="biocode.ivy.config"/>
+
+    <path id="classpath">
+        <fileset dir="${lib}"/>
+    </path>
+
+    <target name="create-plugin" depends="build-plugin">
+        <echo message="${plugin.version}"></echo>
+        <echo message="${short-plugin-name}"></echo>
+        <zip zipfile="${build}/${short-plugin-name}.gplugin">
+            <fileset dir="${build}">
+                <include name="${plugin-name}/**/*"/>
+            </fileset>
+        </zip>
+    </target>
+
+    <target name="build-plugin" depends="clean,compile-plugin">
+        <jar jarfile="${build}/${plugin-name}.jar">
+            <fileset dir="${classes}"/>
+        </jar>
+        <mkdir dir="${build}/${plugin-name}"/>
+        <copy todir="${build}/${plugin-name}">
+            <fileset dir="${build}">
+                <include name="${plugin-name}.jar"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="clean">
+        <delete dir="${build}"/>
+        <delete dir="${classes}"/>
+        <delete dir="${lib}"/>
+    </target>
+
+    <target name="compile-plugin" depends="prepare,retrieve-plugin-dependencies">
+        <javac target="1.6" source="1.6" destdir="${classes}" debug="true">
+            <classpath refid="classpath"/>
+            <src path="${src}"/>
+        </javac>
+    </target>
+
+    <target name="prepare">
+        <mkdir dir="${src}"/>
+        <mkdir dir="${build}"/>
+        <mkdir dir="${classes}"/>
+        <mkdir dir="${lib}"/>
+    </target>
+
+    <target name="retrieve-plugin-dependencies" description="Retrieve dependencies with ivy">
+        <ivy:retrieve conf="build" settingsref="biocode.ivy.config"/>
+    </target>
+
+</project>
