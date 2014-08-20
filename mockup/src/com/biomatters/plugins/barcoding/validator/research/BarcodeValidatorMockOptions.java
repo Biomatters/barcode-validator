@@ -1,17 +1,14 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.components.Dialogs;
-import com.biomatters.geneious.publicapi.components.GPanel;
 import com.biomatters.geneious.publicapi.plugin.*;
 import com.biomatters.geneious.publicapi.utilities.IconUtilities;
 import com.biomatters.plugins.barcoding.validator.research.options.*;
 import com.biomatters.plugins.cap3.Cap3AssemblerOptions;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
 import java.util.Collections;
 
 /**

@@ -9,11 +9,9 @@ import com.biomatters.geneious.publicapi.plugin.Options;
  *         Created on 22/07/14 5:27 PM
  */
 public class Utilities {
-
-
     public static void addQuestionToOptions(Options options, String question) {
         options.addLabelWithIcon("<html><b>Question</b>: " + question + "</html>",
-                            new Icons(Dialogs.DialogIcon.QUESTION.getIcon()));
+                new Icons(Dialogs.DialogIcon.QUESTION.getIcon()));
     }
 
     public static void addNoteToOptions(Options options, String message) {
