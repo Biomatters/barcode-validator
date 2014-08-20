@@ -25,7 +25,7 @@ import java.util.List;
 public class BarcodeValidatorMockOperation extends DocumentOperation {
     @Override
     public GeneiousActionOptions getActionOptions() {
-        return new GeneiousActionOptions("Barcode Validator", "Use to test out validation parameters")
+        return new GeneiousActionOptions("Barcode Validator (Mockup)", "Use to test out validation parameters")
                 .setInMainToolbar(true);
     }
 
