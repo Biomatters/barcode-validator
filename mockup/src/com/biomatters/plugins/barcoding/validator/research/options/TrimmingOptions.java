@@ -12,7 +12,6 @@ public class TrimmingOptions extends Options {
     public TrimmingOptions() {
         super(BarcodeValidatorMockupPlugin.class);
 
-        Utilities.addQuestionToOptions(this, "Use modified Mott algorithm?");
         Utilities.addNoteToOptions(this, "Also include primer trimming");
 
 
