@@ -40,6 +40,9 @@
             <fileset dir="${build}">
                 <include name="${plugin-name}.jar"/>
             </fileset>
+            <fileset dir="resources">
+                <include name="readme.html"/>
+            </fileset>
         </copy>
     </target>
 
