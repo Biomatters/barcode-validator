@@ -21,6 +21,10 @@
     <property name="build" location="build"/>
     <property name="classes" location="classes"/>
     <property name="lib" location="lib"/>
+    <property name="report" location="report"/>
+    <property name="test" location="test"/>
+    <property name="test.classes" location="test.classes"/>
+    <property name="GeneiousFiles" location="GeneiousFiles"/>
 
     <!-- setup reference to the Ivy Ant tasks library -->
     <path id="ivy.lib.path">
@@ -37,8 +41,6 @@
     </path>
 
     <target name="create-plugin" depends="build-plugin">
-        <echo message="${plugin.version}"></echo>
-        <echo message="${short-plugin-name}"></echo>
         <zip zipfile="${build}/${short-plugin-name}.gplugin">
             <fileset dir="${build}">
                 <include name="${plugin-name}/**/*"/>
@@ -62,6 +64,9 @@
         <delete dir="${build}"/>
         <delete dir="${classes}"/>
         <delete dir="${lib}"/>
+        <delete dir="${report}"/>
+        <delete dir="${test.classes}"/>
+        <delete dir="${GeneiousFiles}"/>
     </target>
 
     <target name="compile-plugin" depends="prepare,retrieve-plugin-dependencies">
@@ -76,10 +81,49 @@
         <mkdir dir="${build}"/>
         <mkdir dir="${classes}"/>
         <mkdir dir="${lib}"/>
+        <mkdir dir="${report}"/>
+        <mkdir dir="${test.classes}"/>
+        <mkdir dir="${GeneiousFiles}"/>
     </target>
 
     <target name="retrieve-plugin-dependencies" description="Retrieve dependencies with ivy">
         <ivy:retrieve conf="build" settingsref="biocode.ivy.config"/>
+    </target>
+
+    <target name="compile-tests" depends="compile-plugin">
+        <javac target="1.6" source="1.6" destdir="${test.classes}" debug="true">
+            <classpath>
+                <path refid="classpath"/>
+                <pathelement location="${classes}"/>
+            </classpath>
+            <src path="${test}"/>
+        </javac>
+    </target>
+
+    <target name="test" depends="clean,prepare,compile-tests">
+        <junit dir="GeneiousFiles" fork="true" maxmemory="1024M" printsummary="on" timeout="180000">
+            <batchtest todir="${report}">
+                <fileset dir="${test.classes}">
+                    <include name="**/*Test.class"/>
+                </fileset>
+            </batchtest>
+            <classpath>
+                <pathelement location="${classes}"/>
+                <pathelement location="${test.classes}"/>
+                <path refid="classpath"/>
+            </classpath>
+            <env key="DISPLAY" value=":0.0"/>
+            <env key="DYLD_LIBRARY_PATH" value="/Library/Application Support/Geneious/Frameworks"/>
+            <formatter type="xml"/>
+            <jvmarg value="-Xms256M"/>
+            <jvmarg value="-ea"/>
+            <jvmarg value="-XX:MaxNewSize=40M"/>
+            <jvmarg value="-XX:MaxPermSize=256M"/>
+            <jvmarg value="-XX:ReservedCodeCacheSize=128m"/>
+            <jvmarg value="-Xss512K"/>
+            <sysproperty key="report.dir" value="${report}"/>
+            <sysproperty key="user.dir" value="${build}"/>
+        </junit>
     </target>
 
 </project>
