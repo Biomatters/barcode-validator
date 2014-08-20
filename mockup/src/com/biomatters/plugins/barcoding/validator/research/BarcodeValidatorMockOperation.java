@@ -1,6 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
+import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.XMLSerializerImplementation;
 import com.biomatters.geneious.publicapi.documents.sequence.DefaultSequenceListDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
@@ -45,24 +46,7 @@ public class BarcodeValidatorMockOperation extends DocumentOperation {
 
     @Override
     public List<AnnotatedPluginDocument> performOperation(AnnotatedPluginDocument[] annotatedDocuments, ProgressListener progressListener, Options options) throws DocumentOperationException {
-
-        Cap3Assembler assembler = new Cap3Assembler();
-        assembler.assemble(
-                ((BarcodeValidatorMockOptions)options).getCap3Options(),
-                new AssemblerInput(Arrays.asList(annotatedDocuments),
-                        Collections.<AssemblerInput.ReferenceSequence>emptyList(), false), ProgressListener.EMPTY,
-                new Assembler.Callback() {
-                    @Override
-                    public void addContigDocument(SequenceAlignmentDocument contig, NucleotideSequenceDocument contigConsensus, boolean isThisTheOnlyContigGeneratedByDeNovoAssembly, ProgressListener progressListener) throws DocumentOperationException {
-                        System.out.println("Generated! " + contig.getName());
-                    }
-
-                    @Override
-                    public void addUnusedRead(AssemblerInput.Read read, ProgressListener progressListener) throws DocumentOperationException {
-                        System.out.println("Read not used!");
-                    }
-                });
-        return Collections.emptyList();
+        return Collections.singletonList(DocumentUtilities.createAnnotatedPluginDocument(new MockupReport("Report")));
     }
 
 
