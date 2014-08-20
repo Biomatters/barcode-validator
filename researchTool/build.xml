@@ -87,7 +87,7 @@
     </target>
 
     <target name="retrieve-plugin-dependencies" description="Retrieve dependencies with ivy">
-        <ivy:retrieve conf="build" settingsref="biocode.ivy.config"/>
+        <ivy:retrieve settingsref="biocode.ivy.config"/>
     </target>
 
     <target name="compile-tests" depends="compile-plugin">
