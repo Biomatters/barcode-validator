@@ -9,7 +9,7 @@ import com.biomatters.geneious.publicapi.plugin.GeneiousPlugin;
  */
 public class BarcodeValidatorPlugin extends GeneiousPlugin {
 
-    public static final String PLUGIN_VERSION = "0.0.0";
+    private static final String PLUGIN_VERSION = "0.0.0";
 
     @Override
     public String getName() {
