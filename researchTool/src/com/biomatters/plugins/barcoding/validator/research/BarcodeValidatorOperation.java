@@ -13,10 +13,19 @@ import java.util.List;
  *         Created on 20/08/14 3:11 PM
  */
 public class BarcodeValidatorOperation extends DocumentOperation {
+    private static final Icons ICONS;
+    static {
+        URL icon = BarcodeValidatorOperation.class.getResource("barcodeTick24.png");
+        if(icon != null) {
+            ICONS = new Icons(new ImageIcon(icon));
+        } else {
+            ICONS = null;
+        }
+    }
+
     @Override
     public GeneiousActionOptions getActionOptions() {
-        URL icon = BarcodeValidatorOperation.class.getResource("barcodeTick24.png");
-        return new GeneiousActionOptions("Barcode Validator", "", new Icons(new ImageIcon(icon)))
+        return new GeneiousActionOptions("Barcode Validator", "", ICONS)
                 .setInMainToolbar(true)
                 .setMainMenuLocation(GeneiousActionOptions.MainMenu.Tools);
     }
