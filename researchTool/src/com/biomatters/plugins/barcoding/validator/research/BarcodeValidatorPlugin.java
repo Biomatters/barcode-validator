@@ -18,12 +18,12 @@ public class BarcodeValidatorPlugin extends GeneiousPlugin {
 
     @Override
     public String getDescription() {
-        return "Description";
+        return "Runs batch validation on sets of traces and barcode sequences against user specified parameters.";
     }
 
     @Override
     public String getHelp() {
-        return "Help";
+        return null;
     }
 
     @Override

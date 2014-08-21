@@ -57,6 +57,7 @@
             <fileset dir="${build}">
                 <include name="${plugin-name}.jar"/>
             </fileset>
+            <fileset dir="resources"/>
         </copy>
     </target>
 

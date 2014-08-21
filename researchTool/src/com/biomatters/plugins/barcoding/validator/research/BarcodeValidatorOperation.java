@@ -3,6 +3,9 @@ package com.biomatters.plugins.barcoding.validator.research;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.plugin.*;
 import jebl.util.ProgressListener;
+
+import javax.swing.*;
+import java.net.URL;
 import java.util.List;
 
 /**
@@ -12,7 +15,10 @@ import java.util.List;
 public class BarcodeValidatorOperation extends DocumentOperation {
     @Override
     public GeneiousActionOptions getActionOptions() {
-        return new GeneiousActionOptions("Barcode Validator").setInMainToolbar(true);
+        URL icon = BarcodeValidatorOperation.class.getResource("barcodeTick24.png");
+        return new GeneiousActionOptions("Barcode Validator", "", new Icons(new ImageIcon(icon)))
+                .setInMainToolbar(true)
+                .setMainMenuLocation(GeneiousActionOptions.MainMenu.Tools);
     }
 
     @Override
