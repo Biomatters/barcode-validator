@@ -1,9 +1,14 @@
 package com.biomatters.plugins.barcoding.validator.validation.trimming;
 
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
+import com.biomatters.geneious.publicapi.documents.PluginDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotation;
+import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationInterval;
 import com.biomatters.geneious.publicapi.plugin.*;
 import jebl.util.ProgressListener;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -30,7 +35,43 @@ public class TrimmingAnnotationGenerator extends SequenceAnnotationGenerator {
     }
 
     @Override
+    public Options getOptions(AnnotatedPluginDocument[] documents, SelectionRange selectionRange) throws DocumentOperationException {
+        return new TrimmingAnnotationOptions();
+    }
+
+    @Override
     public List<AnnotationGeneratorResult> generate(AnnotatedPluginDocument[] documents, SelectionRange selectionRange, ProgressListener progressListener, Options options) throws DocumentOperationException {
-        return super.generate(documents, selectionRange, progressListener, options);
+        List<AnnotationGeneratorResult> result = new ArrayList<AnnotationGeneratorResult>();
+        for (AnnotatedPluginDocument annotatedPluginDocument : documents) {
+            PluginDocument pluginDocument = annotatedPluginDocument.getDocumentOrNull();
+
+            if (pluginDocument == null) {
+                throw new DocumentOperationException("Could not load document " + annotatedPluginDocument.getName());
+            }
+
+            if (!(pluginDocument instanceof NucleotideSequenceDocument)) {
+                throw new IllegalStateException("Wrong document type, expected: NucleotideSequenceDocument, actual: " + pluginDocument.getClass().getSimpleName());
+            }
+
+            NucleotideSequenceDocument nucleotideSequenceDocument = (NucleotideSequenceDocument) pluginDocument;
+
+            Trimmage trimmage = ErrorProbabilityTrimmer.getTrimmage(nucleotideSequenceDocument, TrimmableEnds.Both, ((TrimmingAnnotationOptions)options).getErrorProbabilityLimit());
+
+            AnnotationGeneratorResult annotationGeneratorResult = new AnnotationGeneratorResult();
+
+            SequenceAnnotation forwardSequenceAnnotation = new SequenceAnnotation("Trimmed",
+                                                                                  SequenceAnnotation.TYPE_TRIMMED,
+                                                                                  new SequenceAnnotationInterval(1, trimmage.trimAtStart, SequenceAnnotationInterval.Direction.none));
+            SequenceAnnotation reverseSequenceAnnotation = new SequenceAnnotation("Trimmed",
+                                                                                  SequenceAnnotation.TYPE_TRIMMED,
+                                                                                  new SequenceAnnotationInterval(nucleotideSequenceDocument.getSequenceLength() - trimmage.trimAtEnd, nucleotideSequenceDocument.getSequenceLength(), SequenceAnnotationInterval.Direction.none));
+
+            annotationGeneratorResult.addAnnotationToAdd(forwardSequenceAnnotation);
+            annotationGeneratorResult.addAnnotationToAdd(reverseSequenceAnnotation);
+
+            result.add(annotationGeneratorResult);
+        }
+
+        return result;
     }
 }
