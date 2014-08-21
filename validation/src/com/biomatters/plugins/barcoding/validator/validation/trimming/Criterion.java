@@ -63,6 +63,6 @@ class QualityCriterion extends Criterion {
     }
 
     public boolean meets(int index) {
-        return document.getSequenceQuality(index -1) >= BinningOptions.getActiveBinningOptions().getMinimumMediumQualityLevel();
+        return document.getSequenceQuality(index -1) >= 20; // todo: Add option for user to change this
     }
 }

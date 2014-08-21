@@ -49,7 +49,6 @@ public class BarcodeValidatorMockOperation extends DocumentOperation {
         return Collections.singletonList(DocumentUtilities.createAnnotatedPluginDocument(new MockupReport("Report")));
     }
 
-
     public static void main(String[] args) throws DocumentOperationException {
         // A test to see if it is possible to run the Biomatters CAP3 plugin with just the Public API
 
