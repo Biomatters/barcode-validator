@@ -60,7 +60,7 @@ public class TrimmingAnnotationGenerator extends SequenceAnnotationGenerator {
 
             SequenceAnnotation forwardSequenceAnnotation = SequenceAnnotation.createTrimAnnotation(1, trimmage.trimAtStart);
             SequenceAnnotation reverseSequenceAnnotation = SequenceAnnotation.createTrimAnnotation(
-                    nucleotideSequenceDocument.getSequenceLength() - trimmage.trimAtEnd,
+                    nucleotideSequenceDocument.getSequenceLength() - trimmage.trimAtEnd + 1,
                     nucleotideSequenceDocument.getSequenceLength());
 
             annotationGeneratorResult.addAnnotationToAdd(forwardSequenceAnnotation);
