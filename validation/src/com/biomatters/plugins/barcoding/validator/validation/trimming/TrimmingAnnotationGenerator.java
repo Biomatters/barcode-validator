@@ -4,7 +4,6 @@ import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.PluginDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotation;
-import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationInterval;
 import com.biomatters.geneious.publicapi.plugin.*;
 import jebl.util.ProgressListener;
 
@@ -59,12 +58,10 @@ public class TrimmingAnnotationGenerator extends SequenceAnnotationGenerator {
 
             AnnotationGeneratorResult annotationGeneratorResult = new AnnotationGeneratorResult();
 
-            SequenceAnnotation forwardSequenceAnnotation = new SequenceAnnotation("Trimmed",
-                                                                                  SequenceAnnotation.TYPE_TRIMMED,
-                                                                                  new SequenceAnnotationInterval(1, trimmage.trimAtStart, SequenceAnnotationInterval.Direction.none));
-            SequenceAnnotation reverseSequenceAnnotation = new SequenceAnnotation("Trimmed",
-                                                                                  SequenceAnnotation.TYPE_TRIMMED,
-                                                                                  new SequenceAnnotationInterval(nucleotideSequenceDocument.getSequenceLength() - trimmage.trimAtEnd, nucleotideSequenceDocument.getSequenceLength(), SequenceAnnotationInterval.Direction.none));
+            SequenceAnnotation forwardSequenceAnnotation = SequenceAnnotation.createTrimAnnotation(1, trimmage.trimAtStart);
+            SequenceAnnotation reverseSequenceAnnotation = SequenceAnnotation.createTrimAnnotation(
+                    nucleotideSequenceDocument.getSequenceLength() - trimmage.trimAtEnd,
+                    nucleotideSequenceDocument.getSequenceLength());
 
             annotationGeneratorResult.addAnnotationToAdd(forwardSequenceAnnotation);
             annotationGeneratorResult.addAnnotationToAdd(reverseSequenceAnnotation);
