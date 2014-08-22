@@ -46,7 +46,7 @@ class ErrorProbabilityTrimmer {
      * then [sequence.length, 0] will be returned. ie. the entire sequence should be discarded.
      *
      * @param _sequence to trim
-     * @param cutOff bases with error probability less than this will be considered "good". See {@link #confidenceToErrorProbability(int[])}
+     * @param cutOff bases with error probability less than this will be considered "good". See {@link #confidenceToErrorProbability(int)}
      * @return array where array[0] = number of residues trimmed from beginning of sequence and array[1] =
      * number trimmed from end.
      */
