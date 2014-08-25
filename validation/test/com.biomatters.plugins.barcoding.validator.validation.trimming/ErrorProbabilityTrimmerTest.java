@@ -1,16 +1,12 @@
 package com.biomatters.plugins.barcoding.validator.validation.trimming;
 
-import com.biomatters.geneious.common.Maps;
 import com.biomatters.geneious.publicapi.documents.sequence.DefaultNucleotideGraph;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraph;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.utilities.CharSequenceUtilities;
 import junit.framework.TestCase;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Amy Wilson
@@ -26,7 +22,6 @@ public class ErrorProbabilityTrimmerTest extends TestCase {
         assertEquals(expectedTrimmage, trimmage);
     }
 
-
     /**
      * @param sequence or null to generate one the same length as qualities
      */
@@ -41,22 +36,13 @@ public class ErrorProbabilityTrimmerTest extends TestCase {
         return new DefaultNucleotideGraphSequence("test", "", sequence, new Date(), graph);
     }
     public void testTrimByErrorProbability() {
-        Map<List<Integer>, Trimmage> testValues = Maps.sortedMap(Maps.p(Arrays.asList(10, 10, 10, 10, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60,
-                        60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 10, 10, 10, 10), new Trimmage(4, 4)),
-                Maps.p(Arrays.asList(10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 60, 60, 60, 60, 60, 60,
-                        60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60), new Trimmage(10, 0)),
-                Maps.p(Arrays.asList(60, 60, 60, 60, 60, 60,
-                        60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60,
-                        10, 10, 10, 10, 10, 10, 10, 10, 10, 10), new Trimmage(0, 10)),
-                Maps.p(Arrays.asList(60, 60, 60, 60, 60, 60,
-                        60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60,
-                        20, 20, 20, 20, 20, 20, 20, 20, 20, 20), new Trimmage(0, 0)),
-                Maps.p(Arrays.asList(20, 20, 20, 20, 20, 20,
-                        20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
-                        20, 20, 20, 20, 20, 20, 20, 20, 20, 20), new Trimmage(0, 0)),
-                Maps.p(Arrays.asList(10, 10, 10, 10, 10, 10,
-                        10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
-                        10, 10, 10, 10, 10, 10, 10, 10, 10, 10), new Trimmage(30, 0)));
+        Map<List<Integer>, Trimmage> testValues = new LinkedHashMap<List<Integer>, Trimmage>();
+        testValues.put(Arrays.asList(10, 10, 10, 10, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 10, 10, 10, 10), new Trimmage(4, 4));
+        testValues.put(Arrays.asList(10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60), new Trimmage(10, 0));
+        testValues.put(Arrays.asList(60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10), new Trimmage(0, 10));
+        testValues.put(Arrays.asList(60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20), new Trimmage(0, 0));
+        testValues.put(Arrays.asList(20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20), new Trimmage(0, 0));
+        testValues.put(Arrays.asList(10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10), new Trimmage(30, 0));
         for (Map.Entry<List<Integer>, Trimmage> entry: testValues.entrySet()) {
             test(toArray(entry.getKey()), entry.getValue());
         }
