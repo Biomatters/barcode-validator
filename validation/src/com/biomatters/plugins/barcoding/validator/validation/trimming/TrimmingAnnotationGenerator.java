@@ -5,6 +5,7 @@ import com.biomatters.geneious.publicapi.documents.PluginDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotation;
 import com.biomatters.geneious.publicapi.plugin.*;
+import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3Assembler;
 import jebl.util.ProgressListener;
 
 import java.util.ArrayList;
@@ -35,7 +36,7 @@ public class TrimmingAnnotationGenerator extends SequenceAnnotationGenerator {
 
     @Override
     public Options getOptions(AnnotatedPluginDocument[] documents, SelectionRange selectionRange) throws DocumentOperationException {
-        return new TrimmingAnnotationOptions();
+        return new ErrorProbabilityOptions();
     }
 
     @Override
@@ -54,7 +55,7 @@ public class TrimmingAnnotationGenerator extends SequenceAnnotationGenerator {
 
             NucleotideSequenceDocument nucleotideSequenceDocument = (NucleotideSequenceDocument) pluginDocument;
 
-            Trimmage trimmage = ErrorProbabilityTrimmer.getTrimmage(nucleotideSequenceDocument, TrimmableEnds.Both, ((TrimmingAnnotationOptions)options).getErrorProbabilityLimit());
+            Trimmage trimmage = ErrorProbabilityTrimmer.getTrimmage(nucleotideSequenceDocument, TrimmableEnds.Both, ((ErrorProbabilityOptions)options).getErrorProbabilityLimit());
 
             AnnotationGeneratorResult annotationGeneratorResult = new AnnotationGeneratorResult();
 
