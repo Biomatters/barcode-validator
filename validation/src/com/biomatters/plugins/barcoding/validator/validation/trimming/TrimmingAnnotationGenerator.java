@@ -35,7 +35,7 @@ public class TrimmingAnnotationGenerator extends SequenceAnnotationGenerator {
 
     @Override
     public Options getOptions(AnnotatedPluginDocument[] documents, SelectionRange selectionRange) throws DocumentOperationException {
-        return new TrimmingAnnotationOptions();
+        return new ErrorProbabilityOptions();
     }
 
     @Override
@@ -54,7 +54,7 @@ public class TrimmingAnnotationGenerator extends SequenceAnnotationGenerator {
 
             NucleotideSequenceDocument nucleotideSequenceDocument = (NucleotideSequenceDocument) pluginDocument;
 
-            Trimmage trimmage = ErrorProbabilityTrimmer.getTrimmage(nucleotideSequenceDocument, TrimmableEnds.Both, ((TrimmingAnnotationOptions)options).getErrorProbabilityLimit());
+            Trimmage trimmage = ErrorProbabilityTrimmer.getTrimmage(nucleotideSequenceDocument, TrimmableEnds.Both, ((ErrorProbabilityOptions)options).getErrorProbabilityLimit());
 
             AnnotationGeneratorResult annotationGeneratorResult = new AnnotationGeneratorResult();
 
