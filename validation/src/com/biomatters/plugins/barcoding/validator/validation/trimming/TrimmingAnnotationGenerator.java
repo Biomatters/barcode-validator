@@ -73,7 +73,7 @@ public class TrimmingAnnotationGenerator extends SequenceAnnotationGenerator {
             result.add(annotationGeneratorResult);
         }
 
-        Cap3Assembler.createFasta(nucleotideSequenceDocuments);
+        Cap3Assembler.assemble(nucleotideSequenceDocuments);
 
         return result;
     }
