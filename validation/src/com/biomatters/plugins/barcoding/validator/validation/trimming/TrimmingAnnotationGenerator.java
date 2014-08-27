@@ -42,6 +42,7 @@ public class TrimmingAnnotationGenerator extends SequenceAnnotationGenerator {
     @Override
     public List<AnnotationGeneratorResult> generate(AnnotatedPluginDocument[] documents, SelectionRange selectionRange, ProgressListener progressListener, Options options) throws DocumentOperationException {
         List<AnnotationGeneratorResult> result = new ArrayList<AnnotationGeneratorResult>();
+        List<NucleotideSequenceDocument> nucleotideSequenceDocuments = new ArrayList<NucleotideSequenceDocument>();
         for (AnnotatedPluginDocument annotatedPluginDocument : documents) {
             PluginDocument pluginDocument = annotatedPluginDocument.getDocumentOrNull();
 
@@ -54,6 +55,8 @@ public class TrimmingAnnotationGenerator extends SequenceAnnotationGenerator {
             }
 
             NucleotideSequenceDocument nucleotideSequenceDocument = (NucleotideSequenceDocument) pluginDocument;
+
+            nucleotideSequenceDocuments.add(nucleotideSequenceDocument);
 
             Trimmage trimmage = ErrorProbabilityTrimmer.getTrimmage(nucleotideSequenceDocument, TrimmableEnds.Both, ((ErrorProbabilityOptions)options).getErrorProbabilityLimit());
 
@@ -69,6 +72,8 @@ public class TrimmingAnnotationGenerator extends SequenceAnnotationGenerator {
 
             result.add(annotationGeneratorResult);
         }
+
+        Cap3Assembler.createFasta(nucleotideSequenceDocuments);
 
         return result;
     }

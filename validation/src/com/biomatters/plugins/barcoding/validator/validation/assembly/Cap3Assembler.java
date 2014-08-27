@@ -21,7 +21,15 @@ public class Cap3Assembler {
     private static final String MIN_OVERLAP_LENGTH_OPTION_NAME   = "-o";
     private static final String MIN_OVERLAP_IDENTITY_OPTION_NAME = "-p";
 
-    private File createFasta(List<NucleotideSequenceDocument> sequences) throws DocumentOperationException {
+    public static void assemble(List<NucleotideSequenceDocument> sequences) throws DocumentOperationException {
+        createFasta(sequences);
+    }
+
+    private static void executeCap3Assembler() {
+
+    }
+
+    private static File createFasta(List<NucleotideSequenceDocument> sequences) throws DocumentOperationException {
         StringBuilder fastaOutputString = new StringBuilder();
         for (NucleotideSequenceDocument sequence : sequences) {
             StringBuilder sequenceProcessor = new StringBuilder(sequence.getSequenceString());
