@@ -1,16 +1,13 @@
 package com.biomatters.plugins.barcoding.validator.validation.assembly;
 
-import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
-import com.biomatters.geneious.publicapi.documents.PluginDocument;
+import com.biomatters.geneious.publicapi.documents.*;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotation;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationInterval;
-import com.biomatters.geneious.publicapi.plugin.DocumentFileImporter;
-import com.biomatters.geneious.publicapi.plugin.DocumentImportException;
-import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
-import com.biomatters.geneious.publicapi.plugin.PluginUtilities;
+import com.biomatters.geneious.publicapi.plugin.*;
 import com.biomatters.geneious.publicapi.utilities.Execution;
 import com.biomatters.geneious.publicapi.utilities.FileUtilities;
+import com.biomatters.plugins.fileimportexport.AceImporter.AceDocumentImporter;
 import jebl.util.ProgressListener;
 
 import java.io.BufferedWriter;
@@ -68,9 +65,7 @@ public class Cap3Assembler {
     private static List<PluginDocument> importContigs(Cap3AssemblyResult result) throws DocumentOperationException {
         final List<PluginDocument> contigs = new ArrayList<PluginDocument>();
 
-        File contigFile = new File(result.RESULT_FILEPATH);
-
-        DocumentFileImporter importer = PluginUtilities.getDocumentFileImporter("ace");
+        File contigFile = new File(result.RESULT_FILE_PATH);
 
         DocumentFileImporter.ImportCallback importCallback = new DocumentFileImporter.ImportCallback() {
             public AnnotatedPluginDocument addDocument(PluginDocument document) {
@@ -85,7 +80,7 @@ public class Cap3Assembler {
 
         /* Imports contigs. */
         try {
-            importer.importDocuments(contigFile, importCallback, ProgressListener.EMPTY);
+            new AceDocumentImporter().importDocuments(contigFile, importCallback, ProgressListener.EMPTY);
         } catch (IOException e) {
             throw new DocumentOperationException(e.getMessage(), e);
         } catch (DocumentImportException e) {
@@ -167,7 +162,7 @@ public class Cap3Assembler {
 
             /* Replaces chars for deletion with {@value #CHAR_FOR_DELETION_PLACEHOLDER}. */
             for (SequenceAnnotation annotation : document.getSequenceAnnotations()) {
-                if (annotation.getName().equals("Trimmed")) {
+                if (annotation.getType().equals(SequenceAnnotation.TYPE_TRIMMED)) {
                     SequenceAnnotationInterval interval = annotation.getInterval();
                     for (int i = interval.getFrom() - 1; i < interval.getTo(); i++) {
                         sequence.setCharAt(i, CHAR_FOR_DELETION_PLACEHOLDER);
@@ -184,8 +179,8 @@ public class Cap3Assembler {
             }
 
             /* Generates fasta file output. */
-            fastaOutput.append(">" + document.getName() + " " + document.getDescription() + "\n")
-                       .append(finalSequence.toString().toUpperCase() + "\n");
+            fastaOutput.append(">").append(document.getName()).append(" ").append(document.getDescription()).append("\n")
+                       .append(finalSequence.toString().toUpperCase()).append("\n");
         }
 
         fastaOutput.deleteCharAt(fastaOutput.length() - 1); // Removes last new line character.
@@ -240,12 +235,12 @@ public class Cap3Assembler {
      * {@value #CAP3_ASSEMBLER_UNUSED_READS_FILE_EXTENSION} CAP3 assembly output files.
      */
     private static class Cap3AssemblyResult {
-        private String RESULT_FILEPATH;
-        private String UNUSED_READS_FILEPATH;
+        private String RESULT_FILE_PATH;
+        private String UNUSED_READS_FILE_PATH;
 
         private Cap3AssemblyResult(String resultFilePath, String unusedReadsFilePath) {
-            RESULT_FILEPATH = resultFilePath;
-            UNUSED_READS_FILEPATH = unusedReadsFilePath;
+            RESULT_FILE_PATH = resultFilePath;
+            UNUSED_READS_FILE_PATH = unusedReadsFilePath;
         }
     }
 }
