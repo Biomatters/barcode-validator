@@ -5,7 +5,6 @@ import com.biomatters.geneious.publicapi.documents.PluginDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotation;
 import com.biomatters.geneious.publicapi.plugin.*;
-import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3Assembler;
 import jebl.util.ProgressListener;
 
 import java.util.ArrayList;
@@ -35,34 +34,44 @@ public class TrimmingAnnotationGenerator extends SequenceAnnotationGenerator {
     }
 
     @Override
-    public Options getOptions(AnnotatedPluginDocument[] documents, SelectionRange selectionRange) throws DocumentOperationException {
+    public Options getOptions(AnnotatedPluginDocument[] documents, SelectionRange selectionRange)
+            throws DocumentOperationException {
         return new ErrorProbabilityOptions();
     }
 
     @Override
-    public List<AnnotationGeneratorResult> generate(AnnotatedPluginDocument[] documents, SelectionRange selectionRange, ProgressListener progressListener, Options options) throws DocumentOperationException {
+    public List<AnnotationGeneratorResult> generate(AnnotatedPluginDocument[] documents,
+                                                    SelectionRange selectionRange,
+                                                    ProgressListener progressListener,
+                                                    Options options) throws DocumentOperationException {
         List<AnnotationGeneratorResult> result = new ArrayList<AnnotationGeneratorResult>();
-        List<NucleotideSequenceDocument> nucleotideSequenceDocuments = new ArrayList<NucleotideSequenceDocument>();
+
         for (AnnotatedPluginDocument annotatedPluginDocument : documents) {
             PluginDocument pluginDocument = annotatedPluginDocument.getDocumentOrNull();
 
             if (pluginDocument == null) {
-                throw new DocumentOperationException("Could not load document " + annotatedPluginDocument.getName());
+                throw new DocumentOperationException("Could not load document " +
+                                                     annotatedPluginDocument.getName() + ".");
             }
-
             if (!(pluginDocument instanceof NucleotideSequenceDocument)) {
-                throw new IllegalStateException("Wrong document type, expected: NucleotideSequenceDocument, actual: " + pluginDocument.getClass().getSimpleName());
+                throw new IllegalStateException("Wrong document type, expected: NucleotideSequenceDocument, " +
+                                                "actual: " + pluginDocument.getClass().getSimpleName() + ".");
             }
 
             NucleotideSequenceDocument nucleotideSequenceDocument = (NucleotideSequenceDocument) pluginDocument;
 
-            nucleotideSequenceDocuments.add(nucleotideSequenceDocument);
-
-            Trimmage trimmage = ErrorProbabilityTrimmer.getTrimmage(nucleotideSequenceDocument, TrimmableEnds.Both, ((ErrorProbabilityOptions)options).getErrorProbabilityLimit());
+            /* Creates annotations. */
+            Trimmage trimmage = ErrorProbabilityTrimmer.getTrimmage(
+                    nucleotideSequenceDocument,
+                    TrimmableEnds.Both,
+                    ((ErrorProbabilityOptions)options).getErrorProbabilityLimit()
+            );
 
             AnnotationGeneratorResult annotationGeneratorResult = new AnnotationGeneratorResult();
 
-            SequenceAnnotation forwardSequenceAnnotation = SequenceAnnotation.createTrimAnnotation(1, trimmage.trimAtStart);
+            SequenceAnnotation forwardSequenceAnnotation = SequenceAnnotation.createTrimAnnotation(
+                    1,
+                    trimmage.trimAtStart);
             SequenceAnnotation reverseSequenceAnnotation = SequenceAnnotation.createTrimAnnotation(
                     nucleotideSequenceDocument.getSequenceLength() - trimmage.trimAtEnd + 1,
                     nucleotideSequenceDocument.getSequenceLength());
@@ -72,8 +81,6 @@ public class TrimmingAnnotationGenerator extends SequenceAnnotationGenerator {
 
             result.add(annotationGeneratorResult);
         }
-
-        Cap3Assembler.assemble(nucleotideSequenceDocuments);
 
         return result;
     }
