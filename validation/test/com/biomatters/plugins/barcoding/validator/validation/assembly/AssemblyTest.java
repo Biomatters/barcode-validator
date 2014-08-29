@@ -4,9 +4,7 @@ import com.biomatters.geneious.publicapi.documents.DocumentField;
 import com.biomatters.geneious.publicapi.documents.PluginDocument;
 import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.documents.XMLSerializationException;
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
-import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotation;
-import com.biomatters.geneious.publicapi.documents.sequence.SequenceCharSequence;
+import com.biomatters.geneious.publicapi.documents.sequence.*;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 
 import com.biomatters.geneious.publicapi.plugin.TestGeneious;
@@ -25,12 +23,13 @@ import java.util.List;
  */
 public class AssemblyTest extends Assert {
     @Test
-    public void testContigAssembled() {
+    public void testContigAssembled() throws DocumentOperationException {
         TestGeneious.initialize();
+        final String theSequence = "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG";
         NucleotideSequenceDocument document = new NucleotideSequenceDocument() {
             @Override
             public String getSequenceString() {
-                return "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG";
+                return theSequence;
             }
 
             @Override
@@ -103,15 +102,15 @@ public class AssemblyTest extends Assert {
         documents.add(document);
         documents.add(document);
 
-        List<PluginDocument> result = null;
-
-        try {
-            result = Cap3Assembler.assemble(documents, "40", "90");
-        } catch (DocumentOperationException e) {
-            e.printStackTrace();
+        List<PluginDocument> result = Cap3Assembler.assemble(documents, "40", "90");
+        // Should return one contig assembly containing both of the input sequences
+        assertEquals(1, result.size());
+        assertTrue(SequenceAlignmentDocument.class.isAssignableFrom(result.get(0).getClass()));
+        List<SequenceDocument> sequences = ((SequenceAlignmentDocument) result.get(0)).getSequences();
+        assertEquals(2, sequences.size());
+        for (SequenceDocument sequence : sequences) {
+            String withNoGaps = sequence.getSequenceString().replace("-", "");
+            assertEquals(theSequence, withNoGaps);
         }
-
-        System.out.println(result.size());
-        assertTrue(!result.isEmpty());
     }
 }

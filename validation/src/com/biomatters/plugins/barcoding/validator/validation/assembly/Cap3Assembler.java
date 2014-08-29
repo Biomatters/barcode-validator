@@ -7,7 +7,6 @@ import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationIn
 import com.biomatters.geneious.publicapi.plugin.*;
 import com.biomatters.geneious.publicapi.utilities.Execution;
 import com.biomatters.geneious.publicapi.utilities.FileUtilities;
-import com.biomatters.plugins.fileimportexport.AceImporter.AceDocumentImporter;
 import jebl.util.ProgressListener;
 
 import java.io.BufferedWriter;
@@ -78,9 +77,20 @@ public class Cap3Assembler {
             }
         };
 
+        /**
+         * For now we rely on the AceDocumentImporter being included in the runtime
+         */
+        DocumentFileImporter importer = PluginUtilities.getDocumentFileImporter("ace");
+        if(importer == null) {
+            throw new DocumentOperationException("Unable to locate the Ace importer.  Please make sure you have the " +
+                    "plugin enabled.\n\n" +
+                    "1. Go to the Tools menu -> Plugins...\n" +
+                    "2. Click Customize Feature Set.\n" +
+                    "3. Check Ace importer is enabled.");
+        }
         /* Imports contigs. */
         try {
-            new AceDocumentImporter().importDocuments(contigFile, importCallback, ProgressListener.EMPTY);
+            importer.importDocuments(contigFile, importCallback, ProgressListener.EMPTY);
         } catch (IOException e) {
             throw new DocumentOperationException(e.getMessage(), e);
         } catch (DocumentImportException e) {
@@ -109,24 +119,7 @@ public class Cap3Assembler {
                     MIN_OVERLAP_LENGTH_OPTION_NAME, minOverlapLength,
                     MIN_OVERLAP_IDENTITY_OPTION_NAME, minOverlapIdentity
                 },
-                new ProgressListener() {
-                    @Override
-                    protected void _setProgress(double v) {
-                    }
-
-                    @Override
-                    protected void _setIndeterminateProgress() {
-                    }
-
-                    @Override
-                    protected void _setMessage(String s) {
-                    }
-
-                    @Override
-                    public boolean isCanceled() {
-                        return false;
-                    }
-                },
+                ProgressListener.EMPTY,
                 new Cap3OutputListener(),
                 (String) null,
                 false);
