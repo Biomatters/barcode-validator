@@ -22,7 +22,8 @@ public class MockupReport extends AbstractPluginDocument {
     }
 
     private List<Set> passed;
-    private Map<Set, String> failed;  // The real thing will actually need a set of validation results.  Since it is a mockup we'll just need to show a single failure reason.
+    // Map from set to comma separated failure reasons
+    private Map<Set, String> failed;  // The real thing will actually need to provide a lot more info here.  Since it is a mockup we'll just use a simple String
     public MockupReport(String name, List<Set> passed, Map<Set, String> failed) {
         setFieldValue(DocumentField.NAME_FIELD, name);
         this.passed = passed;
@@ -86,7 +87,12 @@ public class MockupReport extends AbstractPluginDocument {
         StringBuilder builder = new StringBuilder("<h2>Results</h3>" +
                 "<table border=\"1\">" +
                 "<tr><td></td><td colspan=\"1\">Trace Validation</td><td colspan=\"3\">Barcode Validation</td></tr>" +
-                "<tr><td>Set Name</td><td>Quality</td><td>Matches</td><td>Quality</td><td>PCI</td></tr>");
+                "<tr>" +
+                "<td>Set Name</td><td>Quality " + getSelectPassFailHtml(5, 2) + "<br>Show/List Options?</td>" +
+                "<td>Matches FASTA " + getSelectPassFailHtml(3, 4) + "<br>Show/List? Options</td>" +
+                "<td>Quality " + getSelectPassFailHtml(5, 2) + "<br>Show/List? Options</td>" +
+                "<td>PCI " + getSelectPassFailHtml(7, 0) + "<br>Show/List? Options</td>" +
+                "</tr>");
         int count = 1;
         for (Set set : passed) {
             builder.append("<tr><td>").append(getDocumentSelectionLink("Set " + count++, set)).append("</td>");
@@ -97,14 +103,21 @@ public class MockupReport extends AbstractPluginDocument {
         }
         for (Map.Entry<Set, String> entry : failed.entrySet()) {
             builder.append("<tr><td>").append(getDocumentSelectionLink("Set " + count++, entry.getKey())).append("</td>");
-            builder.append("<td>").append(tickHtml).append("</td>");
-            builder.append("<td>").append(crossHtml).append(entry.getValue()).append("</td>");
-            for(int i=0; i<2; i++) {
-                builder.append("<td>").append(tickHtml).append("</td>");
+            String[] reasons = entry.getValue().split(",");
+            for (String reason : reasons) {
+                if(reason == null || reason.trim().isEmpty()) {
+                    builder.append("<td>").append(tickHtml).append("</td>");
+                } else {
+                    builder.append("<td title=\"More Details\">").append(crossHtml).append(reason).append("</td>");
+                }
             }
             builder.append("</tr>");
         }
         return builder.toString();
+    }
+
+    private String getSelectPassFailHtml(int numPassed, int numFailed) {
+        return " (<a href=\"\">" + numPassed + " Passed</a> / <a href=\"\">" + numFailed + " Failed</a>)";
     }
 
     private static String getDocumentSelectionLink(String name, Set set) {
@@ -117,10 +130,12 @@ public class MockupReport extends AbstractPluginDocument {
                 "Trimming: Max low quality bases=0, Min overlap identity=90%<br>" +
                 "Assembly: Error Probability Limit=0.05<br>" +
                 "<br><br>" +
-                "Ran validations on <strong>" + (passCount + failedCount) + "</strong> sets of data:" +
+                "Ran validations on <strong>" + (passCount + failedCount) + "</strong> sets of barcode data:" +
                 "<ul>" +
-                "<li><font color=\"green\"><strong>" + passCount + "</strong></font> Sets passed all validations.</li>" +
-                "<li><font color=\"red\"><strong>" + failedCount + "</strong></font> Sets failed at least one validation. See below.</li>" +
+                "<li><font color=\"green\"><strong>" + passCount + "</strong></font> Sets passed all validations. " +
+                    "<a href=\"\">Select all passed</a></li>" +
+                "<li><font color=\"red\"><strong>" + failedCount + "</strong></font> Sets failed at least one validation. See below." +
+                " <a href=\"\">Slect all failed</a></li>" +
                 "</ul>" +
                 "<br><br>";
     }

@@ -49,29 +49,33 @@ public class BarcodeValidatorMockOperation extends DocumentOperation {
     @Override
     public List<AnnotatedPluginDocument> performOperation(AnnotatedPluginDocument[] annotatedDocuments, ProgressListener progressListener, Options options) throws DocumentOperationException {
         progressListener.setMessage("Running through validation steps...");
-        CompositeProgressListener composite = new CompositeProgressListener(progressListener, 6);
+        CompositeProgressListener composite = new CompositeProgressListener(progressListener, 8);
         List<Set> passed = new ArrayList<Set>();
         composite.beginSubtask();
-        passed.add(getExampleSet());
+        passed.add(getExampleSet("good.geneious"));
         composite.beginSubtask();
-        passed.add(getExampleSet());
+        passed.add(getExampleSet("good.geneious"));
         composite.beginSubtask();
-        passed.add(getExampleSet());
+        passed.add(getExampleSet("good.geneious"));
 
         Map<Set, String> failed = new HashMap<Set, String>();
         composite.beginSubtask();
-        failed.put(getExampleSet(), "Bad quality");
+        failed.put(getExampleSet("WrongBarcode.geneious"), " ,Assembled traces do not match barcode, , ");
         composite.beginSubtask();
-        failed.put(getExampleSet(), "Bad quality");
+        failed.put(getExampleSet("BadQuality.geneious"), "Traces don't meet quality criteria,Couldn't assemble,Couldn't assemble, ");
+        composite.beginSubtask();
+        failed.put(getExampleSet("WrongBarcode.geneious"), " ,Assembled traces do not match barcode, , ");
+        composite.beginSubtask();
+        failed.put(getExampleSet("BadQuality.geneious"), "Traces don't meet quality criteria,Couldn't assemble,Couldn't assemble, ");
 
         composite.beginSubtask("Creating mockup reports...");
         ThreadUtilities.sleep(500);
         return Collections.singletonList(DocumentUtilities.createAnnotatedPluginDocument(new MockupReport("Report", passed, failed)));
     }
 
-    public Set getExampleSet() throws DocumentOperationException {
+    public Set getExampleSet(String name) throws DocumentOperationException {
         try {
-            List<AnnotatedPluginDocument> docs = PluginUtilities.importDocuments(FileUtilities.getResourceForClass(BarcodeValidatorMockOperation.class, "exampleSet.geneious"), ProgressListener.EMPTY);
+            List<AnnotatedPluginDocument> docs = PluginUtilities.importDocuments(FileUtilities.getResourceForClass(BarcodeValidatorMockOperation.class, name), ProgressListener.EMPTY);
             List<AnnotatedPluginDocument> added = DocumentUtilities.addAndReturnGeneratedDocuments(docs, false, Collections.<AnnotatedPluginDocument>emptyList());
             URN barcode = null;
             List<URN> traces = new ArrayList<URN>();
