@@ -96,10 +96,12 @@
         <delete dir="${validation.build}"/>
     </target>
 
-    <target name="compile-plugin" depends="compile-validation,retrieve-plugin-dependencies">
+    <target name="compile-plugin" depends="retrieve-plugin-dependencies,compile-validation">
         <javac target="1.6" source="1.6" destdir="${classes}" debug="true">
-            <classpath refid="classpath"/>
-            <classpath refid="${validation.classes}"/>
+            <classpath>
+                <path refid="classpath"/>
+                <pathelement location="${validation.classes}"/>
+            </classpath>
             <src path="${src}"/>
         </javac>
     </target>
@@ -120,7 +122,7 @@
         <ivy:retrieve settingsref="biocode.ivy.config"/>
     </target>
 
-    <target name="compile-tests" depends="compile-plugin">
+    <target name="compile-tests" depends="compile-plugin,compile-validation">
         <javac target="1.6" source="1.6" destdir="${test.classes}" debug="true">
             <classpath>
                 <path refid="classpath"/>
