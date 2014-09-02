@@ -10,9 +10,7 @@ import com.biomatters.geneious.publicapi.documents.URN;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -32,37 +30,19 @@ public class DocumentOpeningHyperlinkListener extends DefaultHyperlinkListener {
         this.owner = owner;
     }
 
-    public static interface HyperlinkHandler {
-        public void hyperlinkClicked(String hyperlink);
-    }
-
-    private final Map<String, HyperlinkHandler> hyperlinkHandlers = new HashMap<String, HyperlinkHandler>();
-
-    /**
-     * Adds an alternative handler for any URL that starts with this protocol followed by a colon
-     * @param protocol
-     * @param hyperlinkHandler
-     */
-    public void setProtocolHandler(String protocol, HyperlinkHandler hyperlinkHandler) {
-        hyperlinkHandlers.put(protocol, hyperlinkHandler);
-    }
 
     @Override
     public void hyperlinkUpdate(final HyperlinkEvent ev) {
         if (ev.getEventType() == HyperlinkEvent.EventType.ACTIVATED && !(ev instanceof HTMLFrameHyperlinkEvent)) {
             final String urlString = ev.getDescription();
-            if (!hasProtocolHandler(urlString,false)) {
-                if (!urlString.toLowerCase().startsWith("urn:")) { // So we can support a mixture of urn hyperlinks and standard hyperlinks
-                    super.hyperlinkUpdate(ev);
-                    return;
-                }
+            if (!urlString.toLowerCase().startsWith("urn:")) { // So we can support a mixture of urn hyperlinks and standard hyperlinks
+                super.hyperlinkUpdate(ev);
+                return;
             }
             new Thread("DocumentOpeningHyperlinkListener for "+owner) {
                 public void run() {
                     if (hyperlinkClickBeingProcessed.getAndSet(true)) return;
                     try {
-                        // we use ev.getDescription() because ev.getURL() sometimes returns null (happens on Windows)
-                        if (hasProtocolHandler(urlString,true)) return;
                         boolean someDocsAtDifferentRevisions = false;
                         List<URN> urns = new ArrayList<URN>();
                         for (String urnAndRevisionString : urlString.split(",")) {
@@ -109,19 +89,5 @@ public class DocumentOpeningHyperlinkListener extends DefaultHyperlinkListener {
         else {
             super.hyperlinkUpdate(ev);
         }
-    }
-
-    private boolean hasProtocolHandler(String urlString, boolean invokeIt) {
-        int colonIndex = urlString.indexOf(':');
-        if (colonIndex>=0) {
-            String protocol = urlString.substring(0,colonIndex);
-            final HyperlinkHandler hyperlinkHandler = hyperlinkHandlers.get(protocol);
-            if (hyperlinkHandler!=null) {
-                if (invokeIt)
-                    hyperlinkHandler.hyperlinkClicked(urlString.substring(colonIndex+1));
-                return true;
-            }
-        }
-        return false;
     }
 }
