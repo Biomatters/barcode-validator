@@ -140,6 +140,7 @@
             <classpath>
                 <pathelement location="${classes}"/>
                 <pathelement location="${test.classes}"/>
+                <pathelement location="${validation.classes}"/>
                 <path refid="classpath"/>
             </classpath>
             <env key="DISPLAY" value=":0.0"/>
