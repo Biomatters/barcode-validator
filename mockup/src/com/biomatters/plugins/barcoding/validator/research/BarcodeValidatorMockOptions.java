@@ -63,8 +63,7 @@ public class BarcodeValidatorMockOptions extends Options {
         traceValidationOptions.addChildOptions("quality", "Quality", null, new TraceQualityOptions());
         traceValidationOptions.addChildOptionsPageChooser("chooser", "Validation Steps:", Collections.<String>emptyList(), PageChooserType.BUTTONS, true);
 
-        cap3Options = new Cap3AssemblerOptions(null);
-        addCollapsibleChildOptions("assembly", "Assembly", "", cap3Options, false, true);
+        addCollapsibleChildOptions("assembly", "Assembly", "", new FakeCap3Options(), false, true);
 
         DocumentOperation op = PluginUtilities.getDocumentOperation("Generate_Consensus");
         Options consensusOptions;
@@ -111,9 +110,5 @@ public class BarcodeValidatorMockOptions extends Options {
                     }
                 });
         options.endAlignHorizontally();
-    }
-
-    Cap3AssemblerOptions getCap3Options() {
-        return  cap3Options;
     }
 }

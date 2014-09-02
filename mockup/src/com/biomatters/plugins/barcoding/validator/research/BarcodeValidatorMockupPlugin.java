@@ -1,7 +1,9 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.plugin.DocumentOperation;
+import com.biomatters.geneious.publicapi.plugin.DocumentViewerFactory;
 import com.biomatters.geneious.publicapi.plugin.GeneiousPlugin;
+import com.biomatters.plugins.barcoding.validator.research.report.ReportViewerFactory;
 
 /**
  * @author Matthew Cheung
@@ -46,5 +48,12 @@ public class BarcodeValidatorMockupPlugin extends GeneiousPlugin {
     @Override
     public DocumentOperation[] getDocumentOperations() {
         return new DocumentOperation[]{new BarcodeValidatorMockOperation()};
+    }
+
+    @Override
+    public DocumentViewerFactory[] getDocumentViewerFactories() {
+        return new DocumentViewerFactory[] {
+                new ReportViewerFactory()
+        };
     }
 }
