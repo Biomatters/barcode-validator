@@ -25,6 +25,7 @@ public class AssemblyTest extends Assert {
     @Test
     public void testContigAssembled() throws DocumentOperationException {
         TestGeneious.initialize();
+        TestGeneious.initializeAllPlugins();
         final String theSequence = "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG";
         NucleotideSequenceDocument document = new NucleotideSequenceDocument() {
             @Override
@@ -103,13 +104,13 @@ public class AssemblyTest extends Assert {
         documents.add(document);
 
         List<PluginDocument> result = Cap3Assembler.assemble(documents, "40", "90");
-        // Should return one contig assembly containing both of the input sequences
-        assertEquals(1, result.size());
+        // Should return one contig assembly containing both of the input sequences, and a DefaultSequenceListDocument.
+        assertEquals(2, result.size());
         assertTrue(SequenceAlignmentDocument.class.isAssignableFrom(result.get(0).getClass()));
         List<SequenceDocument> sequences = ((SequenceAlignmentDocument) result.get(0)).getSequences();
-        assertEquals(2, sequences.size());
-        for (SequenceDocument sequence : sequences) {
-            String withNoGaps = sequence.getSequenceString().replace("-", "");
+        assertEquals(3, sequences.size());
+        for (int i = 1; i < sequences.size(); i++) {
+            String withNoGaps = sequences.get(i).getSequenceString().replace("-", "");
             assertEquals(theSequence, withNoGaps);
         }
     }
