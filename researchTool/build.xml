@@ -16,15 +16,20 @@
     <property name="plugin-name" value="com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorPlugin"/>
     <property name="short-plugin-name" value="BarcodeValidator_${plugin.version}"/>
 
+    <property name="validation-name" value="com.biomatters.plugins.barcoding.validator.research.validation"/>
+
     <!-- folders -->
     <property name="src" location="src"/>
-    <property name="build" location="build"/>
     <property name="classes" location="classes"/>
+    <property name="build" location="build"/>
     <property name="lib" location="lib"/>
     <property name="report" location="report"/>
     <property name="test" location="test"/>
     <property name="test.classes" location="test.classes"/>
     <property name="GeneiousFiles" location="GeneiousFiles"/>
+    <property name="validation.src" location="../validation/src"/>
+    <property name="validation.classes" location="validation.classes"/>
+    <property name="validation.build" location="validation.build"/>
 
     <!-- setup reference to the Ivy Ant tasks library -->
     <path id="ivy.lib.path">
@@ -40,7 +45,7 @@
         <fileset dir="${lib}"/>
     </path>
 
-    <target name="create-plugin" depends="build-plugin">
+    <target name="create-plugin" depends="clean,prepare,build-plugin">
         <zip zipfile="${build}/${short-plugin-name}.gplugin">
             <fileset dir="${build}">
                 <include name="${plugin-name}/**/*"/>
@@ -48,7 +53,7 @@
         </zip>
     </target>
 
-    <target name="build-plugin" depends="clean,compile-plugin">
+    <target name="build-plugin" depends="compile-plugin">
         <jar jarfile="${build}/${plugin-name}.jar">
             <fileset dir="${classes}"/>
         </jar>
@@ -61,6 +66,25 @@
         </copy>
     </target>
 
+    <target name="build-validation" depends="compile-validation">
+        <jar jarfile="${validation.build}/${validation-name}.jar">
+            <fileset dir="${validation.classes}"/>
+        </jar>
+        <mkdir dir="${validation.build}/${validation-name}"/>
+        <copy todir="${validation.build}/${validation-name}">
+            <fileset dir="${validation.build}">
+                <include name="${validation-name}.jar"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="compile-validation">
+        <javac target="1.6" source="1.6" destdir="${validation.classes}" debug="true">
+            <classpath refid="classpath"/>
+            <src path="${validation.src}"/>
+        </javac>
+    </target>
+
     <target name="clean">
         <delete dir="${build}"/>
         <delete dir="${classes}"/>
@@ -68,11 +92,14 @@
         <delete dir="${report}"/>
         <delete dir="${test.classes}"/>
         <delete dir="${GeneiousFiles}"/>
+        <delete dir="${validation.classes}"/>
+        <delete dir="${validation.build}"/>
     </target>
 
-    <target name="compile-plugin" depends="prepare,retrieve-plugin-dependencies">
+    <target name="compile-plugin" depends="compile-validation,retrieve-plugin-dependencies">
         <javac target="1.6" source="1.6" destdir="${classes}" debug="true">
             <classpath refid="classpath"/>
+            <classpath refid="${validation.classes}"/>
             <src path="${src}"/>
         </javac>
     </target>
@@ -85,6 +112,8 @@
         <mkdir dir="${report}"/>
         <mkdir dir="${test.classes}"/>
         <mkdir dir="${GeneiousFiles}"/>
+        <mkdir dir="${validation.classes}"/>
+        <mkdir dir="${validation.build}"/>
     </target>
 
     <target name="retrieve-plugin-dependencies" description="Retrieve dependencies with ivy">
@@ -126,5 +155,4 @@
             <sysproperty key="user.dir" value="${build}"/>
         </junit>
     </target>
-
 </project>
