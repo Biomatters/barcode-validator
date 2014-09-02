@@ -58,7 +58,7 @@ public class BarcodeValidatorMockOperation extends DocumentOperation {
         composite.beginSubtask();
         passed.add(getExampleSet("good.geneious"));
 
-        Map<Set, String> failed = new HashMap<Set, String>();
+        Map<Set, String> failed = new LinkedHashMap<Set, String>();
         composite.beginSubtask();
         failed.put(getExampleSet("WrongBarcode.geneious"), " ,Assembled traces do not match barcode, , ");
         composite.beginSubtask();

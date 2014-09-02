@@ -6,10 +6,7 @@ import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.biomatters.plugins.barcoding.validator.research.data.Set;
 import org.jdom.Element;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -61,7 +58,7 @@ public class MockupReport extends AbstractPluginDocument {
             passed.add(new Set(element));
         }
 
-        failed = new HashMap<Set, String>();
+        failed = new LinkedHashMap<Set, String>();
         Element failedSets = root.getChild(FAILED);
         for (Element element : failedSets.getChildren()) {
             failed.put(new Set(element), element.getAttributeValue(REASON));
@@ -108,6 +105,9 @@ public class MockupReport extends AbstractPluginDocument {
                 if(reason == null || reason.trim().isEmpty()) {
                     builder.append("<td>").append(tickHtml).append("</td>");
                 } else {
+                    if(reason.contains("do not match barcode")) {
+                        reason = "Traces do not match FASTA <a href=\"urn:local:matthew:1w1-3nouyxu\">View Alignment</a>";
+                    }
                     builder.append("<td title=\"More Details\">").append(crossHtml).append(reason).append("</td>");
                 }
             }
@@ -133,9 +133,9 @@ public class MockupReport extends AbstractPluginDocument {
                 "Ran validations on <strong>" + (passCount + failedCount) + "</strong> sets of barcode data:" +
                 "<ul>" +
                 "<li><font color=\"green\"><strong>" + passCount + "</strong></font> Sets passed all validations. " +
-                    "<a href=\"\">Select all passed</a></li>" +
+                    "<a href=\"\">Select all passed</a>.</li>" +
                 "<li><font color=\"red\"><strong>" + failedCount + "</strong></font> Sets failed at least one validation. See below." +
-                " <a href=\"\">Slect all failed</a></li>" +
+                " <a href=\"\">Select all failed</a>.</li>" +
                 "</ul>" +
                 "<br><br>";
     }
