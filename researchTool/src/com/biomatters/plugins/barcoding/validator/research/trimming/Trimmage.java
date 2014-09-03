@@ -1,4 +1,4 @@
-package com.biomatters.plugins.barcoding.validator.validation.trimming;
+package com.biomatters.plugins.barcoding.validator.research.trimming;
 
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationInterval;
 

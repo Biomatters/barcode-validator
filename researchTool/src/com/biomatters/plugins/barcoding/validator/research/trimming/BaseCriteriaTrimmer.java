@@ -1,4 +1,4 @@
-package com.biomatters.plugins.barcoding.validator.validation.trimming;
+package com.biomatters.plugins.barcoding.validator.research.trimming;
 
 import java.util.List;
 
@@ -7,7 +7,6 @@ import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationIn
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceCharSequence;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Trims by checking whether bases meet particular criteria

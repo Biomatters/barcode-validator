@@ -39,6 +39,11 @@ public class BarcodeValidatorOperation extends DocumentOperation {
     }
 
     @Override
+    public Options getOptions(AnnotatedPluginDocument... documents) throws DocumentOperationException {
+        return new BarcodeValidatorOptions();
+    }
+
+    @Override
     public List<AnnotatedPluginDocument> performOperation(AnnotatedPluginDocument[] annotatedDocuments,
                                                           ProgressListener progressListener,
                                                           Options options) throws DocumentOperationException {

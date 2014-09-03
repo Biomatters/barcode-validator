@@ -1,4 +1,4 @@
-package com.biomatters.plugins.barcoding.validator.validation.trimming;
+package com.biomatters.plugins.barcoding.validator.research.trimming;
 
 /**
  * @author Amy Wilson

@@ -3,7 +3,7 @@ package com.biomatters.plugins.barcoding.validator.research;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperation;
 import com.biomatters.geneious.publicapi.plugin.GeneiousPlugin;
 import com.biomatters.geneious.publicapi.plugin.SequenceAnnotationGenerator;
-import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingAnnotationGenerator;
+import com.biomatters.plugins.barcoding.validator.research.trimming.TrimmingAnnotationGenerator;
 
 /**
  * @author Gen Li
