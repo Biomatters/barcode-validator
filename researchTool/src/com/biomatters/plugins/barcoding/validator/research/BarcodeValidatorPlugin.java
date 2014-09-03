@@ -2,8 +2,6 @@ package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.plugin.DocumentOperation;
 import com.biomatters.geneious.publicapi.plugin.GeneiousPlugin;
-import com.biomatters.geneious.publicapi.plugin.SequenceAnnotationGenerator;
-import com.biomatters.plugins.barcoding.validator.research.trimming.TrimmingAnnotationGenerator;
 
 /**
  * @author Gen Li
@@ -49,13 +47,6 @@ public class BarcodeValidatorPlugin extends GeneiousPlugin {
 
     @Override
     public DocumentOperation[] getDocumentOperations() {
-        return new DocumentOperation[]{new BarcodeValidatorOperation()};
-    }
-
-    @Override
-    public SequenceAnnotationGenerator[] getSequenceAnnotationGenerators() {
-        return new SequenceAnnotationGenerator[] {
-            new TrimmingAnnotationGenerator()
-        };
+        return new DocumentOperation[] { new BarcodeValidatorOperation() };
     }
 }

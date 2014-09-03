@@ -60,7 +60,7 @@ public class TrimmingAnnotationGenerator extends SequenceAnnotationGenerator {
 
             NucleotideSequenceDocument nucleotideSequenceDocument = (NucleotideSequenceDocument) pluginDocument;
 
-            /* Creates annotations. */
+            /* Create annotations. */
             Trimmage trimmage = ErrorProbabilityTrimmer.getTrimmage(
                     nucleotideSequenceDocument,
                     TrimmableEnds.Both,

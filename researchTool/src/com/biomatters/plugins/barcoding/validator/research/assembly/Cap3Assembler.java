@@ -88,7 +88,7 @@ public class Cap3Assembler {
                     "2. Click Customize Feature Set.\n" +
                     "3. Check Ace importer is enabled.");
         }
-        /* Imports contigs. */
+        /* Import contigs. */
         try {
             importer.importDocuments(contigFile, importCallback, ProgressListener.EMPTY);
         } catch (IOException e) {
@@ -153,7 +153,7 @@ public class Cap3Assembler {
             StringBuilder sequence = new StringBuilder(document.getSequenceString());
             StringBuilder finalSequence = new StringBuilder();
 
-            /* Replaces chars for deletion with {@value #CHAR_FOR_DELETION_PLACEHOLDER}. */
+            /* Replace chars for deletion with {@value #CHAR_FOR_DELETION_PLACEHOLDER}. */
             for (SequenceAnnotation annotation : document.getSequenceAnnotations()) {
                 if (annotation.getType().equals(SequenceAnnotation.TYPE_TRIMMED)) {
                     SequenceAnnotationInterval interval = annotation.getInterval();
@@ -163,7 +163,7 @@ public class Cap3Assembler {
                 }
             }
 
-            /* Generates trimmed sequence. */
+            /* Generate trimmed sequence. */
             for (int i = 0; i < sequence.length(); i++) {
                 char c = sequence.charAt(i);
                 if (c != CHAR_FOR_DELETION_PLACEHOLDER) {
@@ -171,14 +171,14 @@ public class Cap3Assembler {
                 }
             }
 
-            /* Generates fasta file output. */
+            /* Generate fasta file output. */
             fastaOutput.append(">").append(document.getName()).append(" ").append(document.getDescription()).append("\n")
                        .append(finalSequence.toString().toUpperCase()).append("\n");
         }
 
         fastaOutput.deleteCharAt(fastaOutput.length() - 1); // Removes last new line character.
 
-        /* Creates fasta file. */
+        /* Create fasta file. */
         File fastaFile;
         try {
             fastaFile = FileUtilities.createTempFile("temp", ".fasta", false);

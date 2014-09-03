@@ -5,7 +5,6 @@ import com.biomatters.plugins.barcoding.validator.research.assembly.Cap3Assemble
 import com.biomatters.plugins.barcoding.validator.research.input.InputSplitterOptions;
 import com.biomatters.plugins.barcoding.validator.research.trimming.ErrorProbabilityOptions;
 
-
 /**
  * @author Gen Li
  *         Created on 3/09/14 2:42 PM
