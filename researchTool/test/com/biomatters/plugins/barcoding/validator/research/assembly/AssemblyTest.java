@@ -1,4 +1,4 @@
-package com.biomatters.plugins.barcoding.validator.validation.assembly;
+package com.biomatters.plugins.barcoding.validator.research.assembly;
 
 import com.biomatters.geneious.publicapi.documents.DocumentField;
 import com.biomatters.geneious.publicapi.documents.PluginDocument;

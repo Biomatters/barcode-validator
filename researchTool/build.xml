@@ -122,7 +122,7 @@
         <ivy:retrieve settingsref="biocode.ivy.config"/>
     </target>
 
-    <target name="compile-tests" depends="compile-plugin,compile-validation">
+    <target name="compile-tests" depends="compile-plugin">
         <javac target="1.6" source="1.6" destdir="${test.classes}" debug="true">
             <classpath>
                 <path refid="classpath"/>
