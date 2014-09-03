@@ -137,13 +137,14 @@
             <batchtest todir="${report}">
                 <fileset dir="${test.classes}">
                     <include name="**/*Test.class"/>
+                    <exclude name="**/AssemblyTest.class"/>
                 </fileset>
             </batchtest>
             <classpath>
+                <path refid="classpath"/>
                 <pathelement location="${classes}"/>
                 <pathelement location="${test.classes}"/>
                 <pathelement location="${validation.classes}"/>
-                <path refid="classpath"/>
             </classpath>
             <env key="DISPLAY" value=":0.0"/>
             <env key="DYLD_LIBRARY_PATH" value="/Library/Application Support/Geneious/Frameworks"/>
