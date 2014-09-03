@@ -50,6 +50,9 @@
             <fileset dir="${build}">
                 <include name="${plugin-name}/**/*"/>
             </fileset>
+            <fileset dir="${validation.build}">
+                <include name="${validation-name}/**/*"/>
+            </fileset>
         </zip>
     </target>
 
