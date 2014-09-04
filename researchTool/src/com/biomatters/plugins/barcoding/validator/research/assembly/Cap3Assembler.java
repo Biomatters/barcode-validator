@@ -1,12 +1,11 @@
 package com.biomatters.plugins.barcoding.validator.research.assembly;
 
 import com.biomatters.geneious.publicapi.documents.*;
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
-import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotation;
-import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationInterval;
+import com.biomatters.geneious.publicapi.documents.sequence.*;
 import com.biomatters.geneious.publicapi.plugin.*;
 import com.biomatters.geneious.publicapi.utilities.Execution;
 import com.biomatters.geneious.publicapi.utilities.FileUtilities;
+
 import jebl.util.ProgressListener;
 
 import java.io.BufferedWriter;
@@ -64,37 +63,27 @@ public class Cap3Assembler {
     private static List<PluginDocument> importContigs(Cap3AssemblyResult result) throws DocumentOperationException {
         final List<PluginDocument> contigs = new ArrayList<PluginDocument>();
 
-        File contigFile = new File(result.RESULT_FILE_PATH);
-
-        DocumentFileImporter.ImportCallback importCallback = new DocumentFileImporter.ImportCallback() {
-            public AnnotatedPluginDocument addDocument(PluginDocument document) {
-                contigs.add(document);
-                return null;
-            }
-
-            public AnnotatedPluginDocument addDocument(AnnotatedPluginDocument annotatedDocument) {
-                throw new IllegalStateException("CAP3Assembler expects only PluginDocuments from Ace importer");
-            }
-        };
-
-        /**
-         * For now we rely on the AceDocumentImporter being included in the runtime
-         */
-        DocumentFileImporter importer = PluginUtilities.getDocumentFileImporter("ace");
-        if(importer == null) {
-            throw new DocumentOperationException("Unable to locate the Ace importer.  Please make sure you have the " +
-                    "plugin enabled.\n\n" +
-                    "1. Go to the Tools menu -> Plugins...\n" +
-                    "2. Click Customize Feature Set.\n" +
-                    "3. Check Ace importer is enabled.");
-        }
         /* Import contigs. */
         try {
-            importer.importDocuments(contigFile, importCallback, ProgressListener.EMPTY);
+            for (AnnotatedPluginDocument importedDocument :
+                    PluginUtilities.importDocuments(new File(result.RESULT_FILE_PATH), ProgressListener.EMPTY)) {
+                if (!SequenceAlignmentDocument.class.isAssignableFrom(importedDocument.getDocumentClass()) &&
+                    !DefaultSequenceListDocument.class.isAssignableFrom(importedDocument.getDocumentClass())) {
+                    throw new DocumentOperationException("Could not import contigs: " +
+                                                         "Invalid document imported, " +
+                                                         "expected types: " +
+                                                            "<? extends SequenceAlignmentDocument>, " +
+                                                            "<? extends DefaultSequenceListDocument>, " +
+                                                         "actual type: " +
+                                                         importedDocument.getDocumentClass().getSimpleName());
+                }
+                System.out.println(importedDocument.getDocumentClass().getSimpleName());
+                contigs.add(importedDocument.getDocument());
+            }
         } catch (IOException e) {
-            throw new DocumentOperationException(e.getMessage(), e);
+            throw new DocumentOperationException("Could not import contigs: " + e.getMessage(), e);
         } catch (DocumentImportException e) {
-            throw new DocumentOperationException(e.getMessage(), e);
+            throw new DocumentOperationException("Could not import contigs: " + e.getMessage(), e);
         }
 
         return contigs;

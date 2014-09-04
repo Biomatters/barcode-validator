@@ -106,7 +106,6 @@ public class AssemblyTest extends Assert {
         List<PluginDocument> result = Cap3Assembler.assemble(documents, "40", "90");
         // Should return one contig assembly containing both of the input sequences, and a DefaultSequenceListDocument.
         assertEquals(2, result.size());
-        assertTrue(SequenceAlignmentDocument.class.isAssignableFrom(result.get(0).getClass()));
         List<SequenceDocument> sequences = ((SequenceAlignmentDocument) result.get(0)).getSequences();
         assertEquals(3, sequences.size());
         for (int i = 1; i < sequences.size(); i++) {

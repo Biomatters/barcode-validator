@@ -11,61 +11,95 @@ import org.jdom.Element;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Gen Li
  *         Created on 3/09/14 3:58 PM
  */
 public class InputSplitterOptions extends Options {
+    private static final String TRACE_INPUT_OPTION_NAME            = "traceInput";
+    private static final String BARCODE_INPUT_OPTION_NAME          = "barcodeInput";
+    private static final String MATCH_TRACE_TO_BARCODE_OPTION_NAME = "matchTraceToBarcode";
+    private static final String MATCH_USING_BOLD_OPTION_NAME       = "matchUsingBold";
+    private static final String MATCH_USING_GENBANK_OPTION_NAME    = "matchUsingGenbank";
+    private static final String MATCH_USING_FILE_NAME_OPTION_NAME  = "matchUsingFilename";
+
     public InputSplitterOptions() {
         super(InputSplitterOptions.class);
 
-        /* Help button. */
+        addHelpButton();
+        addTraceInput();
+        addBarcodeInput();
+        addTraceToSequenceMethodSelection();
+    }
+
+    public List<String> getTraceFilePaths() {
+        return getFilePathsFromMultipleInputFileOptions(TRACE_INPUT_OPTION_NAME);
+    }
+
+    public List<String> getBarcodeFilePaths() {
+        return getFilePathsFromMultipleInputFileOptions(BARCODE_INPUT_OPTION_NAME);
+    }
+
+    private void addHelpButton() {
         beginAlignHorizontally(null, false);
         addButtonOption("helpButton",
                         "Specify any number of files or folders that contain traces or barcode sequences.",
                         "",
                         IconUtilities.getIcons("help16.png").getIcon16(),
-                        ButtonOption.RIGHT)
-                .addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        Dialogs.showMessageDialog("Help text describing input formats and options");
-                    }
-                });
+                        ButtonOption.RIGHT).addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Dialogs.showMessageDialog("Help text describing input formats and options");
+            }
+        });
         endAlignHorizontally();
+    }
 
-        /* Trace input option. */
-        addMultipleOptions("traceInput", new InputFileOptions("Trace(s):"), false);
+    private void addTraceInput() {
+        addMultipleOptions(TRACE_INPUT_OPTION_NAME, new InputFileOptions("Trace(s):"), false);
+    }
 
-        /* Barcode input option. */
-        addMultipleOptions("barcodeInput", new InputFileOptions("Barcode Sequence(s):"), false);
+    private void addBarcodeInput() {
+        addMultipleOptions(BARCODE_INPUT_OPTION_NAME, new InputFileOptions("Barcode Sequence(s):"), false);
+    }
 
-        /* Method chooser option. */
-        Options matchFromBoldListOptions = new Options(InputSplitterOptions.class);
-        matchFromBoldListOptions.addFileSelectionOption("traceList", "Trace List: ", "");
-        addChildOptions("bold", "tracelist.txt (BOLD)", "", matchFromBoldListOptions);
+    private void addTraceToSequenceMethodSelection() {
+        Options matchUsingBoldListOptions = new Options(InputSplitterOptions.class);
+        matchUsingBoldListOptions.addFileSelectionOption("traceList", "Trace List: ", "");
+        addChildOptions(MATCH_USING_BOLD_OPTION_NAME, "tracelist.txt (BOLD)", "", matchUsingBoldListOptions);
 
-        Options matchFromGenbankXmlOptions = new Options(InputSplitterOptions.class);
-        matchFromGenbankXmlOptions.addFileSelectionOption("xmlFile", "XML File: ", "");
-        addChildOptions("genbank", "XML File (Genbank)", "", matchFromGenbankXmlOptions);
+        Options matchUsingGenbankXmlOptions = new Options(InputSplitterOptions.class);
+        matchUsingGenbankXmlOptions.addFileSelectionOption("xmlFile", "XML File: ", "");
+        addChildOptions(MATCH_USING_GENBANK_OPTION_NAME, "XML File (Genbank)", "", matchUsingGenbankXmlOptions);
 
-        Options matchNamesOptions = new Options(InputSplitterOptions.class);
+        Options matchUsingFileNamesOptions = new Options(InputSplitterOptions.class);
+        matchUsingFileNamesOptions.beginAlignHorizontally(null, false);
+        matchUsingFileNamesOptions.addCustomOption(new NamePartOption("tracePartNum", ""));
+        matchUsingFileNamesOptions.addCustomOption(new NameSeparatorOption("traceSeparator", "part of trace name separated by "));
+        matchUsingFileNamesOptions.endAlignHorizontally();
+        matchUsingFileNamesOptions.beginAlignHorizontally(null, false);
+        matchUsingFileNamesOptions.addCustomOption(new NamePartOption("seqPartNum", ""));
+        matchUsingFileNamesOptions.addCustomOption(new NameSeparatorOption("seqSeparator", "part of sequence name separated by "));
+        matchUsingFileNamesOptions.endAlignHorizontally();
+        addChildOptions(MATCH_USING_FILE_NAME_OPTION_NAME, "part of names", "", matchUsingFileNamesOptions);
 
-        matchNamesOptions.beginAlignHorizontally(null, false);
-        matchNamesOptions.addCustomOption(new NamePartOption("tracePartNum", ""));
-        matchNamesOptions.addCustomOption(new NameSeparatorOption("traceSeparator", "part of trace name separated by "));
-        matchNamesOptions.endAlignHorizontally();
+        addChildOptionsPageChooser(MATCH_TRACE_TO_BARCODE_OPTION_NAME,
+                "Match traces to sequences by: ",
+                Collections.<String>emptyList(),
+                PageChooserType.COMBO_BOX,
+                false);
+    }
 
-        matchNamesOptions.beginAlignHorizontally(null, false);
-        matchNamesOptions.addCustomOption(new NamePartOption("seqPartNum", ""));
-        matchNamesOptions.addCustomOption(new NameSeparatorOption("seqSeparator", "part of sequence name separated by "));
-        matchNamesOptions.endAlignHorizontally();
-
-        addChildOptions("names", "part of names", "", matchNamesOptions);
-
-        addChildOptionsPageChooser("method", "Match traces to sequences by: ", Collections.<String>emptyList(), PageChooserType.COMBO_BOX, false);
+    private List<String> getFilePathsFromMultipleInputFileOptions(String optionName) {
+        List<String> filePaths = new ArrayList<String>();
+        for (Options traceInput : getMultipleOptions(optionName).getValues()) {
+            filePaths.add(((InputFileOptions)traceInput).getFilePath());
+        }
+        return filePaths;
     }
 
     /**
@@ -73,6 +107,7 @@ public class InputSplitterOptions extends Options {
      *         Created on 15/07/14 4:09 PM
      */
     private static class InputFileOptions extends Options {
+        private final String FILE_SELECTION_OPTION_NAME = "fileInput";
 
         private String label;
 
@@ -80,12 +115,16 @@ public class InputSplitterOptions extends Options {
             super(BarcodeValidatorPlugin.class);
             this.label = label;
             beginAlignHorizontally(null, false);
-            addFileSelectionOption("input", this.label, "").setSelectionType(JFileChooser.FILES_ONLY);
+            addFileSelectionOption(FILE_SELECTION_OPTION_NAME, this.label, "").setSelectionType(JFileChooser.FILES_ONLY);
             endAlignHorizontally();
         }
 
         public InputFileOptions(Element element) throws XMLSerializationException {
             this(element.getText());
+        }
+
+        public String getFilePath() {
+            return getOption(FILE_SELECTION_OPTION_NAME).getValueAsString();
         }
 
         @Override
