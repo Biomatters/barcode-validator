@@ -12,8 +12,10 @@ public class Cap3AssemblerOptions extends Options {
 
     public Cap3AssemblerOptions() {
         super(Cap3AssemblerOptions.class);
-        minOverlapLengthOption = addIntegerOption("minOverlapLength", "Min overlap length:", 40, 16, 1000);
-        minOverlapIdentityOption = addIntegerOption("minOverlapIdentity", "Min overlap identity:", 90, 66, 1000);
+
+        addMinOverlapLengthOption();
+
+        addMinOverlapIdentityOption();
     }
 
     public int getMinimumOverlapLength() {
@@ -22,5 +24,13 @@ public class Cap3AssemblerOptions extends Options {
 
     public int getMinimumOverlapIdentity() {
         return minOverlapIdentityOption.getValue();
+    }
+
+    private void addMinOverlapLengthOption() {
+        minOverlapLengthOption = addIntegerOption("minOverlapLength", "Min overlap length:", 40, 16, 1000);
+    }
+
+    private void addMinOverlapIdentityOption() {
+        minOverlapIdentityOption = addIntegerOption("minOverlapIdentity", "Min overlap identity:", 90, 66, 1000);
     }
 }

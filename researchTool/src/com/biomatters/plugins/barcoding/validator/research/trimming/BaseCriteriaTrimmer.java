@@ -121,5 +121,4 @@ class BaseCriteriaTrimmer {
     private static SequenceAnnotationInterval incrementEnd(SequenceAnnotationInterval interval) {
         return new SequenceAnnotationInterval(interval.getFrom(), interval.getTo() + 1);
     }
-
 }

@@ -6,13 +6,13 @@ import com.biomatters.geneious.publicapi.plugin.*;
 import com.biomatters.geneious.publicapi.utilities.Execution;
 import com.biomatters.geneious.publicapi.utilities.FileUtilities;
 
+import com.biomatters.plugins.barcoding.validator.research.common.ImportUtilities;
 import jebl.util.ProgressListener;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -46,47 +46,13 @@ public class Cap3Assembler {
      * @return contigs assembled.
      * @throws DocumentOperationException
      */
-    public static List<PluginDocument> assemble(List<NucleotideSequenceDocument> sequences,
+    public static List<PluginDocument> assemble(List<NucleotideSequenceDocument>
+                                                sequences,
                                                 String minOverlapLength,
                                                 String minOverlapIdentity) throws DocumentOperationException {
-        return importContigs(executeCap3Assembler(createFastaFile(sequences), minOverlapLength, minOverlapIdentity));
-    }
-
-    /**
-     * Imports contigs.
-     *
-     * @param result contigs imported.
-     * @return paths of {@value #CAP3_ASSEMBLER_RESULT_FILE_EXTENSION} and
-     * {@value #CAP3_ASSEMBLER_UNUSED_READS_FILE_EXTENSION} CAP3 assembler output files.
-     * @throws DocumentOperationException if error occurs during contig import.
-     */
-    private static List<PluginDocument> importContigs(Cap3AssemblyResult result) throws DocumentOperationException {
-        final List<PluginDocument> contigs = new ArrayList<PluginDocument>();
-
-        /* Import contigs. */
-        try {
-            for (AnnotatedPluginDocument importedDocument :
-                    PluginUtilities.importDocuments(new File(result.RESULT_FILE_PATH), ProgressListener.EMPTY)) {
-                if (!SequenceAlignmentDocument.class.isAssignableFrom(importedDocument.getDocumentClass()) &&
-                    !DefaultSequenceListDocument.class.isAssignableFrom(importedDocument.getDocumentClass())) {
-                    throw new DocumentOperationException("Could not import contigs: " +
-                                                         "Invalid document imported, " +
-                                                         "expected types: " +
-                                                            "<? extends SequenceAlignmentDocument>, " +
-                                                            "<? extends DefaultSequenceListDocument>, " +
-                                                         "actual type: " +
-                                                         importedDocument.getDocumentClass().getSimpleName());
-                }
-                System.out.println(importedDocument.getDocumentClass().getSimpleName());
-                contigs.add(importedDocument.getDocument());
-            }
-        } catch (IOException e) {
-            throw new DocumentOperationException("Could not import contigs: " + e.getMessage(), e);
-        } catch (DocumentImportException e) {
-            throw new DocumentOperationException("Could not import contigs: " + e.getMessage(), e);
-        }
-
-        return contigs;
+        return ImportUtilities.importContigsForCap3Assembler(executeCap3Assembler(createFastaFile(sequences),
+                                                                                  minOverlapLength,
+                                                                                  minOverlapIdentity));
     }
 
     /**
@@ -99,19 +65,20 @@ public class Cap3Assembler {
      * {@value #CAP3_ASSEMBLER_UNUSED_READS_FILE_EXTENSION} CAP3 assembler output files.
      * @throws DocumentOperationException if error occurs during execution of CAP3 assembler.
      */
-    private static Cap3AssemblyResult executeCap3Assembler(String fastaFilePath, String minOverlapLength, String minOverlapIdentity)
+    private static Cap3AssemblerResult executeCap3Assembler(String fastaFilePath,
+                                                           String minOverlapLength,
+                                                           String minOverlapIdentity)
             throws DocumentOperationException {
-        Execution exec = new Execution(
-                new String[] {
-                    getCap3AssemblerFilePath(),
-                    fastaFilePath,
-                    MIN_OVERLAP_LENGTH_OPTION_NAME, minOverlapLength,
-                    MIN_OVERLAP_IDENTITY_OPTION_NAME, minOverlapIdentity
-                },
-                ProgressListener.EMPTY,
-                new Cap3OutputListener(),
-                (String) null,
-                false);
+        Execution exec = new Execution(new String[] { getCap3AssemblerFilePath(),
+                                                      fastaFilePath,
+                                                      MIN_OVERLAP_LENGTH_OPTION_NAME,
+                                                      minOverlapLength,
+                                                      MIN_OVERLAP_IDENTITY_OPTION_NAME,
+                                                      minOverlapIdentity },
+                                       ProgressListener.EMPTY,
+                                       new Cap3OutputListener(),
+                                       (String)null,
+                                       false);
 
         exec.setWorkingDirectory(fastaFilePath.substring(0, fastaFilePath.lastIndexOf(File.separator)));
 
@@ -124,62 +91,72 @@ public class Cap3Assembler {
             throw new DocumentOperationException(e.getMessage(), e);
         }
 
-        return new Cap3AssemblyResult(fastaFilePath + CAP3_ASSEMBLER_RESULT_FILE_EXTENSION,
-                                      fastaFilePath + CAP3_ASSEMBLER_UNUSED_READS_FILE_EXTENSION);
+        return new Cap3AssemblerResult(fastaFilePath + CAP3_ASSEMBLER_RESULT_FILE_EXTENSION,
+                                       fastaFilePath + CAP3_ASSEMBLER_UNUSED_READS_FILE_EXTENSION);
     }
 
     /**
      * Creates fasta file from NucleotideSequenceDocuments.
      *
-     * @param nucleotideSequences sequences used to create fasta file.
+     * @param sequences sequences used to create fasta file.
      * @return path of fasta file created.
      * @throws DocumentOperationException if error occurs during fasta file creation.
      */
-    private static String createFastaFile(List<NucleotideSequenceDocument> nucleotideSequences)
+    private static String createFastaFile(List<NucleotideSequenceDocument> sequences)
             throws DocumentOperationException {
-        StringBuilder fastaOutput = new StringBuilder();
-        for (NucleotideSequenceDocument document : nucleotideSequences) {
-            StringBuilder sequence = new StringBuilder(document.getSequenceString());
-            StringBuilder finalSequence = new StringBuilder();
-
-            /* Replace chars for deletion with {@value #CHAR_FOR_DELETION_PLACEHOLDER}. */
-            for (SequenceAnnotation annotation : document.getSequenceAnnotations()) {
-                if (annotation.getType().equals(SequenceAnnotation.TYPE_TRIMMED)) {
-                    SequenceAnnotationInterval interval = annotation.getInterval();
-                    for (int i = interval.getFrom() - 1; i < interval.getTo(); i++) {
-                        sequence.setCharAt(i, CHAR_FOR_DELETION_PLACEHOLDER);
-                    }
-                }
-            }
-
-            /* Generate trimmed sequence. */
-            for (int i = 0; i < sequence.length(); i++) {
-                char c = sequence.charAt(i);
-                if (c != CHAR_FOR_DELETION_PLACEHOLDER) {
-                    finalSequence.append(c);
-                }
-            }
-
-            /* Generate fasta file output. */
-            fastaOutput.append(">").append(document.getName()).append(" ").append(document.getDescription()).append("\n")
-                       .append(finalSequence.toString().toUpperCase()).append("\n");
-        }
-
-        fastaOutput.deleteCharAt(fastaOutput.length() - 1); // Removes last new line character.
-
-        /* Create fasta file. */
         File fastaFile;
         try {
             fastaFile = FileUtilities.createTempFile("temp", ".fasta", false);
 
             BufferedWriter out = new BufferedWriter(new FileWriter(fastaFile));
-            out.write(fastaOutput.toString());
+
+            out.write(generateOutputForFastaFile(sequences));
+
             out.close();
 
             return fastaFile.getAbsolutePath();
         } catch (IOException e) {
             throw new DocumentOperationException("Failed to write FASTA file: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Generates contents to be written to fasta file.
+     * @param sequences sequences used to create fasta file.
+     * @return contents to be written to fasta file.
+     */
+    private static String generateOutputForFastaFile(List<NucleotideSequenceDocument> sequences) {
+        StringBuilder fastaOutput = new StringBuilder();
+        for (NucleotideSequenceDocument sequence : sequences) {
+            StringBuilder initialSequence = new StringBuilder(sequence.getSequenceString());
+            StringBuilder finalSequence = new StringBuilder();
+
+            /* Replace chars for deletion with {@value #CHAR_FOR_DELETION_PLACEHOLDER}. */
+            for (SequenceAnnotation annotation : sequence.getSequenceAnnotations()) {
+                if (annotation.getType().equals(SequenceAnnotation.TYPE_TRIMMED)) {
+                    SequenceAnnotationInterval interval = annotation.getInterval();
+                    for (int i = interval.getFrom() - 1; i < interval.getTo(); i++) {
+                        initialSequence.setCharAt(i, CHAR_FOR_DELETION_PLACEHOLDER);
+                    }
+                }
+            }
+
+            /* Generate trimmed sequence. */
+            for (int i = 0; i < initialSequence.length(); i++) {
+                char c = initialSequence.charAt(i);
+                if (c != CHAR_FOR_DELETION_PLACEHOLDER) {
+                    finalSequence.append(c);
+                }
+            }
+
+            /* Generate fasta file output. */
+            fastaOutput.append(">").append(sequence.getName()).append(" ").append(sequence.getDescription()).append("\n")
+                       .append(finalSequence.toString().toUpperCase()).append("\n");
+        }
+
+        fastaOutput.deleteCharAt(fastaOutput.length() - 1); // Removes last new line character.
+
+        return fastaOutput.toString();
     }
 
     /**
@@ -209,20 +186,6 @@ public class Cap3Assembler {
             return CAP3_ASSEMBLER_LINUX_FILENAME;
         } else {
             throw new DocumentOperationException("Unsupported operating system: " + operatingSystem);
-        }
-    }
-
-    /**
-     * Holds paths of {@value #CAP3_ASSEMBLER_RESULT_FILE_EXTENSION} and
-     * {@value #CAP3_ASSEMBLER_UNUSED_READS_FILE_EXTENSION} CAP3 assembly output files.
-     */
-    private static class Cap3AssemblyResult {
-        private String RESULT_FILE_PATH;
-        private String UNUSED_READS_FILE_PATH;
-
-        private Cap3AssemblyResult(String resultFilePath, String unusedReadsFilePath) {
-            RESULT_FILE_PATH = resultFilePath;
-            UNUSED_READS_FILE_PATH = unusedReadsFilePath;
         }
     }
 }

@@ -11,10 +11,12 @@ import com.biomatters.plugins.barcoding.validator.research.trimming.ErrorProbabi
  */
 public class BarcodeValidatorOptions extends Options {
     public BarcodeValidatorOptions() {
-        super(BarcodeValidatorPlugin.class);
+        super(BarcodeValidatorOptions.class);
 
         addInputOptions();
+
         addTrimmingOptions();
+
         addAssemblyOptions();
     }
 
