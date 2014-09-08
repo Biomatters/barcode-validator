@@ -1,6 +1,5 @@
 package com.biomatters.plugins.barcoding.validator.research.input.map;
 
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 
@@ -31,51 +30,63 @@ public class ByFileNameMapper extends TraceToBarcodeMapper {
     public Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
     map(List<NucleotideSequenceDocument> traces, List<NucleotideSequenceDocument> barcodes)
             throws DocumentOperationException {
-        Map<String, NucleotideSequenceDocument> traceDocumentToNamePart =
-                new HashMap<String, NucleotideSequenceDocument>();
-        Map<String, NucleotideSequenceDocument> barcodeDocumentToNamePart =
-                new HashMap<String, NucleotideSequenceDocument>();
+
+        Set<String> barcodeNamePartsToMatch = new HashSet<String>();
+        for (NucleotideSequenceDocument barcode : barcodes) {
+            String namePartToMatch = getNamePartToMatch(barcode.getName(), barcodeSeparator, barcodeNamePartToMatch);
+            if (barcodeNamePartsToMatch.contains(namePartToMatch)) {
+                throw new DocumentOperationException("Could not match traces to barcodes: " +
+                                                     "Two or more documents of which part of name to match is: " +
+                                                     namePartToMatch);
+            }
+            barcodeNamePartsToMatch.add(namePartToMatch);
+        }
 
         /* Map trace documents to part of name of trace documents to match. */
-        traceDocumentToNamePart = mapDocumentToDocumentNamePartToMatch(traces,
-                                                                       traceSeparator,
-                                                                       traceNamePartToMatch);
+        Map<NucleotideSequenceDocument, String> traceDocumentToNamePart =
+                mapDocumentToDocumentNamePartToMatch(traces, traceSeparator, traceNamePartToMatch);
+
         /* Map barcode sequence documents to part of name of barcode sequence document to match. */
-        barcodeDocumentToNamePart = mapDocumentToDocumentNamePartToMatch(barcodes,
-                                                                         barcodeSeparator,
-                                                                         barcodeNamePartToMatch);
+        Map<NucleotideSequenceDocument, String> barcodeDocumentToNamePart =
+                mapDocumentToDocumentNamePartToMatch(barcodes, barcodeSeparator, barcodeNamePartToMatch);
 
         return matchTraceToSequence(traceDocumentToNamePart, barcodeDocumentToNamePart);
     }
 
     private Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
-    matchTraceToSequence(Map<String, NucleotideSequenceDocument> traceNamePartToMatchToDocument,
-                         Map<String, NucleotideSequenceDocument> barcodeNamePartToMatchToDocument)
+    matchTraceToSequence(Map<NucleotideSequenceDocument, String> traceNamePartToMatchToDocument,
+                         Map<NucleotideSequenceDocument, String> barcodeNamePartToMatchToDocument)
             throws DocumentOperationException {
         Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>> barcodeToTraces =
                 new HashMap<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>();
 
-        for (NucleotideSequenceDocument barcode : barcodeNamePartToMatchToDocument.values()) {
+        for (NucleotideSequenceDocument barcode : barcodeNamePartToMatchToDocument.keySet()) {
             barcodeToTraces.put(barcode, new ArrayList<NucleotideSequenceDocument>());
         }
 
-        for (Map.Entry<String, NucleotideSequenceDocument> traceEntry : traceNamePartToMatchToDocument.entrySet()) {
-            NucleotideSequenceDocument barcode = barcodeNamePartToMatchToDocument.get(traceEntry.getKey());
+        for (Map.Entry<NucleotideSequenceDocument, String> traceEntry : traceNamePartToMatchToDocument.entrySet()) {
+            String traceNamePartToMatch = traceEntry.getValue();
+            NucleotideSequenceDocument barcode = null;
+            for (Map.Entry<NucleotideSequenceDocument, String> barcodeEntry : barcodeNamePartToMatchToDocument.entrySet()) {
+                if (barcodeEntry.getValue().equals(traceNamePartToMatch)) {
+                    barcode = barcodeEntry.getKey();
+                }
+            }
             if (barcode == null) {
                 throw new DocumentOperationException("Could not match traces to barcodes: " +
                                                      "Found trace with no associated barcode.");
             }
-            barcodeToTraces.get(barcode).add(traceEntry.getValue());
+            barcodeToTraces.get(barcode).add(traceEntry.getKey());
         }
 
         return barcodeToTraces;
     }
 
-    private Map<String, NucleotideSequenceDocument>
+    private Map<NucleotideSequenceDocument, String>
     mapDocumentToDocumentNamePartToMatch(List<NucleotideSequenceDocument> documents, String separator, int partNumber) {
-        Map<String, NucleotideSequenceDocument> map = new HashMap<String, NucleotideSequenceDocument>();
+        Map<NucleotideSequenceDocument, String> map = new HashMap<NucleotideSequenceDocument, String>();
         for (NucleotideSequenceDocument document : documents) {
-            map.put(getNamePartToMatch(document.getName(), separator, partNumber), document);
+            map.put(document, getNamePartToMatch(document.getName(), separator, partNumber));
         }
         return map;
     }
