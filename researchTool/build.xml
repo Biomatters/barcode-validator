@@ -45,40 +45,29 @@
         <fileset dir="${lib}"/>
     </path>
 
-    <target name="create-plugin" depends="clean,prepare,build-plugin">
+    <target name="create-plugin" depends="clean,prepare,build-plugin,build-validation">
+        <copy todir="${build}/${plugin-name}">
+            <fileset dir="${validation.build}"/>
+        </copy>
         <zip zipfile="${build}/${short-plugin-name}.gplugin">
-            <fileset dir="${build}">
-                <include name="${plugin-name}/**/*"/>
-            </fileset>
-            <fileset dir="${validation.build}">
-                <include name="${validation-name}/**/*"/>
-            </fileset>
+            <fileset dir="${build}"/>
         </zip>
     </target>
 
     <target name="build-plugin" depends="compile-plugin">
-        <jar jarfile="${build}/${plugin-name}.jar">
-            <fileset dir="${classes}"/>
-        </jar>
         <mkdir dir="${build}/${plugin-name}"/>
         <copy todir="${build}/${plugin-name}">
-            <fileset dir="${build}">
-                <include name="${plugin-name}.jar"/>
-            </fileset>
             <fileset dir="resources"/>
         </copy>
+        <jar jarfile="${build}/${plugin-name}/${plugin-name}.jar">
+            <fileset dir="${classes}"/>
+        </jar>
     </target>
 
     <target name="build-validation" depends="compile-validation">
         <jar jarfile="${validation.build}/${validation-name}.jar">
             <fileset dir="${validation.classes}"/>
         </jar>
-        <mkdir dir="${validation.build}/${validation-name}"/>
-        <copy todir="${validation.build}/${validation-name}">
-            <fileset dir="${validation.build}">
-                <include name="${validation-name}.jar"/>
-            </fileset>
-        </copy>
     </target>
 
     <target name="compile-validation">
@@ -99,7 +88,7 @@
         <delete dir="${validation.build}"/>
     </target>
 
-    <target name="compile-plugin" depends="retrieve-plugin-dependencies,compile-validation">
+    <target name="compile-plugin" depends="retrieve-plugin-dependencies">
         <javac target="1.6" source="1.6" destdir="${classes}" debug="true">
             <classpath>
                 <path refid="classpath"/>
@@ -135,7 +124,7 @@
         </javac>
     </target>
 
-    <target name="test" depends="clean,prepare,compile-tests">
+    <target name="test" depends="clean,prepare,compile-tests,compile-plugin">
         <junit dir="GeneiousFiles" fork="true" maxmemory="1024M" printsummary="on" timeout="180000">
             <batchtest todir="${report}">
                 <fileset dir="${test.classes}">
