@@ -8,12 +8,12 @@ import java.util.Map;
 
 /**
  * @author Gen Li
- *         Created on 5/09/14 9:57 AM
+ *         Created on 5/09/14 9:54 AM
  */
-public class ByGenbankXmlMapper extends TraceToBarcodeMapper {
+public class BoldListMapper extends BarcodesToTracesMapper {
     @Override
     public Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
-    map(List<NucleotideSequenceDocument> traces, List<NucleotideSequenceDocument> barcodeSequences)
+    map(List<NucleotideSequenceDocument> barcodes, List<NucleotideSequenceDocument> traces)
             throws DocumentOperationException {
         return null;
     }

@@ -5,6 +5,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraph;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.utilities.CharSequenceUtilities;
 import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.util.*;
 
@@ -35,6 +36,8 @@ public class ErrorProbabilityTrimmerTest extends TestCase {
         NucleotideGraph graph = new DefaultNucleotideGraph(null, null, qualities, sequence.length(), 0);
         return new DefaultNucleotideGraphSequence("test", "", sequence, new Date(), graph);
     }
+
+    @Test
     public void testTrimByErrorProbability() {
         Map<List<Integer>, Trimmage> testValues = new LinkedHashMap<List<Integer>, Trimmage>();
         testValues.put(Arrays.asList(10, 10, 10, 10, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 10, 10, 10, 10), new Trimmage(4, 4));

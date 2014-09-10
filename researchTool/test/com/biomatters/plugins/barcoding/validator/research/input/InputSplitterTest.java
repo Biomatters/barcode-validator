@@ -7,7 +7,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDo
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotation;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceCharSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
-import com.biomatters.plugins.barcoding.validator.research.input.map.ByFileNameMapper;
+import com.biomatters.plugins.barcoding.validator.research.input.map.FileNameMapper;
 import org.jdom.Element;
 import org.junit.Assert;
 import org.junit.Test;
@@ -210,9 +210,9 @@ public class InputSplitterTest extends Assert {
         traces = Arrays.asList(t1, t2, t3, t4);
         barcodes = Arrays.asList(b1, b2);
 
-        ByFileNameMapper mapper = new ByFileNameMapper("_", 1, "_", 0);
+        FileNameMapper mapper = new FileNameMapper("_", 1, "_", 0);
 
-        Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>> mapped = mapper.map(traces, barcodes);
+        Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>> mapped = mapper.map(barcodes, traces);
 
         List<NucleotideSequenceDocument> mappedToB1 = mapped.get(mapped.keySet().toArray()[0]);
         List<NucleotideSequenceDocument> mappedToB2 = mapped.get(mapped.keySet().toArray()[1]);
@@ -220,12 +220,11 @@ public class InputSplitterTest extends Assert {
         assertEquals(2, mapped.keySet().size());
 
         assertEquals(3, mappedToB1.size());
-        assertEquals(1, mappedToB2.size());
-
         assertTrue(mappedToB1.contains(t1));
         assertTrue(mappedToB1.contains(t2));
         assertTrue(mappedToB1.contains(t3));
 
+        assertEquals(1, mappedToB2.size());
         assertTrue(mappedToB2.contains(t4));
     }
 }

@@ -1,7 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.research.common;
 
-import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
-import com.biomatters.geneious.publicapi.documents.PluginDocument;
+import com.biomatters.geneious.publicapi.documents.*;
 import com.biomatters.geneious.publicapi.documents.sequence.DefaultSequenceListDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
@@ -9,18 +8,14 @@ import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleot
 import com.biomatters.geneious.publicapi.plugin.DocumentImportException;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.PluginUtilities;
-import com.biomatters.plugins.barcoding.validator.research.assembly.Cap3AssemblerResult;
 import jebl.util.ProgressListener;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
- * Contains functionality for importing documents.
+ * Contains methods for importing documents.
  * @author Gen Li
  *         Created on 5/09/14 3:09 PM
  */
@@ -28,141 +23,119 @@ public class ImportUtilities {
     private ImportUtilities() {
     }
 
-    public static List<NucleotideSequenceDocument> importTraces(List<String> filePathsOfTraces)
+    public static List<NucleotideSequenceDocument> importTraces(List<String> filePaths)
             throws DocumentOperationException {
-        List<NucleotideSequenceDocument> traces = new ArrayList<NucleotideSequenceDocument>();
+        List<NucleotideSequenceDocument> result = new ArrayList<NucleotideSequenceDocument>();
 
-        List<Class> validDocumentFormats = Arrays.asList((Class)DefaultNucleotideGraphSequence.class);
-
-        List<AnnotatedPluginDocument> importedDocuments = importDocuments(filePathsOfTraces,
-                                                                          validDocumentFormats,
-                                                                          "traces");
-
-        for (AnnotatedPluginDocument importedDocument : importedDocuments) {
-            for (Class validDocumentFormat : validDocumentFormats) {
-                if (NucleotideSequenceDocument.class.isAssignableFrom(validDocumentFormat)) {
-                    traces.add((NucleotideSequenceDocument)importedDocument.getDocument());
-                }
-            }
-        }
-
-        return traces;
-    }
-
-    public static List<NucleotideSequenceDocument> importBarcodes(List<String> filePathsOfBarcodes)
-            throws DocumentOperationException {
-        List<NucleotideSequenceDocument> barcodes = new ArrayList<NucleotideSequenceDocument>();
-
-        List<Class> validDocumentFormats = Arrays.asList((Class)DefaultSequenceListDocument.class);
-
-        List<AnnotatedPluginDocument> importedDocuments = importDocuments(filePathsOfBarcodes,
-                                                                          validDocumentFormats,
-                                                                          "barcodes");
-
-        for (AnnotatedPluginDocument importedDocument : importedDocuments) {
-            for (Class validDocumentFormat : validDocumentFormats) {
-                if (DefaultSequenceListDocument.class.isAssignableFrom(validDocumentFormat)) {
-                    barcodes.addAll(
-                            ((DefaultSequenceListDocument)importedDocument.getDocument()).getNucleotideSequences()
-                    );
-                }
-            }
-        }
-
-        return barcodes;
-    }
-
-    /**
-     * Imports contigs.
-     *
-     * @param result contigs imported.
-     * @return paths of {@value com.biomatters.plugins.barcoding.validator.research.assembly.Cap3Assembler#
-     * CAP3_ASSEMBLER_RESULT_FILE_EXTENSION} and
-     * {@value com.biomatters.plugins.barcoding.validator.research.assembly.Cap3Assembler#
-     * CAP3_ASSEMBLER_UNUSED_READS_FILE_EXTENSION} CAP3 assembler output files.
-     * @throws DocumentOperationException if error occurs during contig import.
-     */
-    public static List<PluginDocument> importContigsForCap3Assembler(Cap3AssemblerResult result)
-            throws DocumentOperationException {
-        final List<PluginDocument> contigs = new ArrayList<PluginDocument>();
-
-        List<Class> validDocumentFormats = Arrays.asList((Class)DefaultSequenceListDocument.class,
-                                                         (Class)SequenceAlignmentDocument.class);
-
-        List<AnnotatedPluginDocument> importedDocuments = ImportUtilities.importDocuments(
-                Collections.singletonList(result.getPathOfResultFile()),
-                validDocumentFormats,
-                "contigs"
+        List<AnnotatedPluginDocument> importedDocuments = importDocuments(
+                filePaths,
+                Arrays.asList((Class) DefaultNucleotideGraphSequence.class)
         );
 
-        return contigs;
-    }
+        for (AnnotatedPluginDocument importedDocument : importedDocuments)
+            result.add((NucleotideSequenceDocument)importedDocument.getDocument());
 
-    private static List<AnnotatedPluginDocument> importDocuments(List<String> filePathsOfDocuments,
-                                                                 List<Class> validDocumentTypes,
-                                                                 String simpleNameOfDocument)
-            throws DocumentOperationException {
-        if (validDocumentTypes.isEmpty()) {
-            throw new DocumentOperationException("Could not import " + simpleNameOfDocument + ": " +
-                                                 "Please supply at least one document type as.");
-        }
-        List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
-
-        try {
-            for (String path : filePathsOfDocuments) {
-                List<AnnotatedPluginDocument> importedDocuments = PluginUtilities.importDocuments(
-                        new File(path),
-                        ProgressListener.EMPTY
-                );
-
-                for (AnnotatedPluginDocument importedDocument : importedDocuments) {
-                    if (!isImportedDocumentOfAValidFormat(validDocumentTypes, importedDocument.getDocumentClass())) {
-                        throw new DocumentOperationException(
-                                importedDocumentIsOfAnInvalidFormatMessage(validDocumentTypes,
-                                                                           importedDocument.getDocumentClass(),
-                                                                           simpleNameOfDocument)
-                        );
-                    }
-                }
-                result.addAll(importedDocuments);
-            }
-        } catch (IOException e) {
-            throw new DocumentOperationException("Could not import " + simpleNameOfDocument + ": " + e.getMessage(), e);
-        } catch (DocumentImportException e) {
-            throw new DocumentOperationException("Could not import " + simpleNameOfDocument + ": " + e.getMessage(), e);
-        }
         return result;
     }
 
-    private static boolean isImportedDocumentOfAValidFormat(List<Class> validDocumentTypes,
-                                                            Class typeOfImportedDocument) {
-        for (Class validDocumentType : validDocumentTypes) {
-            if (!validDocumentType.isAssignableFrom(typeOfImportedDocument)) {
-                return false;
-            }
-        }
-        return true;
+    public static List<NucleotideSequenceDocument> importBarcodes(List<String> filePaths)
+            throws DocumentOperationException {
+        List<NucleotideSequenceDocument> result = new ArrayList<NucleotideSequenceDocument>();
+
+        List<AnnotatedPluginDocument> importedDocuments = importDocuments(
+                filePaths,
+                Arrays.asList((Class)DefaultSequenceListDocument.class)
+        );
+
+        for (AnnotatedPluginDocument importedDocument : importedDocuments)
+            result.addAll(((DefaultSequenceListDocument)importedDocument.getDocument()).getNucleotideSequences());
+
+        return result;
     }
 
-    private static String importedDocumentIsOfAnInvalidFormatMessage(List<Class> validDocumentTypes,
-                                                                     Class typeOfImportedDocument,
-                                                                     String simpleNameOfImportedDocument) {
-        StringBuilder invalidImportedDocumentFormatMessageBuilder = new StringBuilder();
+    public static List<SequenceAlignmentDocument> importContigsCap3Assembler(String filePath)
+            throws DocumentOperationException {
+        List<SequenceAlignmentDocument> result = new ArrayList<SequenceAlignmentDocument>();
 
-        invalidImportedDocumentFormatMessageBuilder
-                .append("Could not import ").append(simpleNameOfImportedDocument).append(": ")
-                .append("Document of invalid type imported, ")
-                .append("expected types: ");
+        List<AnnotatedPluginDocument> importedDocuments = importDocuments(
+                Collections.singletonList(filePath),
+                Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)SequenceAlignmentDocument.class)
+        );
 
-        for (Class validDocumentType : validDocumentTypes) {
-            invalidImportedDocumentFormatMessageBuilder
-                    .append("<? extends ").append(validDocumentType.getSimpleName()).append(">, ");
+        for (AnnotatedPluginDocument importedDocument : importedDocuments)
+            if (SequenceAlignmentDocument.class.isAssignableFrom(importedDocument.getDocumentClass()))
+                result.add((SequenceAlignmentDocument) importedDocument.getDocument());
+
+        return result;
+    }
+
+    private static List<AnnotatedPluginDocument> importDocuments(List<String> filePaths,
+                                                                 List<Class> expectedDocumentTypes)
+            throws DocumentOperationException {
+        List<AnnotatedPluginDocument> result = importDocuments(filePaths);
+
+        checkDocumentsAreOfTypes(result, expectedDocumentTypes);
+
+        return result;
+    }
+
+    private static List<AnnotatedPluginDocument> importDocuments(List<String> documentPaths)
+            throws DocumentOperationException {
+        List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
+
+        try {
+            for (String path : documentPaths) {
+                File importFile = new File(path);
+
+                if (!importFile.exists())
+                    throw new DocumentOperationException("Could not import document: " +
+                                                         "File '" + path + "' does not exist.");
+
+                result.addAll(PluginUtilities.importDocuments(new File(path), ProgressListener.EMPTY));
+            }
+            
+            return result;
+        } catch (IOException e) {
+            throw new DocumentOperationException("Could not import documents: " + e.getMessage(), e);
+        } catch (DocumentImportException e) {
+            throw new DocumentOperationException("Could not import documents: " + e.getMessage(), e);
         }
+    }
 
-        invalidImportedDocumentFormatMessageBuilder
-                .append("actual type: ")
-                .append("<? extends ").append(typeOfImportedDocument.getSimpleName()).append(">.");
+    private static void checkDocumentsAreOfTypes(List<AnnotatedPluginDocument> documents, List<Class> types)
+            throws DocumentOperationException {
+        for (AnnotatedPluginDocument document : documents)
+            if (!isDocumentOfTypes(document, types))
+                throw new DocumentOperationException(importedDocumentUnexpectedTypeMessage(
+                        types,
+                        document.getDocumentClass(),
+                        document.getDocument().getName())
+                );
+    }
+    
+    private static boolean isDocumentOfTypes(AnnotatedPluginDocument document, List<Class> types) {
+        for (Class type : types)
+            if (type.isAssignableFrom(document.getDocumentClass()))
+                return true;
 
-        return invalidImportedDocumentFormatMessageBuilder.toString();
+        return false;
+    }
+
+    private static String importedDocumentUnexpectedTypeMessage(List<Class> expectedTypes,
+                                                                Class importedDocumentType,
+                                                                String importedDocumentName) {
+        StringBuilder messageBuilder = new StringBuilder();
+
+        messageBuilder.append("Could not import ").append(importedDocumentName).append(": ")
+                      .append("Document of unexpected type imported, ")
+                      .append("expected types: ");
+
+        for (Class validDocumentType : expectedTypes)
+            messageBuilder.append("<? extends ").append(validDocumentType.getSimpleName()).append(">, ");
+
+        messageBuilder.append("actual type: ")
+                      .append("<? extends ").append(importedDocumentType.getSimpleName()).append(">.");
+
+        return messageBuilder.toString();
     }
 }

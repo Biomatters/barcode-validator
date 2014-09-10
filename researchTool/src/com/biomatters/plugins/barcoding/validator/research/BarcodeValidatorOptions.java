@@ -1,6 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.plugin.Options;
+import com.biomatters.geneious.publicapi.plugin.TestGeneious;
 import com.biomatters.plugins.barcoding.validator.research.assembly.Cap3AssemblerOptions;
 import com.biomatters.plugins.barcoding.validator.research.input.InputSplitterOptions;
 import com.biomatters.plugins.barcoding.validator.research.trimming.ErrorProbabilityOptions;
@@ -10,6 +11,10 @@ import com.biomatters.plugins.barcoding.validator.research.trimming.ErrorProbabi
  *         Created on 3/09/14 2:42 PM
  */
 public class BarcodeValidatorOptions extends Options {
+    private static final String INPUT_OPTIONS_NAME    = "input";
+    private static final String TRIMMING_OPTIONS_NAME = "trimming";
+    private static final String ASSEMBLY_OPTIONS_NAME = "assembly";
+
     public BarcodeValidatorOptions() {
         super(BarcodeValidatorOptions.class);
 
@@ -20,15 +25,27 @@ public class BarcodeValidatorOptions extends Options {
         addAssemblyOptions();
     }
 
+    public InputSplitterOptions getInputOptions() {
+        return (InputSplitterOptions)getChildOptions().get(INPUT_OPTIONS_NAME);
+    }
+
+    public ErrorProbabilityOptions getTrimmingOptions() {
+        return (ErrorProbabilityOptions)getChildOptions().get(TRIMMING_OPTIONS_NAME);
+    }
+
+    public Cap3AssemblerOptions getAssemblyOptions() {
+        return (Cap3AssemblerOptions)getChildOptions().get(ASSEMBLY_OPTIONS_NAME);
+    }
+
     private void addInputOptions() {
-        addCollapsibleChildOptions("input", "Input", "", new InputSplitterOptions(), false, false);
+        addCollapsibleChildOptions(INPUT_OPTIONS_NAME, "Input", "", new InputSplitterOptions(), false, false);
     }
 
     private void addTrimmingOptions() {
-        addCollapsibleChildOptions("trim", "Trimming", "", new ErrorProbabilityOptions(), false, true);
+        addCollapsibleChildOptions(TRIMMING_OPTIONS_NAME, "Trimming", "", new ErrorProbabilityOptions(), false, true);
     }
 
     private void addAssemblyOptions() {
-        addCollapsibleChildOptions("assembly", "Assembly", "", new Cap3AssemblerOptions(), false, true);
+        addCollapsibleChildOptions(ASSEMBLY_OPTIONS_NAME, "Assembly", "", new Cap3AssemblerOptions(), false, true);
     }
 }

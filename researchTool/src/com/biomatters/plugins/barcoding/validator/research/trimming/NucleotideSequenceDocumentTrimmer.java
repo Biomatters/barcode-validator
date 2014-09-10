@@ -25,12 +25,15 @@ public class NucleotideSequenceDocumentTrimmer {
                                                         double errorProbabilityLimit)
             throws DocumentOperationException {
         List<NucleotideSequenceDocument> trimmedSequences = new ArrayList<NucleotideSequenceDocument>();
+
         for (NucleotideSequenceDocument trace : traces) {
             Trimmage trimmage = ErrorProbabilityTrimmer.getTrimmage(trace, TrimmableEnds.Both, errorProbabilityLimit);
+
             trimmedSequences.add(trimNucleotideSequenceDocument(trace,
                                                                 trimmage.trimAtStart - 1,
                                                                 trimmage.trimAtEnd - 1));
         }
+
         return trimmedSequences;
     }
 
@@ -38,15 +41,15 @@ public class NucleotideSequenceDocumentTrimmer {
                                                                              final int from,
                                                                              final int to) {
         return new NucleotideSequenceDocument() {
-            private SequenceCharSequence sequence = trimSequence(document.getCharSequence(), from, to);
+            private SequenceCharSequence trimmedSequence = trimSequence(document.getCharSequence(), from, to);
             private NucleotideSequenceDocument originalDocument = document;
 
             @Override
-            public String getSequenceString() { return sequence.toString(); }
+            public String getSequenceString() { return trimmedSequence.toString(); }
             @Override
-            public int getSequenceLength() { return sequence.length(); }
+            public int getSequenceLength() { return trimmedSequence.length(); }
             @Override
-            public SequenceCharSequence getCharSequence() { return sequence; }
+            public SequenceCharSequence getCharSequence() { return trimmedSequence; }
             @Override
             public List<SequenceAnnotation> getSequenceAnnotations() {
                 return originalDocument.getSequenceAnnotations();
@@ -74,7 +77,7 @@ public class NucleotideSequenceDocumentTrimmer {
         };
     }
 
-    private static SequenceCharSequence trimSequence(SequenceCharSequence sequence, int from, int to) {
+    protected static SequenceCharSequence trimSequence(SequenceCharSequence sequence, int from, int to) {
         return sequence.subSequence(from, to);
     }
 }

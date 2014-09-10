@@ -17,9 +17,9 @@ import java.util.List;
  *         Created on 3/09/14 3:58 PM
  */
 public class InputSplitterOptions extends Options {
-    private static final String TRACE_INPUT_OPTION_NAME            = "traceInput";
-    private static final String BARCODE_INPUT_OPTION_NAME          = "barcodeInput";
-    private static final String MATCH_TRACE_TO_BARCODE_OPTION_NAME = "matchTraceToBarcode";
+    private static final String TRACE_INPUT_OPTION_NAME   = "traceInput";
+    private static final String BARCODE_INPUT_OPTION_NAME = "barcodeInput";
+    private static final String METHOD_OPTION_NAME        = "method";
 
     public static final String MATCH_USING_BOLD_OPTION_NAME      = "matchUsingBold";
     public static final String MATCH_USING_GENBANK_OPTION_NAME   = "matchUsingGenbank";
@@ -28,13 +28,13 @@ public class InputSplitterOptions extends Options {
     public InputSplitterOptions() {
         super(BarcodeValidatorPlugin.class);
 
-        addHelpButton();
+        addHelpButtonOptions();
 
-        addTraceInput();
+        addTraceInputOptions();
 
-        addBarcodeInput();
+        addBarcodeInputOptions();
 
-        addTraceToSequenceMethodSelection();
+        addMethodSelectionOptions();
     }
 
     public List<String> getTraceFilePaths() {
@@ -45,12 +45,14 @@ public class InputSplitterOptions extends Options {
         return getFilePathsFromMultipleInputFileOptions(BARCODE_INPUT_OPTION_NAME);
     }
 
-    public Options getMatchTraceToBarcodeMethodOption() {
-        return getChildOptions().get(((OptionValue)getChildOptionsPageChooser().getValue()).getName());
+    public BarcodesToTracesMapperOptions getMethodOption() {
+        return (BarcodesToTracesMapperOptions)
+                getChildOptions().get(((OptionValue) getChildOptionsPageChooser().getValue()).getName());
     }
 
-    private void addHelpButton() {
+    private void addHelpButtonOptions() {
         beginAlignHorizontally(null, false);
+
         addButtonOption("helpButton",
                         "Specify any number of files or folders that contain traces or barcode sequences.",
                         "",
@@ -61,23 +63,24 @@ public class InputSplitterOptions extends Options {
                                 Dialogs.showMessageDialog("Help text describing input formats and options");
                             }
                         });
+
         endAlignHorizontally();
     }
 
-    private void addTraceInput() {
+    private void addTraceInputOptions() {
         addMultipleOptions(TRACE_INPUT_OPTION_NAME, new InputFileOptions("Trace(s):"), false);
     }
 
-    private void addBarcodeInput() {
+    private void addBarcodeInputOptions() {
         addMultipleOptions(BARCODE_INPUT_OPTION_NAME, new InputFileOptions("Barcode Sequence(s):"), false);
     }
 
-    private void addTraceToSequenceMethodSelection() {
-        addChildOptions(MATCH_USING_BOLD_OPTION_NAME, "tracelist.txt (BOLD)", "", new ByBoldListMapperOptions());
+    private void addMethodSelectionOptions() {
+        addChildOptions(MATCH_USING_BOLD_OPTION_NAME, "tracelist.txt (BOLD)", "", new BoldListMapperOptions());
         addChildOptions(MATCH_USING_GENBANK_OPTION_NAME, "XML File (Genbank)", "", new ByGenbankXmlMapperOptions());
-        addChildOptions(MATCH_USING_FILE_NAME_OPTION_NAME, "part of names", "", new ByFileNameMapperOptions());
+        addChildOptions(MATCH_USING_FILE_NAME_OPTION_NAME, "part of names", "", new FileNameMapperOptions());
 
-        addChildOptionsPageChooser(MATCH_TRACE_TO_BARCODE_OPTION_NAME,
+        addChildOptionsPageChooser(METHOD_OPTION_NAME,
                                    "Match traces to sequences by: ",
                                    Collections.<String>emptyList(),
                                    PageChooserType.COMBO_BOX,
@@ -86,9 +89,10 @@ public class InputSplitterOptions extends Options {
 
     private List<String> getFilePathsFromMultipleInputFileOptions(String optionName) {
         List<String> filePaths = new ArrayList<String>();
-        for (Options traceInput : getMultipleOptions(optionName).getValues()) {
+
+        for (Options traceInput : getMultipleOptions(optionName).getValues())
             filePaths.add(((InputFileOptions)traceInput).getFilePath());
-        }
+
         return filePaths;
     }
 }

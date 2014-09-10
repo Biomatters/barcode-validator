@@ -18,11 +18,11 @@ public class Cap3AssemblerOptions extends Options {
         addMinOverlapIdentityOption();
     }
 
-    public int getMinimumOverlapLength() {
+    public int getMinOverlapLength() {
         return minOverlapLengthOption.getValue();
     }
 
-    public int getMinimumOverlapIdentity() {
+    public int getMinOverlapIdentity() {
         return minOverlapIdentityOption.getValue();
     }
 

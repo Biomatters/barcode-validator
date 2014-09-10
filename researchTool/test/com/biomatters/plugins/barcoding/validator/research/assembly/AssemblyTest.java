@@ -103,10 +103,9 @@ public class AssemblyTest extends Assert {
         documents.add(document);
         documents.add(document);
 
-        List<PluginDocument> result = Cap3Assembler.assemble(documents, "40", "90");
-        // Should return one contig assembly containing both of the input sequences, and a DefaultSequenceListDocument.
-        assertEquals(2, result.size());
-        List<SequenceDocument> sequences = ((SequenceAlignmentDocument) result.get(0)).getSequences();
+        List<SequenceAlignmentDocument> result = Cap3Assembler.assemble(documents, 40, 90);
+        assertEquals(1, result.size());
+        List<SequenceDocument> sequences = result.get(0).getSequences();
         assertEquals(3, sequences.size());
         for (int i = 1; i < sequences.size(); i++) {
             String withNoGaps = sequences.get(i).getSequenceString().replace("-", "");
