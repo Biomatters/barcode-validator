@@ -10,7 +10,7 @@ import java.util.Map;
  * @author Gen Li
  *         Created on 5/09/14 9:57 AM
  */
-public class ByGenbankXmlToTracesMapper extends BarcodesToTracesMapper {
+public class GenbankXmlMapper extends BarcodesToTracesMapper {
     @Override
     public Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
     map(List<NucleotideSequenceDocument> traces, List<NucleotideSequenceDocument> barcodeSequences)

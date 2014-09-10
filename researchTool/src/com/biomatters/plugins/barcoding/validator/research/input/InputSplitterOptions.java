@@ -77,7 +77,7 @@ public class InputSplitterOptions extends Options {
 
     private void addMethodSelectionOptions() {
         addChildOptions(MATCH_USING_BOLD_OPTION_NAME, "tracelist.txt (BOLD)", "", new BoldListMapperOptions());
-        addChildOptions(MATCH_USING_GENBANK_OPTION_NAME, "XML File (Genbank)", "", new ByGenbankXmlMapperOptions());
+        addChildOptions(MATCH_USING_GENBANK_OPTION_NAME, "XML File (Genbank)", "", new GenbankXmlMapperOptions());
         addChildOptions(MATCH_USING_FILE_NAME_OPTION_NAME, "part of names", "", new FileNameMapperOptions());
 
         addChildOptionsPageChooser(METHOD_OPTION_NAME,
