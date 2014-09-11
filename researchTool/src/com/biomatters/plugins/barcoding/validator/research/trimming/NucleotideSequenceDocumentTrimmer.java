@@ -29,19 +29,16 @@ public class NucleotideSequenceDocumentTrimmer {
         for (NucleotideSequenceDocument trace : traces) {
             Trimmage trimmage = ErrorProbabilityTrimmer.getTrimmage(trace, TrimmableEnds.Both, errorProbabilityLimit);
 
-            trimmedSequences.add(trimNucleotideSequenceDocument(trace,
-                                                                trimmage.trimAtStart - 1,
-                                                                trimmage.trimAtEnd - 1));
+            trimmedSequences.add(trimNucleotideSequenceDocument(trace, trimmage));
         }
 
         return trimmedSequences;
     }
 
     private static NucleotideSequenceDocument trimNucleotideSequenceDocument(final NucleotideSequenceDocument document,
-                                                                             final int from,
-                                                                             final int to) {
+                                                                             final Trimmage trimmage) {
         return new NucleotideSequenceDocument() {
-            private SequenceCharSequence trimmedSequence = trimSequence(document.getCharSequence(), from, to);
+            private SequenceCharSequence trimmedSequence = trimSequence(document.getCharSequence(), trimmage);
             private NucleotideSequenceDocument originalDocument = document;
 
             @Override
@@ -77,7 +74,7 @@ public class NucleotideSequenceDocumentTrimmer {
         };
     }
 
-    protected static SequenceCharSequence trimSequence(SequenceCharSequence sequence, int from, int to) {
-        return sequence.subSequence(from, to);
+    protected static SequenceCharSequence trimSequence(SequenceCharSequence sequence, Trimmage trimmage) {
+        return sequence.subSequence(trimmage.trimAtStart, sequence.length() - trimmage.trimAtEnd);
     }
 }

@@ -29,7 +29,7 @@ public class ImportUtilities {
 
         List<AnnotatedPluginDocument> importedDocuments = importDocuments(
                 filePaths,
-                Arrays.asList((Class) DefaultNucleotideGraphSequence.class)
+                Arrays.asList((Class)DefaultNucleotideGraphSequence.class)
         );
 
         for (AnnotatedPluginDocument importedDocument : importedDocuments)
@@ -64,7 +64,7 @@ public class ImportUtilities {
 
         for (AnnotatedPluginDocument importedDocument : importedDocuments)
             if (SequenceAlignmentDocument.class.isAssignableFrom(importedDocument.getDocumentClass()))
-                result.add((SequenceAlignmentDocument) importedDocument.getDocument());
+                result.add((SequenceAlignmentDocument)importedDocument.getDocument());
 
         return result;
     }
