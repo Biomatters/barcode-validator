@@ -1,10 +1,9 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.plugin.Options;
-import com.biomatters.geneious.publicapi.plugin.TestGeneious;
-import com.biomatters.plugins.barcoding.validator.research.assembly.Cap3AssemblerOptions;
-import com.biomatters.plugins.barcoding.validator.research.input.InputSplitterOptions;
-import com.biomatters.plugins.barcoding.validator.research.trimming.ErrorProbabilityOptions;
+import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3AssemblerOptions;
+import com.biomatters.plugins.barcoding.validator.validation.input.InputSplitterOptions;
+import com.biomatters.plugins.barcoding.validator.validation.trimming.ErrorProbabilityOptions;
 
 /**
  * @author Gen Li

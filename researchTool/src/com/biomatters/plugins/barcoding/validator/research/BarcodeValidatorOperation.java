@@ -5,17 +5,17 @@ import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.plugin.*;
-import com.biomatters.plugins.barcoding.validator.research.assembly.Cap3Assembler;
-import com.biomatters.plugins.barcoding.validator.research.assembly.Cap3AssemblerOptions;
-import com.biomatters.plugins.barcoding.validator.research.input.InputSplitter;
-import com.biomatters.plugins.barcoding.validator.research.input.InputSplitterOptions;
-import com.biomatters.plugins.barcoding.validator.research.trimming.ErrorProbabilityOptions;
-import com.biomatters.plugins.barcoding.validator.research.trimming.NucleotideSequenceDocumentTrimmer;
+import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3Assembler;
+import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3AssemblerOptions;
+import com.biomatters.plugins.barcoding.validator.validation.input.InputSplitter;
+import com.biomatters.plugins.barcoding.validator.validation.input.InputSplitterOptions;
+import com.biomatters.plugins.barcoding.validator.validation.trimming.ErrorProbabilityOptions;
+import com.biomatters.plugins.barcoding.validator.validation.trimming.NucleotideSequenceDocumentTrimmer;
 import jebl.util.ProgressListener;
 
 import javax.swing.*;
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -72,20 +72,36 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         ErrorProbabilityOptions trimmingOptions = barcodeValidatorOptions.getTrimmingOptions();
         Cap3AssemblerOptions cap3AssemblerOptions = barcodeValidatorOptions.getAssemblyOptions();
 
-        Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>> barcodesToTraces;
+        Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>> suppliedBarcodesToSuppliedTraces;
 
+        Map<List<NucleotideSequenceDocument>, List<NucleotideSequenceDocument>> suppliedTracesToTrimmedTraces
+                = new HashMap<List<NucleotideSequenceDocument>, List<NucleotideSequenceDocument>>();
+
+        Map<NucleotideSequenceDocument, SequenceAlignmentDocument> suppliedBarcodesToAssembledBarcodes
+                = new HashMap<NucleotideSequenceDocument, SequenceAlignmentDocument>();
         try {
             /* Split inputs. */
-            barcodesToTraces = splitInput(inputSplitterOptions);
+            suppliedBarcodesToSuppliedTraces = splitInput(inputSplitterOptions);
 
-            List<NucleotideSequenceDocument> traces = new ArrayList<NucleotideSequenceDocument>();
+            /* Trim traces. */
+            for (List<NucleotideSequenceDocument> traces : suppliedBarcodesToSuppliedTraces.values())
+                suppliedTracesToTrimmedTraces.put(traces, trimTraces(traces, trimmingOptions));
 
-            for (List<NucleotideSequenceDocument> traceSubset : barcodesToTraces.values())
-                traces.addAll(traceSubset);
+            /* Assemble trimmed traces. */
+            for (Map.Entry<List<NucleotideSequenceDocument>, List<NucleotideSequenceDocument>>
+                    suppliedTracesToTrimmedTracesEntry : suppliedTracesToTrimmedTraces.entrySet()) {
+                NucleotideSequenceDocument suppliedBarcode = null;
 
-            /* Trim and assemble traces. */
-            List<SequenceAlignmentDocument> result = assembleTraces(trimTraces(traces, trimmingOptions),
-                                                                    cap3AssemblerOptions);
+                for (Map.Entry<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
+                        suppliedBarcodesToSuppliedTracesEntry : suppliedBarcodesToSuppliedTraces.entrySet())
+                    if (suppliedBarcodesToSuppliedTracesEntry.getValue().equals(suppliedTracesToTrimmedTracesEntry.getKey()))
+                        suppliedBarcode = suppliedBarcodesToSuppliedTracesEntry.getKey();
+
+                suppliedBarcodesToAssembledBarcodes.put(
+                        suppliedBarcode,
+                        assembleTraces(suppliedTracesToTrimmedTracesEntry.getValue(), cap3AssemblerOptions)
+                );
+            }
 
             System.out.println("End of method.");
         } catch (DocumentOperationException e) {
@@ -108,9 +124,16 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         return NucleotideSequenceDocumentTrimmer.trim(traces, options.getErrorProbabilityLimit());
     }
 
-    private List<SequenceAlignmentDocument> assembleTraces(List<NucleotideSequenceDocument> traces,
+    private SequenceAlignmentDocument assembleTraces(List<NucleotideSequenceDocument> traces,
                                                            Cap3AssemblerOptions options)
             throws DocumentOperationException {
-        return Cap3Assembler.assemble(traces, options.getMinOverlapLength(), options.getMinOverlapIdentity());
+        List<SequenceAlignmentDocument> result = Cap3Assembler.assemble(traces,
+                                                                        options.getMinOverlapLength(),
+                                                                        options.getMinOverlapIdentity());
+
+        if (result.size() != 1)
+            throw new DocumentOperationException("Error assembling traces: todo?");
+
+        return result.get(0);
     }
 }

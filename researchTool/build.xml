@@ -88,7 +88,7 @@
         <delete dir="${validation.build}"/>
     </target>
 
-    <target name="compile-plugin" depends="retrieve-plugin-dependencies">
+    <target name="compile-plugin" depends="retrieve-plugin-dependencies,compile-validation">
         <javac target="1.6" source="1.6" destdir="${classes}" debug="true">
             <classpath>
                 <path refid="classpath"/>
@@ -124,7 +124,7 @@
         </javac>
     </target>
 
-    <target name="test" depends="clean,prepare,compile-tests,compile-plugin">
+    <target name="test" depends="clean,prepare,compile-tests">
         <junit dir="GeneiousFiles" fork="true" maxmemory="1024M" printsummary="on" timeout="180000">
             <batchtest todir="${report}">
                 <fileset dir="${test.classes}">
