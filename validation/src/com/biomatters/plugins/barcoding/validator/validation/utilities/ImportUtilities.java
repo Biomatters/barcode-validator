@@ -34,7 +34,7 @@ public class ImportUtilities {
         );
 
         for (AnnotatedPluginDocument importedDocument : importedDocuments)
-            result.add((NucleotideSequenceDocument) importedDocument.getDocument());
+            result.add((NucleotideSequenceDocument)importedDocument.getDocument());
 
         return result;
     }
@@ -49,7 +49,7 @@ public class ImportUtilities {
         );
 
         for (AnnotatedPluginDocument importedDocument : importedDocuments)
-            if (DefaultNucleotideGraphSequence.class.isAssignableFrom(importedDocument.getDocumentClass()))
+            if (DefaultSequenceListDocument.class.isAssignableFrom(importedDocument.getDocumentClass()))
                 result.addAll(((DefaultSequenceListDocument)importedDocument.getDocument()).getNucleotideSequences());
             else if (DefaultNucleotideSequence.class.isAssignableFrom(importedDocument.getDocumentClass()))
                 result.add((NucleotideSequenceDocument)importedDocument.getDocument());
@@ -138,19 +138,19 @@ public class ImportUtilities {
     }
 
     private static String importedDocumentUnexpectedTypeMessage(List<Class> expectedTypes,
-                                                                Class importedDocumentType,
-                                                                String importedDocumentName) {
+                                                                     Class importedDocumentType,
+                                                                     String importedDocumentName) {
         StringBuilder messageBuilder = new StringBuilder();
 
         messageBuilder.append("Could not import ").append(importedDocumentName).append(": ")
-                      .append("Document of unexpected type imported, ")
-                      .append("expected types: ");
+                .append("Document of unexpected type imported, ")
+                .append("expected types: ");
 
         for (Class validDocumentType : expectedTypes)
             messageBuilder.append("<? extends ").append(validDocumentType.getSimpleName()).append(">, ");
 
         messageBuilder.append("actual type: ")
-                      .append("<? extends ").append(importedDocumentType.getSimpleName()).append(">.");
+                .append("<? extends ").append(importedDocumentType.getSimpleName()).append(">.");
 
         return messageBuilder.toString();
     }

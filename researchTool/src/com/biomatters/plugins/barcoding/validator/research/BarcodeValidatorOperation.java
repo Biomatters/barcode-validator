@@ -67,6 +67,8 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                                                  "expected: BarcodeValidatorOptions, " +
                                                  "actual: " + options.getClass().getSimpleName() + ".");
 
+        List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
+
         BarcodeValidatorOptions barcodeValidatorOptions = (BarcodeValidatorOptions)options;
 
         /* Get options. */
@@ -74,13 +76,16 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         ErrorProbabilityOptions trimmingOptions = barcodeValidatorOptions.getTrimmingOptions();
         Cap3AssemblerOptions cap3AssemblerOptions = barcodeValidatorOptions.getAssemblyOptions();
 
-        Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>> suppliedBarcodesToSuppliedTraces;
 
-        Map<List<NucleotideSequenceDocument>, List<NucleotideSequenceDocument>> suppliedTracesToTrimmedTraces
+        Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
+                suppliedBarcodesToSuppliedTraces;
+        Map<List<NucleotideSequenceDocument>, List<NucleotideSequenceDocument>>
+                suppliedTracesToTrimmedTraces
                 = new HashMap<List<NucleotideSequenceDocument>, List<NucleotideSequenceDocument>>();
-
-        Map<NucleotideSequenceDocument, SequenceAlignmentDocument> suppliedBarcodesToAssembledBarcodes
+        Map<NucleotideSequenceDocument, SequenceAlignmentDocument>
+                suppliedBarcodesToAssembledBarcodes
                 = new HashMap<NucleotideSequenceDocument, SequenceAlignmentDocument>();
+
         try {
             /* Split inputs. */
             suppliedBarcodesToSuppliedTraces = splitInput(inputSplitterOptions);
@@ -105,18 +110,14 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                 );
             }
 
-            List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
-
-            for (SequenceAlignmentDocument assembledBarcode : suppliedBarcodesToAssembledBarcodes.values()) {
+            for (SequenceAlignmentDocument assembledBarcode : suppliedBarcodesToAssembledBarcodes.values())
                 result.add(DocumentUtilities.createAnnotatedPluginDocument(assembledBarcode));
-            }
 
-            return result;
         } catch (DocumentOperationException e) {
             Dialogs.showMessageDialog(e.getMessage());
         }
 
-        return null;
+        return result;
     }
 
     private Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>> splitInput(InputSplitterOptions options)

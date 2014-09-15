@@ -154,8 +154,8 @@ public class Cap3Assembler {
             fastaOutput.append(">").append(sequence.getName()).append(" ").append(sequence.getDescription()).append("\n")
                        .append(finalSequenceBuilder.toString().toUpperCase()).append("\n");
         }
-
-        fastaOutput.deleteCharAt(fastaOutput.length() - 1); // Removes last new line character.
+        if (fastaOutput.length() != 0)
+            fastaOutput.deleteCharAt(fastaOutput.length() - 1); // Removes last new line character.
 
         return fastaOutput.toString();
     }

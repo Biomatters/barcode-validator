@@ -65,7 +65,8 @@ public class FileNameMapper extends BarcodesToTracesMapper {
 
             if (barcode == null)
                 throw new DocumentOperationException("Could not match traces to barcodes: " +
-                                                     "Found trace with no associated barcode.");
+                                                     "Trace '" + traceToNamePart.getKey().getName() + "' " +
+                                                     "has no associated barcode.");
 
             result.get(barcode).add(traceToNamePart.getKey());
         }
