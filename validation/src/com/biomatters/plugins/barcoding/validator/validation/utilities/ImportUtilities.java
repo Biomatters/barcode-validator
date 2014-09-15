@@ -5,6 +5,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.DefaultSequenceListD
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
+import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentImportException;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.PluginUtilities;
@@ -33,7 +34,7 @@ public class ImportUtilities {
         );
 
         for (AnnotatedPluginDocument importedDocument : importedDocuments)
-            result.add((NucleotideSequenceDocument)importedDocument.getDocument());
+            result.add((NucleotideSequenceDocument) importedDocument.getDocument());
 
         return result;
     }
@@ -44,11 +45,14 @@ public class ImportUtilities {
 
         List<AnnotatedPluginDocument> importedDocuments = importDocuments(
                 filePaths,
-                Arrays.asList((Class)DefaultSequenceListDocument.class)
+                Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)DefaultNucleotideSequence.class)
         );
 
         for (AnnotatedPluginDocument importedDocument : importedDocuments)
-            result.addAll(((DefaultSequenceListDocument)importedDocument.getDocument()).getNucleotideSequences());
+            if (DefaultNucleotideGraphSequence.class.isAssignableFrom(importedDocument.getDocumentClass()))
+                result.addAll(((DefaultSequenceListDocument)importedDocument.getDocument()).getNucleotideSequences());
+            else if (DefaultNucleotideSequence.class.isAssignableFrom(importedDocument.getDocumentClass()))
+                result.add((NucleotideSequenceDocument)importedDocument.getDocument());
 
         return result;
     }
@@ -83,23 +87,35 @@ public class ImportUtilities {
             throws DocumentOperationException {
         List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
 
+        for (String path : documentPaths) {
+            File source = new File(path);
+
+            if (!source.exists())
+                throw new DocumentOperationException("Could not import document: " +
+                        "File '" + path + "' does not exist.");
+
+            result.addAll(importDocuments(source));
+        }
+
+        return result;
+    }
+
+    private static List<AnnotatedPluginDocument> importDocuments(File source) throws DocumentOperationException {
+        List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
+
         try {
-            for (String path : documentPaths) {
-                File importFile = new File(path);
-
-                if (!importFile.exists())
-                    throw new DocumentOperationException("Could not import document: " +
-                                                         "File '" + path + "' does not exist.");
-
-                result.addAll(PluginUtilities.importDocuments(new File(path), ProgressListener.EMPTY));
-            }
-            
-            return result;
-        } catch (IOException e) {
-            throw new DocumentOperationException("Could not import documents: " + e.getMessage(), e);
+            if (source.isDirectory())
+                for (File subSource : source.listFiles())
+                    result.addAll(importDocuments(subSource));
+            else
+                result.addAll(PluginUtilities.importDocuments(source, ProgressListener.EMPTY));
         } catch (DocumentImportException e) {
             throw new DocumentOperationException("Could not import documents: " + e.getMessage(), e);
+        } catch (IOException e) {
+            throw new DocumentOperationException("Could not import documents: " + e.getMessage(), e);
         }
+
+        return result;
     }
 
     private static void checkDocumentsAreOfTypes(List<AnnotatedPluginDocument> documents, List<Class> types)
@@ -107,9 +123,9 @@ public class ImportUtilities {
         for (AnnotatedPluginDocument document : documents)
             if (!isDocumentOfTypes(document, types))
                 throw new DocumentOperationException(importedDocumentUnexpectedTypeMessage(
-                                                        types,
-                                                        document.getDocumentClass(),
-                                                        document.getDocument().getName())
+                        types,
+                        document.getDocumentClass(),
+                        document.getDocument().getName())
                 );
     }
     

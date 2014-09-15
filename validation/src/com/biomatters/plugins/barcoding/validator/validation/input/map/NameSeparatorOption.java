@@ -13,17 +13,17 @@ public class NameSeparatorOption extends Options.ComboBoxOption<Options.OptionVa
 
     private static final Options.OptionValue[] VALUES = new Options.OptionValue[] {
             new Options.OptionValue("_", "_ (Underscore)"),
-            new Options.OptionValue("*", "* (Asterisk)"),
-            new Options.OptionValue("|", "| (Vertical Bar)"),
+            new Options.OptionValue("\\*", "* (Asterisk)"),
+            new Options.OptionValue("\\|", "| (Vertical Bar)"),
             new Options.OptionValue("-", "- (Hyphen)"),
             new Options.OptionValue(":", ": (Colon)"),
-            new Options.OptionValue("$", "$ (Dollar)"),
+            new Options.OptionValue("\\$", "$ (Dollar)"),
             new Options.OptionValue("=", "= (Equals)"),
-            new Options.OptionValue(".", ". (Full Stop)"),
+            new Options.OptionValue("\\.", ". (Full Stop)"),
             new Options.OptionValue(",", ", (Comma)"),
-            new Options.OptionValue("+", "+ (Plus)"),
-            new Options.OptionValue("~", "~ (Tilde)"),
-            new Options.OptionValue("s+", "(Space)")
+            new Options.OptionValue("\\+", "+ (Plus)"),
+            new Options.OptionValue("\\~", "~ (Tilde)"),
+            new Options.OptionValue("\\s+", "(Space)")
     };
 
     public NameSeparatorOption(String name, String label) {

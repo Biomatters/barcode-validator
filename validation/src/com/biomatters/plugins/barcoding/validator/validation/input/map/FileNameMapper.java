@@ -56,6 +56,7 @@ public class FileNameMapper extends BarcodesToTracesMapper {
 
         for (Map.Entry<NucleotideSequenceDocument, String> traceToNamePart : tracesToNameParts.entrySet()) {
             String namePart = traceToNamePart.getValue();
+
             NucleotideSequenceDocument barcode = null;
 
             for (Map.Entry<NucleotideSequenceDocument, String> barcodeToNamePart : barcodesToNameParts.entrySet())
@@ -79,10 +80,6 @@ public class FileNameMapper extends BarcodesToTracesMapper {
 
         for (NucleotideSequenceDocument document : documents) {
             String documentName = document.getName();
-            if (!document.getName().contains(separator))
-                throw new DocumentOperationException("Could not match traces to barcodes: " +
-                                                     "Document name + '" + documentName + "' " +
-                                                     "does not contain separator '" + separator + "'.");
 
             result.put(document, getNamePartToMatch(documentName, separator, partNumber));
         }
@@ -90,7 +87,36 @@ public class FileNameMapper extends BarcodesToTracesMapper {
         return result;
     }
 
-    private String getNamePartToMatch(String name, String separator, int partNumber) {
-        return name.split(separator)[partNumber];
+    private String getNamePartToMatch(String name, String separator, int partNumber) throws DocumentOperationException {
+        try {
+            return name.split(separator)[partNumber];
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new DocumentOperationException("Could not retrieve " + getNthOrder(partNumber) + " " +
+                                                 "part of '" + name + "' " +
+                                                 "separated by '" + separator + "'.",
+                                                 e);
+        }
+    }
+
+    private String getNthOrder(int n) {
+        String nString = String.valueOf(n);
+
+        String nAbsString = String.valueOf(Math.abs(n));
+
+        int nAbsStringLength = nAbsString.length();
+
+        if (nAbsStringLength > 1 && Integer.valueOf(nAbsString.charAt(nAbsStringLength - 2)) == 1)
+            return nString + "th";
+
+        switch (Integer.valueOf(nAbsString.substring(nAbsStringLength - 1, nAbsStringLength))) {
+            case 1:
+                return nString + "st";
+            case 2:
+                return nString + "nd";
+            case 3:
+                return nString + "rd";
+            default:
+                return nString + "th";
+        }
     }
 }

@@ -65,11 +65,11 @@ public class InputSplitterOptions extends Options {
     }
 
     private void addTraceInputOptions() {
-        addMultipleOptions(TRACE_INPUT_OPTION_NAME, new InputFileOptions("Trace(s):"), false);
+        addMultipleOptions(TRACE_INPUT_OPTION_NAME, new InputOptions("Trace(s):"), false);
     }
 
     private void addBarcodeInputOptions() {
-        addMultipleOptions(BARCODE_INPUT_OPTION_NAME, new InputFileOptions("Barcode Sequence(s):"), false);
+        addMultipleOptions(BARCODE_INPUT_OPTION_NAME, new InputOptions("Barcode Sequence(s):"), false);
     }
 
     private void addMethodSelectionOptions() {
@@ -88,7 +88,7 @@ public class InputSplitterOptions extends Options {
         List<String> filePaths = new ArrayList<String>();
 
         for (Options traceInput : getMultipleOptions(optionName).getValues())
-            filePaths.add(((InputFileOptions)traceInput).getFilePath());
+            filePaths.add(((InputOptions)traceInput).getFilePath());
 
         return filePaths;
     }

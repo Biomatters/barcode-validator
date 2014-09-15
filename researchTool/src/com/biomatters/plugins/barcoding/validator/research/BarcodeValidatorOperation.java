@@ -2,6 +2,7 @@ package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.components.Dialogs;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
+import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.plugin.*;
@@ -15,6 +16,7 @@ import jebl.util.ProgressListener;
 
 import javax.swing.*;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +105,13 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                 );
             }
 
-            System.out.println("End of method.");
+            List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
+
+            for (SequenceAlignmentDocument assembledBarcode : suppliedBarcodesToAssembledBarcodes.values()) {
+                result.add(DocumentUtilities.createAnnotatedPluginDocument(assembledBarcode));
+            }
+
+            return result;
         } catch (DocumentOperationException e) {
             Dialogs.showMessageDialog(e.getMessage());
         }
