@@ -26,8 +26,8 @@ public class BarcodeValidatorMockOptions extends Options {
                 "Help text describing input formats and options");
 
         addCollapsibleChildOptions("input", "Input", "", inputOptions, false, false);
-        addMultiInputOptions(inputOptions, null, "ab1 files", "traceInput", "Trace(s):");
-        addMultiInputOptions(inputOptions, null, "FASTA", "barcodeInput", "Barcode Sequence(s):");
+        addMultiInputOptions(inputOptions, null, "ab1 files", "traceInput", "Trace(s):", true);
+        addMultiInputOptions(inputOptions, null, "FASTA", "barcodeInput", "Barcode Sequence(s):", false);
 
 
         Options matchFromBoldListOptions = new Options(BarcodeValidatorMockupPlugin.class);
@@ -91,11 +91,11 @@ public class BarcodeValidatorMockOptions extends Options {
     }
 
     private int count = 1;
-    void addMultiInputOptions(Options inputOutputOptions, String descriptionLabel, final String helpText, String multiOptionsName, String inputOptionsLabel) {
+    void addMultiInputOptions(Options inputOutputOptions, String descriptionLabel, final String helpText, String multiOptionsName, String inputOptionsLabel, boolean includeDirection) {
         if(descriptionLabel != null) {
             addLabelWithMoreHelpButton(inputOutputOptions, descriptionLabel, helpText);
         }
-        inputOutputOptions.addMultipleOptions(multiOptionsName, new InputFileOptions(inputOptionsLabel), false);
+        inputOutputOptions.addMultipleOptions(multiOptionsName, new InputFileOptions(inputOptionsLabel, includeDirection), false);
     }
 
     private void addLabelWithMoreHelpButton(Options options, String label, final String extraHelpText) {
