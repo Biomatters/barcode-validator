@@ -9,6 +9,7 @@ import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleot
 import com.biomatters.geneious.publicapi.plugin.DocumentImportException;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.PluginUtilities;
+import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import jebl.util.ProgressListener;
 
 import java.io.File;
@@ -21,6 +22,13 @@ import java.util.*;
  *         Created on 5/09/14 3:09 PM
  */
 public class ImportUtilities {
+    private final static List<String> TRACE_ALLOWED_FILE_EXTENSIONS
+            = Collections.unmodifiableList(Arrays.asList("ab1"));
+    private final static List<String> BARCODE_ALLOWED_FILE_EXTENSIONS
+            = Collections.unmodifiableList(Arrays.asList("fasta"));
+    private final static List<String> CONTIGS_CAP3ASSEMBLER_ALLOWED_FILE_EXTENSIONS
+            = Collections.unmodifiableList(Arrays.asList("ace"));
+
     private ImportUtilities() {
     }
 
@@ -30,7 +38,8 @@ public class ImportUtilities {
 
         List<AnnotatedPluginDocument> importedDocuments = importDocuments(
                 filePaths,
-                Arrays.asList((Class)DefaultNucleotideGraphSequence.class)
+                Arrays.asList((Class)DefaultNucleotideGraphSequence.class),
+                TRACE_ALLOWED_FILE_EXTENSIONS
         );
 
         for (AnnotatedPluginDocument importedDocument : importedDocuments)
@@ -45,7 +54,8 @@ public class ImportUtilities {
 
         List<AnnotatedPluginDocument> importedDocuments = importDocuments(
                 filePaths,
-                Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)DefaultNucleotideSequence.class)
+                Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)DefaultNucleotideSequence.class),
+                BARCODE_ALLOWED_FILE_EXTENSIONS
         );
 
         for (AnnotatedPluginDocument importedDocument : importedDocuments)
@@ -63,7 +73,8 @@ public class ImportUtilities {
 
         List<AnnotatedPluginDocument> importedDocuments = importDocuments(
                 Collections.singletonList(filePath),
-                Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)SequenceAlignmentDocument.class)
+                Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)SequenceAlignmentDocument.class),
+                CONTIGS_CAP3ASSEMBLER_ALLOWED_FILE_EXTENSIONS
         );
 
         for (AnnotatedPluginDocument importedDocument : importedDocuments)
@@ -74,41 +85,45 @@ public class ImportUtilities {
     }
 
     private static List<AnnotatedPluginDocument> importDocuments(List<String> filePaths,
-                                                                 List<Class> expectedDocumentTypes)
+                                                                 List<Class> expectedDocumentTypes,
+                                                                 List<String> allowedFileExtensions)
             throws DocumentOperationException {
-        List<AnnotatedPluginDocument> result = importDocuments(filePaths);
+        List<AnnotatedPluginDocument> result;
+
+        List<File> files = new ArrayList<File>();
+
+        for (String filePath : filePaths) {
+            File file = new File(filePath);
+
+            if (!file.exists())
+                throw new DocumentOperationException("Could not import documents: " +
+                                                     "File or directory '" + filePath + "' does not exist.");
+
+            files.add(file);
+        }
+
+        result = importDocuments(files, allowedFileExtensions);
 
         checkDocumentsAreOfTypes(result, expectedDocumentTypes);
 
         return result;
     }
 
-    private static List<AnnotatedPluginDocument> importDocuments(List<String> documentPaths)
+    private static List<AnnotatedPluginDocument> importDocuments(List<File> files, List<String> allowedFileExtensions)
             throws DocumentOperationException {
         List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
 
-        for (String path : documentPaths) {
-            File source = new File(path);
-
-            if (!source.exists())
-                throw new DocumentOperationException("Could not import document: " +
-                        "File '" + path + "' does not exist.");
-
-            result.addAll(importDocuments(source));
-        }
-
-        return result;
-    }
-
-    private static List<AnnotatedPluginDocument> importDocuments(File source) throws DocumentOperationException {
-        List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
-
         try {
-            if (source.isDirectory())
-                for (File subSource : source.listFiles())
-                    result.addAll(importDocuments(subSource));
-            else
-                result.addAll(PluginUtilities.importDocuments(source, ProgressListener.EMPTY));
+            for (File file : files)
+                if (file.isDirectory())
+                    result.addAll(importDocuments(Arrays.asList(file.listFiles()), allowedFileExtensions));
+                else {
+                    if (fileNameHasOneOfExtensions(file.getName(), allowedFileExtensions))
+                        throw new DocumentOperationException(fileNameInvalidExtensionMessage(file.getName(),
+                                                                                             allowedFileExtensions));
+                    
+                    result.addAll(PluginUtilities.importDocuments(file, ProgressListener.EMPTY));
+                }
         } catch (DocumentImportException e) {
             throw new DocumentOperationException("Could not import documents: " + e.getMessage(), e);
         } catch (IOException e) {
@@ -138,19 +153,38 @@ public class ImportUtilities {
     }
 
     private static String importedDocumentUnexpectedTypeMessage(List<Class> expectedTypes,
-                                                                     Class importedDocumentType,
-                                                                     String importedDocumentName) {
+                                                                Class importedDocumentType,
+                                                                String importedDocumentName) {
         StringBuilder messageBuilder = new StringBuilder();
 
         messageBuilder.append("Could not import ").append(importedDocumentName).append(": ")
-                .append("Document of unexpected type imported, ")
-                .append("expected types: ");
+                      .append("Document of unexpected type imported, ")
+                      .append("expected types: ");
 
         for (Class validDocumentType : expectedTypes)
             messageBuilder.append("<? extends ").append(validDocumentType.getSimpleName()).append(">, ");
 
         messageBuilder.append("actual type: ")
-                .append("<? extends ").append(importedDocumentType.getSimpleName()).append(">.");
+                      .append("<? extends ").append(importedDocumentType.getSimpleName()).append(">.");
+
+        return messageBuilder.toString();
+    }
+
+    private static boolean fileNameHasOneOfExtensions(String fileName, List<String> extensions) {
+        for (String extension : extensions)
+            if (fileName.endsWith("." + extension))
+                return true;
+
+        return false;
+    }
+
+    private static String fileNameInvalidExtensionMessage(String fileName, List<String> allowedExtensions) {
+        StringBuilder messageBuilder = new StringBuilder();
+
+        messageBuilder.append("Could not import documents: ")
+                      .append("File name '").append(fileName).append("' has an incorrect extension, ")
+                      .append("allowed extensions: ")
+                      .append(StringUtilities.join(", ", allowedExtensions)).append(".");
 
         return messageBuilder.toString();
     }
