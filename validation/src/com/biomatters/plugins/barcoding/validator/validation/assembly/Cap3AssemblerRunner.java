@@ -21,7 +21,7 @@ import java.util.List;
  * @author Gen Li
  *         Created on 22/08/14 12:07 PM
  */
-public class Cap3AssemblerProxy {
+public class Cap3AssemblerRunner {
     private static final String CAP3_ASSEMBLER_WINDOWS_FILENAME = "cap3.exe";
     private static final String CAP3_ASSEMBLER_MAC_FILENAME     = "cap3.osx";
     private static final String CAP3_ASSEMBLER_LINUX_FILENAME   = "cap3.linux";
@@ -31,7 +31,7 @@ public class Cap3AssemblerProxy {
     private static final String MIN_OVERLAP_LENGTH_COMMANDLINE_OPTION   = "-o";
     private static final String MIN_OVERLAP_IDENTITY_COMMANDLINE_OPTION = "-p";
 
-    private Cap3AssemblerProxy() {
+    private Cap3AssemblerRunner() {
     }
 
     /**
@@ -147,7 +147,7 @@ public class Cap3AssemblerProxy {
      * @return The path of the CAP3 assembler executable for the current OS.
      */
     private static String getCap3AssemblerFilePath() {
-        return Cap3AssemblerProxy.class.getResource(getCap3AssemblerFileName()).getPath().replace("%20", " ");
+        return Cap3AssemblerRunner.class.getResource(getCap3AssemblerFileName()).getPath().replace("%20", " ");
     }
 
     /**

@@ -5,7 +5,7 @@ import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.plugin.*;
-import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3AssemblerProxy;
+import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3AssemblerRunner;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3AssemblerOptions;
 import com.biomatters.plugins.barcoding.validator.validation.input.Input;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
@@ -134,9 +134,9 @@ public class BarcodeValidatorOperation extends DocumentOperation {
     private SequenceAlignmentDocument assembleTraces(List<NucleotideSequenceDocument> traces,
                                                      Cap3AssemblerOptions options)
             throws DocumentOperationException {
-        List<SequenceAlignmentDocument> result = Cap3AssemblerProxy.assemble(traces,
-                                                                             options.getMinOverlapLength(),
-                                                                             options.getMinOverlapIdentity());
+        List<SequenceAlignmentDocument> result = Cap3AssemblerRunner.assemble(traces,
+                options.getMinOverlapLength(),
+                options.getMinOverlapIdentity());
 
         if (result.size() != 1)
             throw new DocumentOperationException("todo?");
