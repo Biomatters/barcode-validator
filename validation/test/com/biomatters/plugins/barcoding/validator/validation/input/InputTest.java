@@ -18,7 +18,7 @@ import java.util.*;
  * @author Gen Li
  *         Created on 8/09/14 2:36 PM
  */
-public class InputSplitterTest extends Assert {
+public class InputTest extends Assert {
     @Test
     public void testSplitByName() throws DocumentOperationException {
         final String separator = "_";

@@ -1,7 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation.assembly;
 
 import com.biomatters.geneious.publicapi.documents.DocumentField;
-import com.biomatters.geneious.publicapi.documents.PluginDocument;
 import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.documents.XMLSerializationException;
 import com.biomatters.geneious.publicapi.documents.sequence.*;
@@ -103,7 +102,7 @@ public class AssemblyTest extends Assert {
         documents.add(document);
         documents.add(document);
 
-        List<SequenceAlignmentDocument> result = Cap3Assembler.assemble(documents, 40, 90);
+        List<SequenceAlignmentDocument> result = Cap3AssemblerProxy.assemble(documents, 40, 90);
         assertEquals(1, result.size());
         List<SequenceDocument> sequences = result.get(0).getSequences();
         assertEquals(3, sequences.size());

@@ -17,47 +17,66 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * Contains methods for importing documents.
+ * Functionality for importing documents in Geneious-native formats. Non-instantiable.
+ *
  * @author Gen Li
  *         Created on 5/09/14 3:09 PM
  */
 public class ImportUtilities {
-    private final static List<String> TRACE_ALLOWED_FILE_EXTENSIONS
-            = Collections.unmodifiableList(Arrays.asList("ab1"));
-    private final static List<String> BARCODE_ALLOWED_FILE_EXTENSIONS
-            = Collections.unmodifiableList(Arrays.asList("fasta"));
-    private final static List<String> CONTIGS_CAP3ASSEMBLER_ALLOWED_FILE_EXTENSIONS
-            = Collections.unmodifiableList(Arrays.asList("ace"));
+    private final static Set<String> TRACE_ALLOWED_FILE_EXTENSIONS
+            = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("ab1")));
+    private final static Set<String> BARCODE_ALLOWED_FILE_EXTENSIONS
+            = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("fasta")));
+    private final static Set<String> CONTIGS_ALLOWED_FILE_EXTENSIONS
+            = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("ace")));
 
     private ImportUtilities() {
     }
 
-    public static List<NucleotideSequenceDocument> importTraces(List<String> filePaths)
+    /**
+     * Imports traces.
+     *
+     * @param sourcePath Paths of source files or folders containing source files from which traces are imported.
+     * @return Imported traces.
+     * @throws DocumentOperationException
+     */
+    public static List<NucleotideSequenceDocument> importTraces(List<String> sourcePath)
             throws DocumentOperationException {
         List<NucleotideSequenceDocument> result = new ArrayList<NucleotideSequenceDocument>();
 
+        /* Import traces. */
         List<AnnotatedPluginDocument> importedDocuments = importDocuments(
-                filePaths,
+                sourcePath,
                 Arrays.asList((Class)DefaultNucleotideGraphSequence.class),
                 TRACE_ALLOWED_FILE_EXTENSIONS
         );
 
+        /* Filter traces. */
         for (AnnotatedPluginDocument importedDocument : importedDocuments)
             result.add((NucleotideSequenceDocument)importedDocument.getDocument());
 
         return result;
     }
 
-    public static List<NucleotideSequenceDocument> importBarcodes(List<String> filePaths)
+    /**
+     * Imports barcodes.
+     *
+     * @param sourcePath Paths of source files or folders containing source files from which barcodes are imported.
+     * @return Imported barcodes.
+     * @throws DocumentOperationException
+     */
+    public static List<NucleotideSequenceDocument> importBarcodes(List<String> sourcePath)
             throws DocumentOperationException {
         List<NucleotideSequenceDocument> result = new ArrayList<NucleotideSequenceDocument>();
 
+        /* Import barcodes. */
         List<AnnotatedPluginDocument> importedDocuments = importDocuments(
-                filePaths,
+                sourcePath,
                 Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)DefaultNucleotideSequence.class),
                 BARCODE_ALLOWED_FILE_EXTENSIONS
         );
 
+        /* Filter barcodes. */
         for (AnnotatedPluginDocument importedDocument : importedDocuments)
             if (DefaultSequenceListDocument.class.isAssignableFrom(importedDocument.getDocumentClass()))
                 result.addAll(((DefaultSequenceListDocument)importedDocument.getDocument()).getNucleotideSequences());
@@ -67,16 +86,25 @@ public class ImportUtilities {
         return result;
     }
 
-    public static List<SequenceAlignmentDocument> importContigsCap3Assembler(String filePath)
+    /**
+     * Imports contigs.
+     *
+     * @param sourcePath Paths of source files or folders containing source files from which contigs are imported.
+     * @return Imported contigs.
+     * @throws DocumentOperationException
+     */
+    public static List<SequenceAlignmentDocument> importContigs(String sourcePath)
             throws DocumentOperationException {
         List<SequenceAlignmentDocument> result = new ArrayList<SequenceAlignmentDocument>();
 
+        /* Import contigs. */
         List<AnnotatedPluginDocument> importedDocuments = importDocuments(
-                Collections.singletonList(filePath),
+                Collections.singletonList(sourcePath),
                 Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)SequenceAlignmentDocument.class),
-                CONTIGS_CAP3ASSEMBLER_ALLOWED_FILE_EXTENSIONS
+                CONTIGS_ALLOWED_FILE_EXTENSIONS
         );
 
+        /* Filter contigs. */
         for (AnnotatedPluginDocument importedDocument : importedDocuments)
             if (SequenceAlignmentDocument.class.isAssignableFrom(importedDocument.getDocumentClass()))
                 result.add((SequenceAlignmentDocument)importedDocument.getDocument());
@@ -84,9 +112,18 @@ public class ImportUtilities {
         return result;
     }
 
+    /**
+     * Imports documents and checks the correctness of their types.
+     *
+     * @param filePaths Paths of source files or folders containing source files from which documents are imported.
+     * @param expectedDocumentTypes Types among which the imported documents' types must be.
+     * @param allowedFileExtensions File extensions that each document
+     * @return
+     * @throws DocumentOperationException
+     */
     private static List<AnnotatedPluginDocument> importDocuments(List<String> filePaths,
                                                                  List<Class> expectedDocumentTypes,
-                                                                 List<String> allowedFileExtensions)
+                                                                 Set<String> allowedFileExtensions)
             throws DocumentOperationException {
         List<AnnotatedPluginDocument> result;
 
@@ -109,20 +146,29 @@ public class ImportUtilities {
         return result;
     }
 
-    private static List<AnnotatedPluginDocument> importDocuments(List<File> files, List<String> allowedFileExtensions)
+    /**
+     * Imports documents.
+     *
+     * @param sourcefiles Source files or folders containing source files from which documents are imported.
+     * @param allowedFileExtensions Extensions among which the extensions of the source files must be.
+     * @return Imported documents.
+     * @throws DocumentOperationException
+     */
+    private static List<AnnotatedPluginDocument> importDocuments(List<File> sourcefiles,
+                                                                 Set<String> allowedFileExtensions)
             throws DocumentOperationException {
         List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
 
         try {
-            for (File file : files)
-                if (file.isDirectory())
-                    result.addAll(importDocuments(Arrays.asList(file.listFiles()), allowedFileExtensions));
+            for (File sourceFile : sourcefiles)
+                if (sourceFile.isDirectory())
+                    result.addAll(importDocuments(Arrays.asList(sourceFile.listFiles()), allowedFileExtensions));
                 else {
-                    if (fileNameHasOneOfExtensions(file.getName(), allowedFileExtensions))
-                        throw new DocumentOperationException(fileNameInvalidExtensionMessage(file.getName(),
+                    if (fileNameHasOneOfExtensions(sourceFile.getName(), allowedFileExtensions))
+                        throw new DocumentOperationException(fileNameInvalidExtensionMessage(sourceFile.getName(),
                                                                                              allowedFileExtensions));
-                    
-                    result.addAll(PluginUtilities.importDocuments(file, ProgressListener.EMPTY));
+
+                    result.addAll(PluginUtilities.importDocuments(sourceFile, ProgressListener.EMPTY));
                 }
         } catch (DocumentImportException e) {
             throw new DocumentOperationException("Could not import documents: " + e.getMessage(), e);
@@ -133,6 +179,13 @@ public class ImportUtilities {
         return result;
     }
 
+    /**
+     * Checks if a group of documents have types that are among a group of types.
+     *
+     * @param documents Documents.
+     * @param types Types.
+     * @throws DocumentOperationException If a document's type isn't among the group of types supplied is.
+     */
     private static void checkDocumentsAreOfTypes(List<AnnotatedPluginDocument> documents, List<Class> types)
             throws DocumentOperationException {
         for (AnnotatedPluginDocument document : documents)
@@ -143,7 +196,14 @@ public class ImportUtilities {
                         document.getDocument().getName())
                 );
     }
-    
+
+    /**
+     * Checks for a document's type among a group of types.
+     *
+     * @param document Document.
+     * @param types Types.
+     * @return True if the document's type is among the group of types supplied; and false if not.
+     */
     private static boolean isDocumentOfTypes(AnnotatedPluginDocument document, List<Class> types) {
         for (Class type : types)
             if (type.isAssignableFrom(document.getDocumentClass()))
@@ -152,6 +212,14 @@ public class ImportUtilities {
         return false;
     }
 
+    /**
+     * Returns an error message for when an imported document has the wrong type.
+     *
+     * @param expectedTypes Expected types.
+     * @param importedDocumentType Type of the imported document.
+     * @param importedDocumentName Name of the imported document.
+     * @return Error message.
+     */
     private static String importedDocumentUnexpectedTypeMessage(List<Class> expectedTypes,
                                                                 Class importedDocumentType,
                                                                 String importedDocumentName) {
@@ -170,7 +238,14 @@ public class ImportUtilities {
         return messageBuilder.toString();
     }
 
-    private static boolean fileNameHasOneOfExtensions(String fileName, List<String> extensions) {
+    /**
+     * Checks for a filename's extension among a group of extensions.
+     *
+     * @param fileName Filename.
+     * @param extensions Extensions.
+     * @return True if the filename has an extension that is among the supplied extensions; and false if not.
+     */
+    private static boolean fileNameHasOneOfExtensions(String fileName, Set<String> extensions) {
         for (String extension : extensions)
             if (fileName.endsWith("." + extension))
                 return true;
@@ -178,7 +253,14 @@ public class ImportUtilities {
         return false;
     }
 
-    private static String fileNameInvalidExtensionMessage(String fileName, List<String> allowedExtensions) {
+    /**
+     * Returns an error message for when a file has the wrong extension.
+     *
+     * @param fileName Filename.
+     * @param allowedExtensions Allowed extensions.
+     * @return Error message.
+     */
+    private static String fileNameInvalidExtensionMessage(String fileName, Set<String> allowedExtensions) {
         StringBuilder messageBuilder = new StringBuilder();
 
         messageBuilder.append("Could not import documents: ")

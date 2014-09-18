@@ -2,7 +2,7 @@ package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3AssemblerOptions;
-import com.biomatters.plugins.barcoding.validator.validation.input.InputSplitterOptions;
+import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.ErrorProbabilityOptions;
 
 /**
@@ -14,8 +14,8 @@ public class BarcodeValidatorOptions extends Options {
     private static final String TRIMMING_OPTIONS_NAME = "trimming";
     private static final String ASSEMBLY_OPTIONS_NAME = "assembly";
 
-    public BarcodeValidatorOptions() {
-        super(BarcodeValidatorOptions.class);
+    public BarcodeValidatorOptions(Class cls) {
+        super(cls);
 
         addInputOptions();
 
@@ -24,8 +24,8 @@ public class BarcodeValidatorOptions extends Options {
         addAssemblyOptions();
     }
 
-    public InputSplitterOptions getInputOptions() {
-        return (InputSplitterOptions)getChildOptions().get(INPUT_OPTIONS_NAME);
+    public InputOptions getInputOptions() {
+        return (InputOptions)getChildOptions().get(INPUT_OPTIONS_NAME);
     }
 
     public ErrorProbabilityOptions getTrimmingOptions() {
@@ -37,7 +37,7 @@ public class BarcodeValidatorOptions extends Options {
     }
 
     private void addInputOptions() {
-        addCollapsibleChildOptions(INPUT_OPTIONS_NAME, "Input", "", new InputSplitterOptions(), false, false);
+        addCollapsibleChildOptions(INPUT_OPTIONS_NAME, "Input", "", new InputOptions(), false, false);
     }
 
     private void addTrimmingOptions() {

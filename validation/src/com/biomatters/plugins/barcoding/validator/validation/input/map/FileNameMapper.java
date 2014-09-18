@@ -6,6 +6,8 @@ import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import java.util.*;
 
 /**
+ * Algorithm for mapping barcodes to traces using their file names.
+ *
  * @author Gen Li
  *         Created on 4/09/14 12:40 PM
  */
@@ -26,34 +28,51 @@ public class FileNameMapper extends BarcodesToTracesMapper {
         this.barcodeNamePart = barcodeNamePart;
     }
 
+    /**
+     * Maps barcodes to traces.
+     *
+     * @param barcodes Barcodes.
+     * @param traces Traces.
+     * @return Mapping of barcodes to traces.
+     * @throws DocumentOperationException
+     */
     @Override
     public Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
     map(List<NucleotideSequenceDocument> barcodes, List<NucleotideSequenceDocument> traces)
             throws DocumentOperationException {
 
-        /* Map trace documents to part of name of trace documents to match. */
+        /* Map traces to the part of their respective name that is used for grouping. */
         Map<NucleotideSequenceDocument, String> tracesToNameParts = mapDocumentToDocumentNamePart(traces,
                                                                                                   traceSeparator,
                                                                                                   traceNamePart);
 
-        /* Map barcode sequence documents to part of name of barcode sequence document to match. */
+        /* Map barcodes to the part of their respective name that is used for grouping. */
         Map<NucleotideSequenceDocument, String> barcodesToNameParts = mapDocumentToDocumentNamePart(barcodes,
                                                                                                     barcodeSeparator,
                                                                                                     barcodeNamePart);
 
-        return mapBarcodesToTraces(tracesToNameParts, barcodesToNameParts);
+        return groupTracesToBarcodes(tracesToNameParts, barcodesToNameParts);
     }
 
+    /**
+     * Groups traces to barcodes.
+     *
+     * @param tracesToNameParts Map of traces to the part of their respective name that is used for grouping.
+     * @param barcodesToNameParts Map of barcodes to the part of their respective name that is used for grouping.
+     * @return Map of barcodes to traces.
+     * @throws DocumentOperationException
+     */
     private Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
-    mapBarcodesToTraces(Map<NucleotideSequenceDocument, String> tracesToNameParts,
-                        Map<NucleotideSequenceDocument, String> barcodesToNameParts)
-            throws DocumentOperationException {
+    groupTracesToBarcodes(Map<NucleotideSequenceDocument, String> tracesToNameParts,
+                          Map<NucleotideSequenceDocument, String> barcodesToNameParts) throws DocumentOperationException {
         Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>> result
                 = new HashMap<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>();
 
+        /* Populate the result with the barcodes. */
         for (NucleotideSequenceDocument barcode : barcodesToNameParts.keySet())
             result.put(barcode, new ArrayList<NucleotideSequenceDocument>());
 
+        /* Associate the traces with the barcodes. */
         for (Map.Entry<NucleotideSequenceDocument, String> traceToNamePart : tracesToNameParts.entrySet()) {
             String namePart = traceToNamePart.getValue();
 
@@ -74,32 +93,47 @@ public class FileNameMapper extends BarcodesToTracesMapper {
         return result;
     }
 
+    /**
+     * Maps documents to the part of their respective name that is used for grouping.
+     *
+     * @param documents Documents.
+     * @param separator Separator used to extract the document name parts.
+     * @param i Index used to extract the document name parts;
+     * @return Map of documents to the part of their respective name that is used for grouping.
+     * @throws DocumentOperationException
+     */
     private Map<NucleotideSequenceDocument, String>
-    mapDocumentToDocumentNamePart(List<NucleotideSequenceDocument> documents, String separator, int partNumber)
-            throws DocumentOperationException {
+    mapDocumentToDocumentNamePart(List<NucleotideSequenceDocument> documents, String separator, int i) {
         Map<NucleotideSequenceDocument, String> result = new HashMap<NucleotideSequenceDocument, String>();
 
         for (NucleotideSequenceDocument document : documents) {
             String documentName = document.getName();
 
-            result.put(document, getNamePartToMatch(documentName, separator, partNumber));
+            result.put(document, splitAndReturnIth(documentName, separator, i));
         }
 
         return result;
     }
 
-    private String getNamePartToMatch(String name, String separator, int partNumber) throws DocumentOperationException {
-        try {
-            return name.split(separator)[partNumber];
-        } catch (ArrayIndexOutOfBoundsException e) {
-            throw new DocumentOperationException("Could not retrieve " + getNthOrder(partNumber) + " " +
-                                                 "part of '" + name + "' " +
-                                                 "separated by '" + separator + "'.",
-                                                 e);
-        }
+    /**
+     * Equivalent to s.split(sep)[i].
+     *
+     * @param s String.
+     * @param sep Separator.
+     * @param i Index.
+     * @return s.split(sep)[i].
+     */
+    private String splitAndReturnIth(String s, String sep, int i) {
+        return s.split(sep)[i];
     }
 
-    private String getNthOrder(int n) {
+    /**
+     * Returns the n-th ordinal.
+     *
+     * @param n N.
+     * @return N-th ordinal.
+     */
+    private String getOrdinalString(int n) {
         String nString = String.valueOf(n);
 
         String nAbsString = String.valueOf(Math.abs(n));

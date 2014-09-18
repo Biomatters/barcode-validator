@@ -1,7 +1,5 @@
 package com.biomatters.plugins.barcoding.validator.validation.input.map;
 
-import com.biomatters.plugins.barcoding.validator.validation.input.InputSplitterOptions;
-
 /**
  * @author Gen Li
  *         Created on 5/09/14 9:53 AM
@@ -13,8 +11,8 @@ public class FileNameMapperOptions extends BarcodesToTracesMapperOptions {
     private static final String TRACE_SEPARATOR    = "traceSeparator";
     private static final String SEQUENCE_SEPARATOR = "seqSeparator";
 
-    public FileNameMapperOptions() {
-        super(InputSplitterOptions.class);
+    public FileNameMapperOptions(Class cls) {
+        super(cls);
 
         addTraceOptions();
 
