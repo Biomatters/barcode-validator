@@ -14,6 +14,6 @@ public class TrimmingTest extends Assert {
     public void testDocumentsTrimmedCorrectly() {
         SequenceCharSequence sequence = SequenceCharSequence.valueOf("TAGCTAGC");
         Trimmage trimmage = new Trimmage(1, 2);
-        assertEquals(SequenceCharSequence.valueOf("AGCTA"), SequenceTrimmer.trimSequenceAtEnds(sequence, trimmage));
+        assertEquals(SequenceCharSequence.valueOf("AGCTA"), SequenceTrimmer.trimCharacterSequence(sequence, trimmage));
     }
 }

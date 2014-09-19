@@ -118,25 +118,48 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         return result;
     }
 
+    /**
+     * Groups traces to barcodes.
+     *
+     * @param options Trace and barcode file paths and Method options.
+     * @return Map of barcodes to traces.
+     * @throws DocumentOperationException
+     */
     private Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
     groupTracesToBarcodes(InputOptions options) throws DocumentOperationException {
         return Input.processInputs(options.getTraceFilePaths(),
-                                   options.getBarcodeFilePaths(),
-                                   options.getMethodOption());
+                options.getBarcodeFilePaths(),
+                options.getMethodOption());
     }
 
+    /**
+     * Trims traces.
+     *
+     * @param traces Traces.
+     * @param options
+     * @return Trimmed traces.
+     * @throws DocumentOperationException
+     */
     private List<NucleotideSequenceDocument> trimTraces(List<NucleotideSequenceDocument> traces,
                                                         ErrorProbabilityOptions options)
             throws DocumentOperationException {
-        return SequenceTrimmer.trim(traces, options.getErrorProbabilityLimit());
+        return SequenceTrimmer.trimNucleotideSequenceDocuments(traces, options.getErrorProbabilityLimit());
     }
 
+    /**
+     * Assembles contigs.
+     *
+     * @param traces Traces.
+     * @param options
+     * @return Contigs.
+     * @throws DocumentOperationException
+     */
     private SequenceAlignmentDocument assembleTraces(List<NucleotideSequenceDocument> traces,
                                                      Cap3AssemblerOptions options)
             throws DocumentOperationException {
         List<SequenceAlignmentDocument> result = Cap3AssemblerRunner.assemble(traces,
-                options.getMinOverlapLength(),
-                options.getMinOverlapIdentity());
+                                                                              options.getMinOverlapLength(),
+                                                                              options.getMinOverlapIdentity());
 
         if (result.size() != 1)
             throw new DocumentOperationException("todo?");

@@ -40,31 +40,33 @@ public class FileNameMapper extends BarcodesToTracesMapper {
     public Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
     map(List<NucleotideSequenceDocument> barcodes, List<NucleotideSequenceDocument> traces)
             throws DocumentOperationException {
+        try {
+            /* Map traces to the part of their respective names that are used for grouping. */
+            Map<NucleotideSequenceDocument, String> tracesToNameParts =
+                    mapDocumentToDocumentNamePart(traces, traceSeparator, traceNamePart);
 
-        /* Map traces to the part of their respective name that is used for grouping. */
-        Map<NucleotideSequenceDocument, String> tracesToNameParts = mapDocumentToDocumentNamePart(traces,
-                                                                                                  traceSeparator,
-                                                                                                  traceNamePart);
+            /* Map barcodes to the part of their respective name that is used for grouping. */
+            Map<NucleotideSequenceDocument, String> barcodesToNameParts =
+                    mapDocumentToDocumentNamePart(barcodes, barcodeSeparator, barcodeNamePart);
 
-        /* Map barcodes to the part of their respective name that is used for grouping. */
-        Map<NucleotideSequenceDocument, String> barcodesToNameParts = mapDocumentToDocumentNamePart(barcodes,
-                                                                                                    barcodeSeparator,
-                                                                                                    barcodeNamePart);
-
-        return groupTracesToBarcodes(tracesToNameParts, barcodesToNameParts);
+            return groupTracesToBarcodes(tracesToNameParts, barcodesToNameParts);
+        } catch (DocumentOperationException e) {
+            throw new DocumentOperationException("Could not map barcodes to traces: " + e.getMessage(), e);
+        }
     }
 
     /**
      * Groups traces to barcodes.
      *
-     * @param tracesToNameParts Map of traces to the part of their respective name that is used for grouping.
-     * @param barcodesToNameParts Map of barcodes to the part of their respective name that is used for grouping.
+     * @param tracesToNameParts Map of traces to the part of their respective names that are used for grouping.
+     * @param barcodesToNameParts Map of barcodes to the part of their respective names that are used for grouping.
      * @return Map of barcodes to traces.
      * @throws DocumentOperationException
      */
     private Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
     groupTracesToBarcodes(Map<NucleotideSequenceDocument, String> tracesToNameParts,
-                          Map<NucleotideSequenceDocument, String> barcodesToNameParts) throws DocumentOperationException {
+                          Map<NucleotideSequenceDocument, String> barcodesToNameParts)
+            throws DocumentOperationException {
         Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>> result
                 = new HashMap<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>();
 
@@ -83,8 +85,7 @@ public class FileNameMapper extends BarcodesToTracesMapper {
                     barcode = barcodeToNamePart.getKey();
 
             if (barcode == null)
-                throw new DocumentOperationException("Could not match traces to barcodes: " +
-                                                     "Trace '" + traceToNamePart.getKey().getName() + "' " +
+                throw new DocumentOperationException("Trace '" + traceToNamePart.getKey().getName() + "' " +
                                                      "has no associated barcode.");
 
             result.get(barcode).add(traceToNamePart.getKey());
@@ -94,22 +95,28 @@ public class FileNameMapper extends BarcodesToTracesMapper {
     }
 
     /**
-     * Maps documents to the part of their respective name that is used for grouping.
+     * Maps documents to the part of their respective names that are used for grouping.
      *
      * @param documents Documents.
-     * @param separator Separator used to extract the document name parts.
-     * @param i Index used to extract the document name parts;
-     * @return Map of documents to the part of their respective name that is used for grouping.
+     * @param separator Separator used to extract the document name part.
+     * @param i Index used to extract the document name parts.
+     * @return Map of documents to the part of their respective names that are used for grouping.
      * @throws DocumentOperationException
      */
     private Map<NucleotideSequenceDocument, String>
-    mapDocumentToDocumentNamePart(List<NucleotideSequenceDocument> documents, String separator, int i) {
+    mapDocumentToDocumentNamePart(List<NucleotideSequenceDocument> documents, String separator, int i)
+            throws DocumentOperationException {
         Map<NucleotideSequenceDocument, String> result = new HashMap<NucleotideSequenceDocument, String>();
 
         for (NucleotideSequenceDocument document : documents) {
             String documentName = document.getName();
 
-            result.put(document, splitAndReturnIth(documentName, separator, i));
+            try {
+                result.put(document, splitAndReturnIth(documentName, separator, i));
+            } catch (IndexOutOfBoundsException e) {
+                throw new DocumentOperationException("Could not get " + getOrdinalString(i + 1) + " substring of '" +
+                                                     documentName + "' separated by '" + separator + "'.", e);
+            }
         }
 
         return result;
@@ -122,8 +129,9 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @param sep Separator.
      * @param i Index.
      * @return s.split(sep)[i].
+     * @throws java.lang.IndexOutOfBoundsException If i < 0 || i >= s.split().length.
      */
-    private String splitAndReturnIth(String s, String sep, int i) {
+    private String splitAndReturnIth(String s, String sep, int i) throws IndexOutOfBoundsException {
         return s.split(sep)[i];
     }
 

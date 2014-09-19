@@ -20,7 +20,7 @@ public class Input {
     }
 
     /**
-     * Imports traces and barcodes from the supplied source files and groups the traces to the barcodes.
+     * Imports traces and barcodes from supplied source files and groups the traces to the barcodes.
      *
      * @param traceFilePaths Paths of trace source files.
      * @param barcodeFilePaths Paths of barcode source files.

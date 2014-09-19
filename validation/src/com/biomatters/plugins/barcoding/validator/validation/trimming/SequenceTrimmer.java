@@ -31,17 +31,19 @@ public class SequenceTrimmer {
      * @return Trimmed Documents.
      * @throws DocumentOperationException
      */
-    public static List<NucleotideSequenceDocument> trim(List<NucleotideSequenceDocument> documents,
-                                                        double errorProbabilityLimit)
+    public static List<NucleotideSequenceDocument>
+    trimNucleotideSequenceDocuments(List<NucleotideSequenceDocument> documents, double errorProbabilityLimit)
             throws DocumentOperationException {
-        List<NucleotideSequenceDocument> trimmedSequences;
+        List<NucleotideSequenceDocument> trimmedSequences = new ArrayList<NucleotideSequenceDocument>();
 
-        trimmedSequences = new ArrayList<NucleotideSequenceDocument>();
+        try {
+            for (NucleotideSequenceDocument trace : documents) {
+                Trimmage trimmage = ErrorProbabilityTrimmer.getTrimmage(trace, TrimmableEnds.Both, errorProbabilityLimit);
 
-        for (NucleotideSequenceDocument trace : documents) {
-            Trimmage trimmage = ErrorProbabilityTrimmer.getTrimmage(trace, TrimmableEnds.Both, errorProbabilityLimit);
+                trimmedSequences.add(trimNucleotideSequenceDocument(trace, trimmage));
+            }
+        } catch (DocumentOperationException e) {
 
-            trimmedSequences.add(trimNucleotideSequenceDocument(trace, trimmage));
         }
 
         return trimmedSequences;
@@ -54,8 +56,7 @@ public class SequenceTrimmer {
      * @param trimmage Region lengths.
      * @return Trimmed character sequence.
      */
-    public static SequenceCharSequence trimSequenceAtEnds(SequenceCharSequence sequence, Trimmage trimmage)
-            throws IndexOutOfBoundsException {
+    public static SequenceCharSequence trimCharacterSequence(SequenceCharSequence sequence, Trimmage trimmage) {
         return sequence.subSequence(trimmage.trimAtStart, sequence.length() - trimmage.trimAtEnd);
     }
 
@@ -71,15 +72,14 @@ public class SequenceTrimmer {
                                                                              Trimmage trimmage)
             throws DocumentOperationException {
         try {
-            return createNucleotideSequenceDocument(trimSequenceAtEnds(document.getCharSequence(),
-                            trimmage),
-                    document.getSequenceAnnotations(),
-                    document.isCircular(),
-                    document.getDisplayableFields(),
-                    document.getName(),
-                    document.getURN(),
-                    document.getCreationDate(),
-                    document.getDescription());
+            return createNucleotideSequenceDocument(trimCharacterSequence(document.getCharSequence(), trimmage),
+                                                                          document.getSequenceAnnotations(),
+                                                                          document.isCircular(),
+                                                                          document.getDisplayableFields(),
+                                                                          document.getName(),
+                                                                          document.getURN(),
+                                                                          document.getCreationDate(),
+                                                                          document.getDescription());
         } catch (IndexOutOfBoundsException e) {
             throw new DocumentOperationException("Could not trim '" + document.getName() + "': " + e.getMessage(), e);
         }
