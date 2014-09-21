@@ -93,7 +93,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         for (List<NucleotideSequenceDocument> traces : suppliedBarcodesToSuppliedTraces.values())
             suppliedTracesToTrimmedTraces.put(traces, trimTraces(traces, trimmingOptions));
 
-        /* Assemble trimmed traces. */
+        /* Assemble contigs from trimmed traces. */
         composite.beginSubtask("Assembling traces.");
         for (Map.Entry<List<NucleotideSequenceDocument>, List<NucleotideSequenceDocument>>
                 suppliedTracesToTrimmedTracesEntry : suppliedTracesToTrimmedTraces.entrySet()) {
