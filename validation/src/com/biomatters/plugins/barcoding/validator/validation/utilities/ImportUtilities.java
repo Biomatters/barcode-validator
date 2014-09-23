@@ -9,7 +9,6 @@ import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleot
 import com.biomatters.geneious.publicapi.plugin.DocumentImportException;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.PluginUtilities;
-import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import jebl.util.ProgressListener;
 
 import java.io.File;
@@ -45,7 +44,6 @@ public class ImportUtilities {
         List<NucleotideSequenceDocument> result = new ArrayList<NucleotideSequenceDocument>();
 
         List<AnnotatedPluginDocument> importedDocuments;
-
         try {
             /* Import traces. */
             importedDocuments = importDocuments(
@@ -76,12 +74,11 @@ public class ImportUtilities {
         List<NucleotideSequenceDocument> result = new ArrayList<NucleotideSequenceDocument>();
 
         List<AnnotatedPluginDocument> importedDocuments;
-
         try {
             /* Import barcodes. */
             importedDocuments = importDocuments(
                     sourcePath,
-                    Arrays.asList((Class) DefaultSequenceListDocument.class, (Class) DefaultNucleotideSequence.class),
+                    Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)DefaultNucleotideSequence.class),
                     BARCODE_ALLOWED_FILE_EXTENSIONS
             );
         } catch (DocumentOperationException e) {
@@ -179,13 +176,8 @@ public class ImportUtilities {
             for (File sourceFile : sourcefiles)
                 if (sourceFile.isDirectory())
                     result.addAll(importDocuments(Arrays.asList(sourceFile.listFiles()), allowedFileExtensions));
-                else {
-                    if (!fileNameHasOneOfExtensions(sourceFile.getName(), allowedFileExtensions))
-                        throw new DocumentOperationException(fileNameInvalidExtensionMessage(sourceFile.getName(),
-                                                                                             allowedFileExtensions));
-
+                else if (fileNameHasOneOfExtensions(sourceFile.getName(), allowedFileExtensions))
                     result.addAll(PluginUtilities.importDocuments(sourceFile, ProgressListener.EMPTY));
-                }
         } catch (DocumentImportException e) {
             throw new DocumentOperationException(e.getMessage(), e);
         } catch (IOException e) {
@@ -265,22 +257,5 @@ public class ImportUtilities {
                 return true;
 
         return false;
-    }
-
-    /**
-     * Returns an error message for when a file has the wrong extension.
-     *
-     * @param fileName Filename.
-     * @param allowedExtensions Allowed extensions.
-     * @return Error message.
-     */
-    private static String fileNameInvalidExtensionMessage(String fileName, Set<String> allowedExtensions) {
-        StringBuilder messageBuilder = new StringBuilder();
-
-        messageBuilder.append("File name '").append(fileName).append("' has an incorrect extension, ")
-                      .append("allowed extensions: ")
-                      .append(StringUtilities.join(", ", allowedExtensions)).append(".");
-
-        return messageBuilder.toString();
     }
 }

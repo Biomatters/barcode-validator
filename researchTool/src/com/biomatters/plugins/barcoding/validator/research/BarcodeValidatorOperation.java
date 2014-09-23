@@ -61,8 +61,8 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                                                           Options options) throws DocumentOperationException {
         if (!(options instanceof BarcodeValidatorOptions))
             throw new DocumentOperationException("Unexpected Options type, " +
-                                                 "expected: BarcodeValidatorOptions, " +
-                                                 "actual: " + options.getClass().getSimpleName() + ".");
+                    "expected: BarcodeValidatorOptions, " +
+                    "actual: " + options.getClass().getSimpleName() + ".");
 
         List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
 
@@ -110,8 +110,16 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             );
         }
 
-        for (SequenceAlignmentDocument assembledBarcode : suppliedBarcodesToAssembledBarcodes.values())
-            result.add(DocumentUtilities.createAnnotatedPluginDocument(assembledBarcode));
+        for (Map.Entry<NucleotideSequenceDocument, SequenceAlignmentDocument>
+                suppliedBarcodeToAssembledBarcode : suppliedBarcodesToAssembledBarcodes.entrySet()) {
+            AnnotatedPluginDocument contigDocument
+                    = DocumentUtilities.createAnnotatedPluginDocument(suppliedBarcodeToAssembledBarcode.getValue());
+
+            /* Rename contig. */
+            contigDocument.setName(suppliedBarcodeToAssembledBarcode.getKey().getName() + " Contig");
+
+            result.add(contigDocument);
+        }
 
         composite.setComplete();
 

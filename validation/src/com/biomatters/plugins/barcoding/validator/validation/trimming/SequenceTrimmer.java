@@ -43,7 +43,7 @@ public class SequenceTrimmer {
                 trimmedSequences.add(trimNucleotideSequenceDocument(trace, trimmage));
             }
         } catch (DocumentOperationException e) {
-
+            throw new DocumentOperationException("Could not trim NucleotideSequenceDocuments: " + e.getMessage(), e);
         }
 
         return trimmedSequences;

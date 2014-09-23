@@ -50,7 +50,7 @@ public class Cap3AssemblerRunner {
             return ImportUtilities.importContigs(executeCap3Assembler(createFastaFile(sequences),
                                                                       minOverlapLength,
                                                                       minOverlapIdentity));
-        } catch (IllegalStateException e) {
+        } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not assemble contigs: " + e.getMessage(), e);
         } catch (InterruptedException e) {
             throw new DocumentOperationException("Could not assemble contigs: " + e.getMessage(), e);
@@ -71,7 +71,7 @@ public class Cap3AssemblerRunner {
      * @throws IOException
      */
     private static String executeCap3Assembler(String fastaFilePath, int minOverlapLength, int minOverlapIdentity)
-            throws IllegalStateException, InterruptedException, IOException {
+            throws DocumentOperationException, InterruptedException, IOException {
         Execution exec = new Execution(
                 new String[] {
                         getCap3AssemblerFilePath(),
@@ -140,8 +140,9 @@ public class Cap3AssemblerRunner {
      * Returns the path of the CAP3 assembler executable for the current OS.
      *
      * @return The path of the CAP3 assembler executable for the current OS.
+     * @throws DocumentOperationException If no CAP3 assembler executable is available for the current OS.
      */
-    private static String getCap3AssemblerFilePath() throws IllegalStateException {
+    private static String getCap3AssemblerFilePath() throws DocumentOperationException {
         String result = Cap3AssemblerRunner.class.getResource(getCap3AssemblerFileName()).getPath().replace("%20", " ");
 
         if (result == null)
@@ -156,9 +157,9 @@ public class Cap3AssemblerRunner {
      * Returns the file name of the CAP3 assembler executable for the current OS.
      *
      * @return The file name of the CAP3 assembler executable for the current OS.
-     * @throws IllegalStateException If no CAP3 assembler executable is available for the current OS.
+     * @throws DocumentOperationException If no CAP3 assembler executable is available for the current OS.
      */
-    private static String getCap3AssemblerFileName() throws IllegalStateException {
+    private static String getCap3AssemblerFileName() throws DocumentOperationException {
         String operatingSystem = System.getProperty("os.name").toLowerCase();
 
         if (operatingSystem.contains("windows"))
@@ -168,6 +169,6 @@ public class Cap3AssemblerRunner {
         else if (operatingSystem.contains("linux"))
             return CAP3_ASSEMBLER_LINUX_FILENAME;
         else
-            throw new IllegalStateException("Unsupported operating system: " + operatingSystem);
+            throw new DocumentOperationException("Unsupported operating system: " + operatingSystem);
     }
 }
