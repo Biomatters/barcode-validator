@@ -16,10 +16,13 @@ import java.util.*;
 public class InputTest extends Assert {
     @Test
     public void testSplitByName() throws DocumentOperationException {
-        final String separator = "_";
-        List<NucleotideSequenceDocument> traces;
-        List<NucleotideSequenceDocument> barcodes;
+        for (String separator : Arrays.asList("_", "*", "|", ":", "$", "=", ".", ",", "+", "~", " ")) {
+            performMappingTestWithSeparator(separator);
+        }
 
+    }
+
+    public void performMappingTestWithSeparator(String separator) throws DocumentOperationException {
         NucleotideSequenceDocument t1 = new DefaultNucleotideSequence("trace1" + separator + "1", "");
         NucleotideSequenceDocument t2 = new DefaultNucleotideSequence("trace2" + separator + "1", "");
         NucleotideSequenceDocument t3 = new DefaultNucleotideSequence("trace3" + separator + "1", "");
@@ -28,10 +31,11 @@ public class InputTest extends Assert {
         NucleotideSequenceDocument b1 = new DefaultNucleotideSequence("1" + separator + "barcode1", "");
         NucleotideSequenceDocument b2 = new DefaultNucleotideSequence("2" + separator + "barcode2", "");
 
-        traces = Arrays.asList(t1, t2, t3, t4);
-        barcodes = Arrays.asList(b1, b2);
+        List<NucleotideSequenceDocument> traces = Arrays.asList(t1, t2, t3, t4);
+        List<NucleotideSequenceDocument> barcodes = Arrays.asList(b1, b2);
 
-        FileNameMapper mapper = new FileNameMapper("_", 1, "_", 0);
+        String regex = getRegularExpressionForSeparator(separator);
+        FileNameMapper mapper = new FileNameMapper(regex, 1, regex, 0);
 
         Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>> mapped = mapper.map(barcodes, traces);
 
@@ -47,5 +51,26 @@ public class InputTest extends Assert {
 
         assertEquals(1, mappedToB2.size());
         assertTrue(mappedToB2.contains(t4));
+    }
+
+    private static String getRegularExpressionForSeparator(String separator) {
+        String regex = separtorToExpression.get(separator);
+        if(regex != null) {
+            return regex;
+        } else {
+            return separator;
+        }
+    }
+
+
+    private static Map<String, String> separtorToExpression = new HashMap<String, String>();
+    static {
+        separtorToExpression.put("*", "\\*");
+        separtorToExpression.put("|", "\\|");
+        separtorToExpression.put("$", "\\$");
+        separtorToExpression.put(".", "\\.");
+        separtorToExpression.put("+", "\\+");
+        separtorToExpression.put("~", "\\~");
+        separtorToExpression.put(" ", "\\s+");
     }
 }
