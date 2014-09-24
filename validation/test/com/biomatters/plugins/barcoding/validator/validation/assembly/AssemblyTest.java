@@ -4,6 +4,7 @@ import com.biomatters.geneious.publicapi.documents.DocumentField;
 import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.documents.XMLSerializationException;
 import com.biomatters.geneious.publicapi.documents.sequence.*;
+import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 
 import com.biomatters.geneious.publicapi.plugin.TestGeneious;
@@ -23,81 +24,12 @@ import java.util.List;
 public class AssemblyTest extends Assert {
     @Test
     public void testContigAssembled() throws DocumentOperationException {
-        TestGeneious.initialize();
-        TestGeneious.initializeAllPlugins();
+        TestGeneious.initializePlugins(
+                "com.biomatters.plugins.fileimportexport.AceImporter.AceImporterPlugin",  // Required to process Cap3 results
+                "com.biomatters.plugins.local.LocalDatabasePlugin"  // Required becasue Ace importer requires a WritableDatabaseService
+        );
         final String theSequence = "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG";
-        NucleotideSequenceDocument document = new NucleotideSequenceDocument() {
-            @Override
-            public String getSequenceString() {
-                return theSequence;
-            }
-
-            @Override
-            public int getSequenceLength() {
-                return 4;
-            }
-
-            @Override
-            public SequenceCharSequence getCharSequence() {
-                return null;
-            }
-
-            @Override
-            public List<SequenceAnnotation> getSequenceAnnotations() {
-                return new ArrayList<SequenceAnnotation>();
-            }
-
-            @Override
-            public boolean isCircular() {
-                return false;
-            }
-
-            @Override
-            public List<DocumentField> getDisplayableFields() {
-                return null;
-            }
-
-            @Override
-            public Object getFieldValue(String fieldCodeName) {
-                return null;
-            }
-
-            @Override
-            public String getName() {
-                return "testDoc";
-            }
-
-            @Override
-            public URN getURN() {
-                return null;
-            }
-
-            @Override
-            public Date getCreationDate() {
-                return null;
-            }
-
-            @Override
-            public String getDescription() {
-                return "Test document";
-            }
-
-            @Override
-            public String toHTML() {
-                return null;
-            }
-
-            @Override
-            public Element toXML() {
-                return null;
-            }
-
-            @Override
-            public void fromXML(Element element) throws XMLSerializationException {
-
-            }
-        };
-
+        NucleotideSequenceDocument document = new DefaultNucleotideSequence("testDoc", "Test document", theSequence, new Date());
         List<NucleotideSequenceDocument> documents = new ArrayList<NucleotideSequenceDocument>();
         documents.add(document);
         documents.add(document);
