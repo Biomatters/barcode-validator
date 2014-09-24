@@ -24,11 +24,11 @@ public class SequenceTrimmer {
     }
 
     /**
-     * Trims NucleotideSequenceDocuments by removing regions from the ends their sequences.
+     * Trims NucleotideSequenceDocuments: Removes regions from the ends of their sequences.
      *
      * @param documents Documents.
      * @param errorProbabilityLimit Error probability limit.
-     * @return Trimmed Documents.
+     * @return Trimmed documents.
      * @throws DocumentOperationException
      */
     public static List<NucleotideSequenceDocument>
@@ -38,22 +38,24 @@ public class SequenceTrimmer {
 
         try {
             for (NucleotideSequenceDocument trace : documents) {
-                Trimmage trimmage = ErrorProbabilityTrimmer.getTrimmage(trace, TrimmableEnds.Both, errorProbabilityLimit);
+                Trimmage trimmage = ErrorProbabilityTrimmer.getTrimmage(trace,
+                                                                        TrimmableEnds.Both,
+                                                                        errorProbabilityLimit);
 
                 trimmedSequences.add(trimNucleotideSequenceDocument(trace, trimmage));
             }
         } catch (DocumentOperationException e) {
-            throw new DocumentOperationException("Could not trim NucleotideSequenceDocuments: " + e.getMessage(), e);
+            throw new DocumentOperationException("Could not trim documents: " + e.getMessage(), e);
         }
 
         return trimmedSequences;
     }
 
     /**
-     * Trims character sequences by removing regions from its ends.
+     * Removes regions from a character sequence's ends.
      *
      * @param sequence Character sequence.
-     * @param trimmage Region lengths.
+     * @param trimmage Regions.
      * @return Trimmed character sequence.
      */
     public static SequenceCharSequence trimCharacterSequence(SequenceCharSequence sequence, Trimmage trimmage) {
@@ -61,11 +63,11 @@ public class SequenceTrimmer {
     }
 
     /**
-     * Trims a single NucleotideSequenceDocument by removing regions from the ends of the its sequence.
+     * Trims a NucleotideSequenceDocument: Removes regions from the ends of its sequence.
      *
-     * @param document NucleotideSequenceDocument for trimming.
+     * @param document Document.
      * @param trimmage Region lengths.
-     * @return Trimmed NucleotideSequenceDocument.
+     * @return Trimmed document.
      * @throws DocumentOperationException
      */
     private static NucleotideSequenceDocument trimNucleotideSequenceDocument(NucleotideSequenceDocument document,
@@ -88,7 +90,7 @@ public class SequenceTrimmer {
     /**
      * Creates a NucleotideSequenceDocument.
      *
-     * @return NucleotideSequenceDocument.
+     * @return Document.
      */
     private static NucleotideSequenceDocument
     createNucleotideSequenceDocument(final SequenceCharSequence sequence,

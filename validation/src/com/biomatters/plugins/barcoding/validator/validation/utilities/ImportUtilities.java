@@ -35,8 +35,8 @@ public class ImportUtilities {
     /**
      * Imports traces.
      *
-     * @param sourcePath Paths of source files or folders containing source files from which traces are imported.
-     * @return Imported traces.
+     * @param sourcePath Paths of source files or folders containing source files, from which traces are imported.
+     * @return Traces.
      * @throws DocumentOperationException
      */
     public static List<NucleotideSequenceDocument> importTraces(List<String> sourcePath)
@@ -65,8 +65,8 @@ public class ImportUtilities {
     /**
      * Imports barcodes.
      *
-     * @param sourcePath Paths of source files or folders containing source files from which barcodes are imported.
-     * @return Imported barcodes.
+     * @param sourcePath Paths of source files or folders containing source files, from which barcodes are imported.
+     * @return Barcodes.
      * @throws DocumentOperationException
      */
     public static List<NucleotideSequenceDocument> importBarcodes(List<String> sourcePath)
@@ -98,8 +98,8 @@ public class ImportUtilities {
     /**
      * Imports contigs.
      *
-     * @param sourcePath Paths of source files or folders containing source files from which contigs are imported.
-     * @return Imported contigs.
+     * @param sourcePath Paths of source files or folders containing source files, from which contigs are imported.
+     * @return Contigs.
      * @throws DocumentOperationException
      */
     public static List<SequenceAlignmentDocument> importContigs(String sourcePath)
@@ -129,10 +129,10 @@ public class ImportUtilities {
     /**
      * Imports documents and checks the correctness of their types.
      *
-     * @param filePaths Paths of source files or folders containing source files from which documents are imported.
-     * @param expectedDocumentTypes Types among which the imported documents' types must be.
-     * @param allowedFileExtensions File extensions that each document must associate with one of.
-     * @return Imported documents.
+     * @param filePaths Paths of source files or folders containing source files, from which documents are imported.
+     * @param expectedDocumentTypes Expected types of imported documents.
+     * @param allowedFileExtensions Allowed file extensions  source files.
+     * @return Documents.
      * @throws DocumentOperationException
      */
     private static List<AnnotatedPluginDocument> importDocuments(List<String> filePaths,
@@ -162,8 +162,8 @@ public class ImportUtilities {
     /**
      * Imports documents. Folders are recursively scanned and their containing files accumulated.
      *
-     * @param sourcefiles Source files or folders containing source files from which documents are imported.
-     * @param allowedFileExtensions Extensions among which the extensions of the source files must be.
+     * @param sourcefiles Source files or folders containing source files, from which documents are imported.
+     * @param allowedFileExtensions Allowed file extensions for source files..
      * @return Imported documents.
      * @throws DocumentOperationException
      */
@@ -188,11 +188,11 @@ public class ImportUtilities {
     }
 
     /**
-     * Checks for the presence of a group of documents' types in a group of types.
+     * Checks for the presence of the types of a group of document types in a group of types.
      *
      * @param documents Documents.
      * @param types Types.
-     * @throws DocumentOperationException If the type of one or more documents aren't present in the group of types.
+     * @throws DocumentOperationException If the type(s) of one or more documents are not present in the group of types.
      */
     private static void checkDocumentsAreOfTypes(List<AnnotatedPluginDocument> documents, List<Class> types)
             throws DocumentOperationException {
@@ -206,11 +206,11 @@ public class ImportUtilities {
     }
 
     /**
-     * Checks for the presence of a document's type in a group of types.
+     * Checks for the presence of a document's type among a group of types.
      *
      * @param document Document.
      * @param types Types.
-     * @return True if the document's type is present in the group of types; false if not.
+     * @return True if the document's type is among the group of types; false if not.
      */
     private static boolean isDocumentOfTypes(AnnotatedPluginDocument document, List<Class> types) {
         for (Class type : types)
@@ -224,8 +224,8 @@ public class ImportUtilities {
      * Returns an error message for when an imported document has the wrong type.
      *
      * @param expectedTypes Expected types.
-     * @param importedDocumentType Type of the imported document.
-     * @param importedDocumentName Name of the imported document.
+     * @param importedDocumentType Imported document type.
+     * @param importedDocumentName Imported document name.
      * @return Error message.
      */
     private static String importedDocumentUnexpectedTypeMessage(List<Class> expectedTypes,
@@ -245,11 +245,11 @@ public class ImportUtilities {
     }
 
     /**
-     * Checks for the presence of a filename's extension in a group of extensions.
+     * Checks for the presence of a filename's extension among a group of extensions.
      *
      * @param fileName Filename.
      * @param extensions Extensions.
-     * @return True if the filename has an extension that is among the supplied extensions; false if not.
+     * @return True if the filename has an extension that is among the group of extensions; false if not.
      */
     private static boolean fileNameHasOneOfExtensions(String fileName, Set<String> extensions) {
         for (String extension : extensions)

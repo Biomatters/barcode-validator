@@ -20,12 +20,12 @@ public class Input {
     }
 
     /**
-     * Imports traces and barcodes from supplied source files and groups the traces to the barcodes.
+     * Imports traces and barcodes and maps traces to barcodes.
      *
-     * @param traceFilePaths Paths of trace source files.
-     * @param barcodeFilePaths Paths of barcode source files.
-     * @param options Configuration details for the mapping of traces to barcodes.
-     * @return Mapping of barcodes to traces.
+     * @param traceFilePaths Trace source file paths.
+     * @param barcodeFilePaths Barcode source file paths.
+     * @param options Method and settings for grouping traces to barcodes.
+     * @return Map of barcodes to traces.
      * @throws DocumentOperationException
      */
     public static Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>

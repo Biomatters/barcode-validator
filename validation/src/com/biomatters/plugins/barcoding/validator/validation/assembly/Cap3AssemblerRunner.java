@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Functionality for utilizing the Cap3 assembler. Non-instantiable.
+ * Functionality for utilizing the CAP3 assembler. Non-instantiable.
  *
  * @author Gen Li
  *         Created on 22/08/14 12:07 PM
@@ -37,19 +37,19 @@ public class Cap3AssemblerRunner {
     /**
      * Assembles contigs.
      *
-     * @param sequences Sequences for assembling.
-     * @param minOverlapLength Minimum overlap length value.
-     * @param minOverlapIdentity Minimum overlap identity value.
-     * @return Assembled contigs.
+     * @param sequences Sequences.
+     * @param minOverlapLength Minimum overlap length.
+     * @param minOverlapIdentity Minimum overlap identity.
+     * @return Contigs.
      * @throws DocumentOperationException
      */
     public static List<SequenceAlignmentDocument> assemble(List<NucleotideSequenceDocument> sequences,
                                                            int minOverlapLength,
                                                            int minOverlapIdentity) throws DocumentOperationException {
         try {
-            return ImportUtilities.importContigs(executeCap3Assembler(createFastaFile(sequences),
-                                                                      minOverlapLength,
-                                                                      minOverlapIdentity));
+            return ImportUtilities.importContigs(runCap3Assembler(createFastaFile(sequences),
+                    minOverlapLength,
+                    minOverlapIdentity));
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not assemble contigs: " + e.getMessage(), e);
         } catch (InterruptedException e) {
@@ -60,17 +60,17 @@ public class Cap3AssemblerRunner {
     }
 
     /**
-     * Executes the CAP3 assembler.
+     * Runs the CAP3 assembler.
      *
-     * @param fastaFilePath Path of fasta file input.
-     * @param minOverlapLength Minimum overlap length value.
-     * @param minOverlapIdentity Minimum overlap identity value.
-     * @return Path of the {@value #CAP3_ASSEMBLER_RESULT_FILE_EXTENSION} output file.
-     * @throws java.lang.IllegalStateException
+     * @param fastaFilePath Fasta file path.
+     * @param minOverlapLength Minimum overlap length.
+     * @param minOverlapIdentity Minimum overlap identity.
+     * @return {@value #CAP3_ASSEMBLER_RESULT_FILE_EXTENSION} output file path.
+     * @throws DocumentOperationException
      * @throws InterruptedException
      * @throws IOException
      */
-    private static String executeCap3Assembler(String fastaFilePath, int minOverlapLength, int minOverlapIdentity)
+    private static String runCap3Assembler(String fastaFilePath, int minOverlapLength, int minOverlapIdentity)
             throws DocumentOperationException, InterruptedException, IOException {
         Execution exec = new Execution(
                 new String[] {
@@ -89,17 +89,17 @@ public class Cap3AssemblerRunner {
 
         exec.setWorkingDirectory(fastaFilePath.substring(0, fastaFilePath.lastIndexOf(File.separator)));
 
-        /* Execute the CAP3 assembler. */
+        /* Run. */
         exec.execute();
 
         return fastaFilePath + CAP3_ASSEMBLER_RESULT_FILE_EXTENSION;
     }
 
     /**
-     * Creates fasta file from sequences.
+     * Creates a fasta file from sequences.
      *
      * @param sequences Sequences.
-     * @return Path of fasta file.
+     * @return Fasta file path.
      */
     private static String createFastaFile(List<NucleotideSequenceDocument> sequences) throws IOException {
         File fastaFile = FileUtilities.createTempFile("temp", ".fasta", false);
@@ -122,15 +122,15 @@ public class Cap3AssemblerRunner {
     private static String toFastaFileFormat(List<NucleotideSequenceDocument> sequences) {
         StringBuilder fastaOutput = new StringBuilder();
 
-        /* Generate the fasta file output. */
+        /* Generate fasta file output. */
         for (NucleotideSequenceDocument sequence : sequences)
             fastaOutput.append(">").append(sequence.getName()).append(" ").append(sequence.getDescription())
-                    .append("\n")
-                    .append(sequence.getSequenceString().toUpperCase())
-                    .append("\n");
+                       .append("\n")
+                       .append(sequence.getSequenceString().toUpperCase())
+                       .append("\n");
 
+        /* Remove trailing new line. */
         if (fastaOutput.length() > 0)
-            /* Remove the trailing new line character. */
             fastaOutput.deleteCharAt(fastaOutput.length() - 1);
 
         return fastaOutput.toString();
@@ -139,16 +139,16 @@ public class Cap3AssemblerRunner {
     /**
      * Returns the path of the CAP3 assembler executable for the current OS.
      *
-     * @return The path of the CAP3 assembler executable for the current OS.
-     * @throws DocumentOperationException If no CAP3 assembler executable is available for the current OS.
+     * @return Path of the CAP3 assembler executable for the current OS.
+     * @throws DocumentOperationException If a CAP3 assembler executable is not available for the current OS.
      */
     private static String getCap3AssemblerFilePath() throws DocumentOperationException {
         String result = Cap3AssemblerRunner.class.getResource(getCap3AssemblerFileName()).getPath().replace("%20", " ");
 
         if (result == null)
-            throw new IllegalStateException("Missing plugin resource: " +
-                                            "Try re-installing the plugin. " +
-                                            "Contact support@mooreasoftware.org if the issue still persists.");
+            throw new DocumentOperationException("Missing plugin resource: " +
+                                                 "Try re-installing the plugin. " +
+                                                 "Contact support@mooreasoftware.org if the issue still persists.");
 
         return result;
     }
@@ -156,8 +156,8 @@ public class Cap3AssemblerRunner {
     /**
      * Returns the file name of the CAP3 assembler executable for the current OS.
      *
-     * @return The file name of the CAP3 assembler executable for the current OS.
-     * @throws DocumentOperationException If no CAP3 assembler executable is available for the current OS.
+     * @return File name of the CAP3 assembler executable for the current OS.
+     * @throws DocumentOperationException If a CAP3 assembler executable is not available for the current OS.
      */
     private static String getCap3AssemblerFileName() throws DocumentOperationException {
         String operatingSystem = System.getProperty("os.name").toLowerCase();

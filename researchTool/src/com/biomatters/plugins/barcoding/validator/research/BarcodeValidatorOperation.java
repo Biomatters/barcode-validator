@@ -136,8 +136,8 @@ public class BarcodeValidatorOperation extends DocumentOperation {
     private Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
     groupTracesToBarcodes(InputOptions options) throws DocumentOperationException {
         return Input.processInputs(options.getTraceFilePaths(),
-                options.getBarcodeFilePaths(),
-                options.getMethodOption());
+                                   options.getBarcodeFilePaths(),
+                                   options.getMethodOption());
     }
 
     /**
