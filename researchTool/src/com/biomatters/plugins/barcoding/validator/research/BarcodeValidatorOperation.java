@@ -85,24 +85,31 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         CompositeProgressListener composite = new CompositeProgressListener(progressListener, 3);
 
         /* Split inputs. */
-        composite.beginSubtask("Grouping traces to barcodes.");
+        composite.beginSubtask("Grouping traces to barcodes");
         suppliedBarcodesToSuppliedTraces = groupTracesToBarcodes(inputSplitterOptions);
 
         /* Trim traces. */
-        composite.beginSubtask("Trimming traces.");
-        for (List<NucleotideSequenceDocument> traces : suppliedBarcodesToSuppliedTraces.values())
+        composite.beginSubtask("Trimming traces");
+        CompositeProgressListener trimmingProgress = new CompositeProgressListener(composite, suppliedBarcodesToSuppliedTraces.size());
+        for (List<NucleotideSequenceDocument> traces : suppliedBarcodesToSuppliedTraces.values()) {
+            trimmingProgress.beginSubtask();
             suppliedTracesToTrimmedTraces.put(traces, trimTraces(traces, trimmingOptions));
+        }
 
         /* Assemble contigs from trimmed traces. */
-        composite.beginSubtask("Assembling traces.");
+        composite.beginSubtask("Assembling traces");
+        CompositeProgressListener assemblyProgress = new CompositeProgressListener(composite, suppliedTracesToTrimmedTraces.size());
         for (Map.Entry<List<NucleotideSequenceDocument>, List<NucleotideSequenceDocument>>
                 suppliedTracesToTrimmedTracesEntry : suppliedTracesToTrimmedTraces.entrySet()) {
+            assemblyProgress.beginSubtask();
             NucleotideSequenceDocument suppliedBarcode = null;
 
             for (Map.Entry<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
-                    suppliedBarcodesToSuppliedTracesEntry : suppliedBarcodesToSuppliedTraces.entrySet())
-                if (suppliedBarcodesToSuppliedTracesEntry.getValue().equals(suppliedTracesToTrimmedTracesEntry.getKey()))
+                    suppliedBarcodesToSuppliedTracesEntry : suppliedBarcodesToSuppliedTraces.entrySet()) {
+                if (suppliedBarcodesToSuppliedTracesEntry.getValue().equals(suppliedTracesToTrimmedTracesEntry.getKey())) {
                     suppliedBarcode = suppliedBarcodesToSuppliedTracesEntry.getKey();
+                }
+            }
 
             suppliedBarcodesToAssembledBarcodes.put(
                     suppliedBarcode,
