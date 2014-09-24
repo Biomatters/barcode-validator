@@ -8,23 +8,37 @@ import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
  *         Created on 22/09/14 9:43 AM
  */
 public class SlidingWindowValidator {
-    public static boolean validate(NucleotideGraphSequenceDocument seq,
+    public static boolean validate(NucleotideGraphSequenceDocument sequence,
                                    int winSize,
                                    int stepSize,
                                    double minQuality,
                                    double minRatioSatisfied) throws DocumentOperationException {
-        if (!seq.hasSequenceQualities())
-            throw new DocumentOperationException("Sequence document '" + seq.getName() + "' has no sequence qualities.");
-        
+        try {
+            for (int i = 0; i <= sequence.getSequenceLength() - winSize; i += stepSize)
+                if (!validateQualities(getQualityWindow(sequence, i, winSize), minQuality, minRatioSatisfied))
+                    return false;
+        } catch (DocumentOperationException e) {
+            throw new DocumentOperationException("Could not validate sequence: " + e.getMessage(), e);
+        }
 
         return true;
     }
 
     private static int[] getQualityWindow(NucleotideGraphSequenceDocument sequence, int startPos, int winSize)
-            throws IndexOutOfBoundsException {
+            throws DocumentOperationException {
+        if (!sequence.hasSequenceQualities())
+            throw new DocumentOperationException("Sequence document '" + sequence.getName() + "' " +
+                                                 "has no sequence qualities.");
+
+        if (winSize < 1)
+            throw new DocumentOperationException("Negative window size: " + winSize + ".");
+
         if (startPos < 0 || sequence.getSequenceLength() < startPos + winSize)
-            throw new IndexOutOfBoundsException("Valid range: 0 - " + sequence.getSequenceLength() + ", " +
-                                                "specified range: " + startPos + " - " + startPos + winSize + ".");
+            throw new DocumentOperationException("Window coverage out of bounds, " +
+                                                 "valid range: " +
+                                                 "0 - " + (sequence.getSequenceLength() - 1) + ", " +
+                                                 "window coverage: " +
+                                                 startPos + " - " + (startPos + winSize - 1) + ".");
 
         int[] result = new int[winSize];
 
@@ -35,15 +49,15 @@ public class SlidingWindowValidator {
     }
 
     private static boolean validateQualities(int[] qualities, double minQuality, double minRatioSatisfied) {
-        /* Check minQuality and minRatioSatisifed are in range 0 - 1 inclusive. */
         if (minQuality < 0 || minQuality > 1)
             throw new IllegalArgumentException("Minimum quality value out of range, " +
-                                               "valid range: 0 - 1, " +
-                                               "actual value: " + minQuality);
+                                               "valid range: 0 - 1 inclusive, " +
+                                               "actual value: " + minQuality + ".");
+
         if (minRatioSatisfied < 0 || minRatioSatisfied > 1)
             throw new IllegalArgumentException("Minimum ratio satisfied value out of range, " +
-                                               "Valid range: 0 - 1, " +
-                                               "actual value: " + minRatioSatisfied);
+                                               "valid range: 0 - 1 inclusive, " +
+                                               "actual value: " + minRatioSatisfied + ".");
 
         int satisfied = 0, qualitiesLength = qualities.length;
 
