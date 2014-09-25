@@ -1,5 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 
 import java.util.List;
@@ -18,5 +19,5 @@ public interface TraceValidation {
      * @param traces The user supplied traces
      * @return a {@link com.biomatters.plugins.barcoding.validator.validation.ValidationResult}
      */
-    public ValidationResult validate(List<NucleotideSequenceDocument> traces);
+    public ValidationResult validate(List<NucleotideGraphSequenceDocument> traces);
 }
