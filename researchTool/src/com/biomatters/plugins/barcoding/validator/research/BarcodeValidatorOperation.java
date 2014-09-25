@@ -59,10 +59,11 @@ public class BarcodeValidatorOperation extends DocumentOperation {
     public List<AnnotatedPluginDocument> performOperation(AnnotatedPluginDocument[] annotatedDocuments,
                                                           ProgressListener progressListener,
                                                           Options options) throws DocumentOperationException {
-        if (!(options instanceof BarcodeValidatorOptions))
+        if (!(options instanceof BarcodeValidatorOptions)) {
             throw new DocumentOperationException("Unexpected Options type, " +
                                                  "expected: BarcodeValidatorOptions, " +
                                                  "actual: " + options.getClass().getSimpleName() + ".");
+        }
 
         List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
 
@@ -114,9 +115,11 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             NucleotideSequenceDocument suppliedBarcode = null;
 
             for (Map.Entry<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
-                    suppliedBarcodesToSuppliedTracesEntry : suppliedBarcodesToSuppliedTraces.entrySet())
-                if (suppliedBarcodesToSuppliedTracesEntry.getValue().equals(suppliedTracesToTrimmedTracesEntry.getKey()))
+                    suppliedBarcodesToSuppliedTracesEntry : suppliedBarcodesToSuppliedTraces.entrySet()) {
+                if (suppliedBarcodesToSuppliedTracesEntry.getValue().equals(suppliedTracesToTrimmedTracesEntry.getKey())) {
                     suppliedBarcode = suppliedBarcodesToSuppliedTracesEntry.getKey();
+                }
+            }
 
             suppliedBarcodesToAssembledBarcodes.put(
                     suppliedBarcode,
@@ -182,9 +185,9 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         List<SequenceAlignmentDocument> result = Cap3AssemblerRunner.assemble(traces,
                                                                               options.getMinOverlapLength(),
                                                                               options.getMinOverlapIdentity());
-
-        if (result.size() != 1)
+        if (result.size() != 1) {
             throw new DocumentOperationException("todo?");
+        }
 
         return result.get(0);
     }

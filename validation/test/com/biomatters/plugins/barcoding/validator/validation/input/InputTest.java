@@ -28,8 +28,9 @@ public class InputTest extends Assert {
 
     @Test
     public void testSplitByName() throws DocumentOperationException {
-        for (String separator : Arrays.asList("_", "*", "|", ":", "$", "=", ".", ",", "+", "~", " "))
+        for (String separator : Arrays.asList("_", "*", "|", ":", "$", "=", ".", ",", "+", "~", " ")) {
             mappingTestWithSeparator(separator);
+        }
     }
 
     public void mappingTestWithSeparator(String separator) throws DocumentOperationException {
@@ -65,9 +66,10 @@ public class InputTest extends Assert {
 
     private static String getRegularExpressionForSeparator(String separator) {
         String regex = separatorToRegularExpression.get(separator);
-        if (regex != null)
+        if (regex != null) {
             return regex;
-        else
-            return separator;
+        }
+
+        return separator;
     }
 }
