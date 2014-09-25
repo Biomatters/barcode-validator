@@ -31,13 +31,9 @@ public class Input {
     public static Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
     processInputs(List<String> traceFilePaths, List<String> barcodeFilePaths, BarcodesToTracesMapperOptions options)
             throws DocumentOperationException {
-        try {
-            List<NucleotideSequenceDocument> traces = ImportUtilities.importTraces(traceFilePaths);
-            List<NucleotideSequenceDocument> barcodes = ImportUtilities.importBarcodes(barcodeFilePaths);
+        List<NucleotideSequenceDocument> traces = ImportUtilities.importTraces(traceFilePaths);
+        List<NucleotideSequenceDocument> barcodes = ImportUtilities.importBarcodes(barcodeFilePaths);
 
-            return BarcodesToTracesMapperFactory.getBarcodesToTracesMapper(options).map(barcodes, traces);
-        } catch (DocumentOperationException e) {
-            throw new DocumentOperationException("Could not process inputs: " + e.getMessage(), e);
-        }
+        return BarcodesToTracesMapperFactory.getBarcodesToTracesMapper(options).map(barcodes, traces);
     }
 }

@@ -96,8 +96,9 @@ public class InputOptions extends Options {
     private List<String> getFilePathsFromMultipleInputFileOptions(String optionName) {
         List<String> filePaths = new ArrayList<String>();
 
-        for (Options traceInput : getMultipleOptions(optionName).getValues())
-            filePaths.add(((InputSelectionOptions)traceInput).getFilePath());
+        for (Options traceInput : getMultipleOptions(optionName).getValues()) {
+            filePaths.add(((InputSelectionOptions) traceInput).getFilePath());
+        }
 
         return filePaths;
     }

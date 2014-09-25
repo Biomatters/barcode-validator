@@ -61,8 +61,8 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                                                           Options options) throws DocumentOperationException {
         if (!(options instanceof BarcodeValidatorOptions))
             throw new DocumentOperationException("Unexpected Options type, " +
-                    "expected: BarcodeValidatorOptions, " +
-                    "actual: " + options.getClass().getSimpleName() + ".");
+                                                 "expected: BarcodeValidatorOptions, " +
+                                                 "actual: " + options.getClass().getSimpleName() + ".");
 
         List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
 
@@ -86,30 +86,37 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
         /* Split inputs. */
         composite.beginSubtask("Grouping traces to barcodes");
+
         suppliedBarcodesToSuppliedTraces = groupTracesToBarcodes(inputSplitterOptions);
 
         /* Trim traces. */
         composite.beginSubtask("Trimming traces");
-        CompositeProgressListener trimmingProgress = new CompositeProgressListener(composite, suppliedBarcodesToSuppliedTraces.size());
+
+        CompositeProgressListener trimmingProgress
+                = new CompositeProgressListener(composite, suppliedBarcodesToSuppliedTraces.size());
+
         for (List<NucleotideSequenceDocument> traces : suppliedBarcodesToSuppliedTraces.values()) {
             trimmingProgress.beginSubtask();
+
             suppliedTracesToTrimmedTraces.put(traces, trimTraces(traces, trimmingOptions));
         }
 
         /* Assemble contigs from trimmed traces. */
         composite.beginSubtask("Assembling traces");
-        CompositeProgressListener assemblyProgress = new CompositeProgressListener(composite, suppliedTracesToTrimmedTraces.size());
+
+        CompositeProgressListener assemblyProgress
+                = new CompositeProgressListener(composite, suppliedTracesToTrimmedTraces.size());
+
         for (Map.Entry<List<NucleotideSequenceDocument>, List<NucleotideSequenceDocument>>
                 suppliedTracesToTrimmedTracesEntry : suppliedTracesToTrimmedTraces.entrySet()) {
             assemblyProgress.beginSubtask();
+
             NucleotideSequenceDocument suppliedBarcode = null;
 
             for (Map.Entry<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
-                    suppliedBarcodesToSuppliedTracesEntry : suppliedBarcodesToSuppliedTraces.entrySet()) {
-                if (suppliedBarcodesToSuppliedTracesEntry.getValue().equals(suppliedTracesToTrimmedTracesEntry.getKey())) {
+                    suppliedBarcodesToSuppliedTracesEntry : suppliedBarcodesToSuppliedTraces.entrySet())
+                if (suppliedBarcodesToSuppliedTracesEntry.getValue().equals(suppliedTracesToTrimmedTracesEntry.getKey()))
                     suppliedBarcode = suppliedBarcodesToSuppliedTracesEntry.getKey();
-                }
-            }
 
             suppliedBarcodesToAssembledBarcodes.put(
                     suppliedBarcode,

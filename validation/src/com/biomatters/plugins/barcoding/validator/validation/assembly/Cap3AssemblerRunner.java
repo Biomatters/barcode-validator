@@ -13,6 +13,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 
 /**
@@ -48,8 +49,8 @@ public class Cap3AssemblerRunner {
                                                            int minOverlapIdentity) throws DocumentOperationException {
         try {
             return ImportUtilities.importContigs(runCap3Assembler(createFastaFile(sequences),
-                    minOverlapLength,
-                    minOverlapIdentity));
+                                                                  minOverlapLength,
+                                                                  minOverlapIdentity));
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not assemble contigs: " + e.getMessage(), e);
         } catch (InterruptedException e) {
@@ -87,6 +88,7 @@ public class Cap3AssemblerRunner {
                 false
         );
 
+        /* Set working directory as input fasta file's containing directory. */
         exec.setWorkingDirectory(fastaFilePath.substring(0, fastaFilePath.lastIndexOf(File.separator)));
 
         /* Run. */
@@ -123,15 +125,17 @@ public class Cap3AssemblerRunner {
         StringBuilder fastaOutput = new StringBuilder();
 
         /* Generate fasta file output. */
-        for (NucleotideSequenceDocument sequence : sequences)
+        for (NucleotideSequenceDocument sequence : sequences) {
             fastaOutput.append(">").append(sequence.getName()).append(" ").append(sequence.getDescription())
-                       .append("\n")
-                       .append(sequence.getSequenceString().toUpperCase())
-                       .append("\n");
+                    .append("\n")
+                    .append(sequence.getSequenceString().toUpperCase())
+                    .append("\n");
+        }
 
         /* Remove trailing new line. */
-        if (fastaOutput.length() > 0)
+        if (fastaOutput.length() > 0) {
             fastaOutput.deleteCharAt(fastaOutput.length() - 1);
+        }
 
         return fastaOutput.toString();
     }
@@ -143,14 +147,15 @@ public class Cap3AssemblerRunner {
      * @throws DocumentOperationException If a CAP3 assembler executable is not available for the current OS.
      */
     private static String getCap3AssemblerFilePath() throws DocumentOperationException {
-        String result = Cap3AssemblerRunner.class.getResource(getCap3AssemblerFileName()).getPath().replace("%20", " ");
+        URL cap3AssemblerURL = Cap3AssemblerRunner.class.getResource(getCap3AssemblerFileName());
 
-        if (result == null)
+        if (cap3AssemblerURL == null) {
             throw new DocumentOperationException("Missing plugin resource: " +
                                                  "Try re-installing the plugin. " +
                                                  "Contact support@mooreasoftware.org if the issue still persists.");
+        }
 
-        return result;
+        return cap3AssemblerURL.getPath().replace("%20", " ");
     }
 
     /**
@@ -162,13 +167,14 @@ public class Cap3AssemblerRunner {
     private static String getCap3AssemblerFileName() throws DocumentOperationException {
         String operatingSystem = System.getProperty("os.name").toLowerCase();
 
-        if (operatingSystem.contains("windows"))
+        if (operatingSystem.contains("windows")) {
             return CAP3_ASSEMBLER_WINDOWS_FILENAME;
-        else if (operatingSystem.contains("mac"))
+        } else if (operatingSystem.contains("mac")) {
             return CAP3_ASSEMBLER_MAC_FILENAME;
-        else if (operatingSystem.contains("linux"))
+        } else if (operatingSystem.contains("linux")) {
             return CAP3_ASSEMBLER_LINUX_FILENAME;
-        else
+        } else {
             throw new DocumentOperationException("Unsupported operating system: " + operatingSystem);
+        }
     }
 }

@@ -30,6 +30,7 @@
     <property name="validation.src" location="../validation/src"/>
     <property name="validation.classes" location="validation.classes"/>
     <property name="validation.build" location="validation.build"/>
+    <property name="validation.resources" location="../validation/resources"/>
 
     <!-- setup reference to the Ivy Ant tasks library -->
     <path id="ivy.lib.path">
@@ -68,6 +69,9 @@
         <jar jarfile="${validation.build}/${validation-name}.jar">
             <fileset dir="${validation.classes}"/>
         </jar>
+        <copy todir="${validation.build}/">
+            <fileset dir="${validation.resources}"/>
+        </copy>
     </target>
 
     <target name="compile-validation">

@@ -14,15 +14,25 @@ import java.util.*;
  *         Created on 8/09/14 2:36 PM
  */
 public class InputTest extends Assert {
-    @Test
-    public void testSplitByName() throws DocumentOperationException {
-        for (String separator : Arrays.asList("_", "*", "|", ":", "$", "=", ".", ",", "+", "~", " ")) {
-            performMappingTestWithSeparator(separator);
-        }
+    private static Map<String, String> separatorToRegularExpression = new HashMap<String, String>();
 
+    static {
+        separatorToRegularExpression.put("*", "\\*");
+        separatorToRegularExpression.put("|", "\\|");
+        separatorToRegularExpression.put("$", "\\$");
+        separatorToRegularExpression.put(".", "\\.");
+        separatorToRegularExpression.put("+", "\\+");
+        separatorToRegularExpression.put("~", "\\~");
+        separatorToRegularExpression.put(" ", "\\s+");
     }
 
-    public void performMappingTestWithSeparator(String separator) throws DocumentOperationException {
+    @Test
+    public void testSplitByName() throws DocumentOperationException {
+        for (String separator : Arrays.asList("_", "*", "|", ":", "$", "=", ".", ",", "+", "~", " "))
+            mappingTestWithSeparator(separator);
+    }
+
+    public void mappingTestWithSeparator(String separator) throws DocumentOperationException {
         NucleotideSequenceDocument t1 = new DefaultNucleotideSequence("trace1" + separator + "1", "");
         NucleotideSequenceDocument t2 = new DefaultNucleotideSequence("trace2" + separator + "1", "");
         NucleotideSequenceDocument t3 = new DefaultNucleotideSequence("trace3" + separator + "1", "");
@@ -54,23 +64,10 @@ public class InputTest extends Assert {
     }
 
     private static String getRegularExpressionForSeparator(String separator) {
-        String regex = separtorToExpression.get(separator);
-        if(regex != null) {
+        String regex = separatorToRegularExpression.get(separator);
+        if (regex != null)
             return regex;
-        } else {
+        else
             return separator;
-        }
-    }
-
-
-    private static Map<String, String> separtorToExpression = new HashMap<String, String>();
-    static {
-        separtorToExpression.put("*", "\\*");
-        separtorToExpression.put("|", "\\|");
-        separtorToExpression.put("$", "\\$");
-        separtorToExpression.put(".", "\\.");
-        separtorToExpression.put("+", "\\+");
-        separtorToExpression.put("~", "\\~");
-        separtorToExpression.put(" ", "\\s+");
     }
 }

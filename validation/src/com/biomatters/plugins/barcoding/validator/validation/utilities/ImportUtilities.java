@@ -35,11 +35,11 @@ public class ImportUtilities {
     /**
      * Imports traces.
      *
-     * @param sourcePath Paths of source files or folders containing source files, from which traces are imported.
+     * @param sourcePaths Paths of source files or folders containing source files, from which traces are imported.
      * @return Traces.
      * @throws DocumentOperationException
      */
-    public static List<NucleotideSequenceDocument> importTraces(List<String> sourcePath)
+    public static List<NucleotideSequenceDocument> importTraces(List<String> sourcePaths)
             throws DocumentOperationException {
         List<NucleotideSequenceDocument> result = new ArrayList<NucleotideSequenceDocument>();
 
@@ -47,7 +47,7 @@ public class ImportUtilities {
         try {
             /* Import traces. */
             importedDocuments = importDocuments(
-                    sourcePath,
+                    sourcePaths,
                     Arrays.asList((Class) DefaultNucleotideGraphSequence.class),
                     TRACE_ALLOWED_FILE_EXTENSIONS
             );
@@ -56,8 +56,9 @@ public class ImportUtilities {
         }
 
         /* Filter traces. */
-        for (AnnotatedPluginDocument importedDocument : importedDocuments)
-            result.add((NucleotideSequenceDocument)importedDocument.getDocument());
+        for (AnnotatedPluginDocument importedDocument : importedDocuments) {
+            result.add((NucleotideSequenceDocument) importedDocument.getDocument());
+        }
 
         return result;
     }
@@ -65,11 +66,11 @@ public class ImportUtilities {
     /**
      * Imports barcodes.
      *
-     * @param sourcePath Paths of source files or folders containing source files, from which barcodes are imported.
+     * @param sourcePaths Paths of source files or folders containing source files, from which barcodes are imported.
      * @return Barcodes.
      * @throws DocumentOperationException
      */
-    public static List<NucleotideSequenceDocument> importBarcodes(List<String> sourcePath)
+    public static List<NucleotideSequenceDocument> importBarcodes(List<String> sourcePaths)
             throws DocumentOperationException {
         List<NucleotideSequenceDocument> result = new ArrayList<NucleotideSequenceDocument>();
 
@@ -77,7 +78,7 @@ public class ImportUtilities {
         try {
             /* Import barcodes. */
             importedDocuments = importDocuments(
-                    sourcePath,
+                    sourcePaths,
                     Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)DefaultNucleotideSequence.class),
                     BARCODE_ALLOWED_FILE_EXTENSIONS
             );
@@ -86,11 +87,13 @@ public class ImportUtilities {
         }
 
         /* Filter barcodes. */
-        for (AnnotatedPluginDocument importedDocument : importedDocuments)
-            if (DefaultSequenceListDocument.class.isAssignableFrom(importedDocument.getDocumentClass()))
-                result.addAll(((DefaultSequenceListDocument)importedDocument.getDocument()).getNucleotideSequences());
-            else if (DefaultNucleotideSequence.class.isAssignableFrom(importedDocument.getDocumentClass()))
-                result.add((NucleotideSequenceDocument)importedDocument.getDocument());
+        for (AnnotatedPluginDocument importedDocument : importedDocuments) {
+            if (DefaultSequenceListDocument.class.isAssignableFrom(importedDocument.getDocumentClass())) {
+                result.addAll(((DefaultSequenceListDocument) importedDocument.getDocument()).getNucleotideSequences());
+            } else if (DefaultNucleotideSequence.class.isAssignableFrom(importedDocument.getDocumentClass())) {
+                result.add((NucleotideSequenceDocument) importedDocument.getDocument());
+            }
+        }
 
         return result;
     }
@@ -119,9 +122,11 @@ public class ImportUtilities {
         }
 
         /* Filter contigs. */
-        for (AnnotatedPluginDocument importedDocument : importedDocuments)
-            if (SequenceAlignmentDocument.class.isAssignableFrom(importedDocument.getDocumentClass()))
-                result.add((SequenceAlignmentDocument)importedDocument.getDocument());
+        for (AnnotatedPluginDocument importedDocument : importedDocuments) {
+            if (SequenceAlignmentDocument.class.isAssignableFrom(importedDocument.getDocumentClass())) {
+                result.add((SequenceAlignmentDocument) importedDocument.getDocument());
+            }
+        }
 
         return result;
     }
@@ -129,13 +134,13 @@ public class ImportUtilities {
     /**
      * Imports documents and checks the correctness of their types.
      *
-     * @param filePaths Paths of source files or folders containing source files, from which documents are imported.
+     * @param sourcePaths Paths of source files or folders containing source files, from which documents are imported.
      * @param expectedDocumentTypes Expected types of imported documents.
      * @param allowedFileExtensions Allowed file extensions  source files.
      * @return Documents.
      * @throws DocumentOperationException
      */
-    private static List<AnnotatedPluginDocument> importDocuments(List<String> filePaths,
+    private static List<AnnotatedPluginDocument> importDocuments(List<String> sourcePaths,
                                                                  List<Class> expectedDocumentTypes,
                                                                  Set<String> allowedFileExtensions)
             throws DocumentOperationException {
@@ -143,11 +148,12 @@ public class ImportUtilities {
 
         List<File> files = new ArrayList<File>();
 
-        for (String filePath : filePaths) {
-            File file = new File(filePath);
+        for (String sourcePath : sourcePaths) {
+            File file = new File(sourcePath);
 
-            if (!file.exists())
-                throw new DocumentOperationException("File or directory '" + filePath + "' does not exist.");
+            if (!file.exists()) {
+                throw new DocumentOperationException("File or directory '" + sourcePath + "' does not exist.");
+            }
 
             files.add(file);
         }
@@ -162,22 +168,24 @@ public class ImportUtilities {
     /**
      * Imports documents. Folders are recursively scanned and their containing files accumulated.
      *
-     * @param sourcefiles Source files or folders containing source files, from which documents are imported.
+     * @param sources Source files or folders containing source files, from which documents are imported.
      * @param allowedFileExtensions Allowed file extensions for source files..
      * @return Imported documents.
      * @throws DocumentOperationException
      */
-    private static List<AnnotatedPluginDocument> importDocuments(List<File> sourcefiles,
+    private static List<AnnotatedPluginDocument> importDocuments(List<File> sources,
                                                                  Set<String> allowedFileExtensions)
             throws DocumentOperationException {
         List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
 
         try {
-            for (File sourceFile : sourcefiles)
-                if (sourceFile.isDirectory())
-                    result.addAll(importDocuments(Arrays.asList(sourceFile.listFiles()), allowedFileExtensions));
-                else if (fileNameHasOneOfExtensions(sourceFile.getName(), allowedFileExtensions))
-                    result.addAll(PluginUtilities.importDocuments(sourceFile, ProgressListener.EMPTY));
+            for (File source : sources) {
+                if (source.isDirectory()) {
+                    result.addAll(importDocuments(Arrays.asList(source.listFiles()), allowedFileExtensions));
+                } else if (fileNameHasOneOfExtensions(source.getName(), allowedFileExtensions)) {
+                    result.addAll(PluginUtilities.importDocuments(source, ProgressListener.EMPTY));
+                }
+            }
         } catch (DocumentImportException e) {
             throw new DocumentOperationException(e.getMessage(), e);
         } catch (IOException e) {
@@ -196,13 +204,15 @@ public class ImportUtilities {
      */
     private static void checkDocumentsAreOfTypes(List<AnnotatedPluginDocument> documents, List<Class> types)
             throws DocumentOperationException {
-        for (AnnotatedPluginDocument document : documents)
-            if (!isDocumentOfTypes(document, types))
+        for (AnnotatedPluginDocument document : documents) {
+            if (!isDocumentOfTypes(document, types)) {
                 throw new DocumentOperationException(importedDocumentUnexpectedTypeMessage(
                         types,
                         document.getDocumentClass(),
                         document.getDocument().getName())
                 );
+            }
+        }
     }
 
     /**
@@ -213,9 +223,11 @@ public class ImportUtilities {
      * @return True if the document's type is among the group of types; false if not.
      */
     private static boolean isDocumentOfTypes(AnnotatedPluginDocument document, List<Class> types) {
-        for (Class type : types)
-            if (type.isAssignableFrom(document.getDocumentClass()))
+        for (Class type : types) {
+            if (type.isAssignableFrom(document.getDocumentClass())) {
                 return true;
+            }
+        }
 
         return false;
     }
@@ -236,8 +248,9 @@ public class ImportUtilities {
         messageBuilder.append("Imported document '").append(importedDocumentName).append(" is of an unexpected type, ")
                       .append("expected types: ");
 
-        for (Class validDocumentType : expectedTypes)
+        for (Class validDocumentType : expectedTypes) {
             messageBuilder.append("<? extends ").append(validDocumentType.getSimpleName()).append(">, ");
+        }
 
         messageBuilder.append("actual type: ").append(importedDocumentType.getSimpleName());
 
@@ -252,9 +265,11 @@ public class ImportUtilities {
      * @return True if the filename has an extension that is among the group of extensions; false if not.
      */
     private static boolean fileNameHasOneOfExtensions(String fileName, Set<String> extensions) {
-        for (String extension : extensions)
-            if (fileName.endsWith("." + extension))
+        for (String extension : extensions) {
+            if (fileName.endsWith("." + extension)) {
                 return true;
+            }
+        }
 
         return false;
     }

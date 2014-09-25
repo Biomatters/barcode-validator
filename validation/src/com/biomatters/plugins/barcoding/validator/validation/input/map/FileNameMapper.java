@@ -69,8 +69,9 @@ public class FileNameMapper extends BarcodesToTracesMapper {
         Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>> result
                 = new HashMap<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>();
 
-        for (NucleotideSequenceDocument barcode : barcodesToNameParts.keySet())
+        for (NucleotideSequenceDocument barcode : barcodesToNameParts.keySet()) {
             result.put(barcode, new ArrayList<NucleotideSequenceDocument>());
+        }
 
         /* Match traces to barcodes. */
         for (Map.Entry<NucleotideSequenceDocument, String> traceToNamePart : tracesToNameParts.entrySet()) {
@@ -78,13 +79,20 @@ public class FileNameMapper extends BarcodesToTracesMapper {
 
             NucleotideSequenceDocument barcode = null;
 
-            for (Map.Entry<NucleotideSequenceDocument, String> barcodeToNamePart : barcodesToNameParts.entrySet())
-                if (barcodeToNamePart.getValue().equals(namePart))
+            for (Map.Entry<NucleotideSequenceDocument, String> barcodeToNamePart : barcodesToNameParts.entrySet()) {
+                if (barcodeToNamePart.getValue().equals(namePart)) {
                     barcode = barcodeToNamePart.getKey();
+                }
+            }
 
-            if (barcode == null)
+            if (barcode == null) {
                 throw new DocumentOperationException("Trace '" + traceToNamePart.getKey().getName() + "' " +
-                                                     "has no associated barcode.");
+                                                     "has no associated barcode. " +
+                                                     "Trace separator: " + traceSeparator + ", " +
+                                                     "trace name part: " + traceNamePart + ", " +
+                                                     "barcode separator: " + barcodeSeparator + ", " +
+                                                     "barcode name part: " + barcodeNamePart + ".");
+            }
 
             result.get(barcode).add(traceToNamePart.getKey());
         }
@@ -145,8 +153,9 @@ public class FileNameMapper extends BarcodesToTracesMapper {
 
         int nAbsStringLength = nAbsString.length();
 
-        if (nAbsStringLength > 1 && Integer.valueOf(nAbsString.charAt(nAbsStringLength - 2)) == 1)
+        if (nAbsStringLength > 1 && Integer.valueOf(nAbsString.charAt(nAbsStringLength - 2)) == 1) {
             return nString + "th";
+        }
 
         switch (Integer.valueOf(nAbsString.substring(nAbsStringLength - 1, nAbsStringLength))) {
             case 1:
