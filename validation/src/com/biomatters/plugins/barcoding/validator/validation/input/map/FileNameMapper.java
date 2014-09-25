@@ -145,14 +145,15 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @param n
      * @return Nth ordinal.
      */
-    private static String getOrdinalString(int n) {
+    static String getOrdinalString(int n) {
         String nString = String.valueOf(n);
 
         String nAbsString = String.valueOf(Math.abs(n));
 
         int nAbsStringLength = nAbsString.length();
 
-        if (nAbsStringLength > 1 && Integer.valueOf(nAbsString.charAt(nAbsStringLength - 2)) == 1) {
+        int indexOfSecondDigit = nAbsStringLength - 2;
+        if (nAbsStringLength > 1 && Integer.valueOf(nAbsString.substring(indexOfSecondDigit, indexOfSecondDigit+1)) == 1) {
             return nString + "th";
         }
 
