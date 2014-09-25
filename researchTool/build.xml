@@ -110,7 +110,6 @@
         <mkdir dir="${lib}"/>
         <mkdir dir="${report}"/>
         <mkdir dir="${test.classes}"/>
-        <mkdir dir="${GeneiousFiles}"/>
         <mkdir dir="${validation.classes}"/>
         <mkdir dir="${validation.build}"/>
     </target>
@@ -119,7 +118,18 @@
         <ivy:retrieve settingsref="biocode.ivy.config"/>
     </target>
 
-    <target name="compile-tests" depends="compile-plugin">
+    <target name="evaluate-geneious-files-exists">
+        <condition property="GeneiousFiles.exists">
+            <available file="${GeneiousFiles}" type="dir"/>
+        </condition>
+    </target>
+
+    <target name="retrieve-geneious-runtime-dependencies" description="Retrieve the Geneious runtime for running the tests" depends="evaluate-geneious-files-exists" unless="GeneiousFiles.exists">
+        <ivy:retrieve type="resource" settingsref="biocode.ivy.config" pattern="${basedir}/[artifact].[ext]"/>
+        <unzip src="GeneiousFiles.zip" dest="."/>
+    </target>
+
+    <target name="compile-tests" depends="compile-plugin,retrieve-geneious-runtime-dependencies">
         <javac target="1.6" source="1.6" destdir="${test.classes}" debug="true">
             <classpath>
                 <path refid="classpath"/>
@@ -145,9 +155,13 @@
             </batchtest>
             <classpath>
                 <path refid="classpath"/>
+                <file file="${GeneiousFiles}/iSeek.jar"/>
+                <fileset dir="${GeneiousFiles}/lib"/>
                 <pathelement location="${classes}"/>
                 <pathelement location="${test.classes}"/>
                 <pathelement location="${validation.classes}"/>
+                <pathelement location="${GeneiousFiles}/resources"/>
+                <pathelement location="${GeneiousFiles}/bundledPlugins"/>
             </classpath>
             <env key="DISPLAY" value=":0.0"/>
             <env key="DYLD_LIBRARY_PATH" value="/Library/Application Support/Geneious/Frameworks"/>

@@ -29,15 +29,22 @@ public class AssemblyTest extends Assert {
                 "com.biomatters.plugins.local.LocalDatabasePlugin"  // Required becasue Ace importer requires a WritableDatabaseService
         );
         final String theSequence = "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG";
-        NucleotideSequenceDocument document = new DefaultNucleotideSequence("testDoc", "Test document", theSequence, new Date());
+
+        NucleotideSequenceDocument document = new DefaultNucleotideSequence("testDoc",
+                                                                            "Test document",
+                                                                            theSequence,
+                                                                            new Date());
+
         List<NucleotideSequenceDocument> documents = new ArrayList<NucleotideSequenceDocument>();
         documents.add(document);
         documents.add(document);
 
         List<SequenceAlignmentDocument> result = Cap3AssemblerRunner.assemble(documents, 40, 90);
         assertEquals(1, result.size());
+
         List<SequenceDocument> sequences = result.get(0).getSequences();
         assertEquals(3, sequences.size());
+
         for (int i = 1; i < sequences.size(); i++) {
             String withNoGaps = sequences.get(i).getSequenceString().replace("-", "");
             assertEquals(theSequence, withNoGaps);
