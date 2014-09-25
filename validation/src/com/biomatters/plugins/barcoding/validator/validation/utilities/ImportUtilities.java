@@ -230,7 +230,7 @@ public class ImportUtilities {
      * @return True if the document's type is among the group of types; false if not.
      */
     private static boolean isDocumentOfTypes(AnnotatedPluginDocument document, List<Class> types) {
-        for (Class type : types) {
+        for (Class<?> type : types) {
             if (type.isAssignableFrom(document.getDocumentClass())) {
                 return true;
             }
