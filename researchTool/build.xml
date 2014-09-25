@@ -31,6 +31,7 @@
     <property name="validation.classes" location="validation.classes"/>
     <property name="validation.build" location="validation.build"/>
     <property name="validation.resources" location="../validation/resources"/>
+    <property name="validation.test" location="../validation/test"/>
 
     <!-- setup reference to the Ivy Ant tasks library -->
     <path id="ivy.lib.path">
@@ -109,9 +110,9 @@
         <mkdir dir="${lib}"/>
         <mkdir dir="${report}"/>
         <mkdir dir="${test.classes}"/>
-        <mkdir dir="${GeneiousFiles}"/>
         <mkdir dir="${validation.classes}"/>
         <mkdir dir="${validation.build}"/>
+        <mkdir dir="${GeneiousFiles}"/>
     </target>
 
     <target name="retrieve-plugin-dependencies" description="Retrieve dependencies with ivy">
@@ -125,6 +126,13 @@
                 <pathelement location="${classes}"/>
             </classpath>
             <src path="${test}"/>
+        </javac>
+        <javac target="1.6" source="1.6" destdir="${test.classes}" debug="true">
+            <classpath>
+                <path refid="classpath"/>
+                <pathelement location="${validation.classes}"/>
+            </classpath>
+            <src path="${validation.test}"/>
         </javac>
     </target>
 
