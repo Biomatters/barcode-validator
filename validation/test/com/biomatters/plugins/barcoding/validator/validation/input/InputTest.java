@@ -14,18 +14,6 @@ import java.util.*;
  *         Created on 8/09/14 2:36 PM
  */
 public class InputTest extends Assert {
-    private static Map<String, String> separatorToRegularExpression = new HashMap<String, String>();
-
-    static {
-        separatorToRegularExpression.put("*", "\\*");
-        separatorToRegularExpression.put("|", "\\|");
-        separatorToRegularExpression.put("$", "\\$");
-        separatorToRegularExpression.put(".", "\\.");
-        separatorToRegularExpression.put("+", "\\+");
-        separatorToRegularExpression.put("~", "\\~");
-        separatorToRegularExpression.put(" ", "\\s+");
-    }
-
     @Test
     public void testSplitByName() throws DocumentOperationException {
         for (String separator : Arrays.asList("_", "*", "|", ":", "$", "=", ".", ",", "+", "~", " ")) {
@@ -62,6 +50,17 @@ public class InputTest extends Assert {
 
         assertEquals(1, mappedToB2.size());
         assertTrue(mappedToB2.contains(t4));
+    }
+
+    private static Map<String, String> separatorToRegularExpression = new HashMap<String, String>();
+    static {
+        separatorToRegularExpression.put("*", "\\*");
+        separatorToRegularExpression.put("|", "\\|");
+        separatorToRegularExpression.put("$", "\\$");
+        separatorToRegularExpression.put(".", "\\.");
+        separatorToRegularExpression.put("+", "\\+");
+        separatorToRegularExpression.put("~", "\\~");
+        separatorToRegularExpression.put(" ", "\\s+");
     }
 
     private static String getRegularExpressionForSeparator(String separator) {

@@ -50,7 +50,12 @@ public class FileNameMapper extends BarcodesToTracesMapper {
             /* Map. */
             return map(tracesToNameParts, barcodesToNameParts);
         } catch (DocumentOperationException e) {
-            throw new DocumentOperationException("Could not map barcodes to traces: " + e.getMessage(), e);
+            throw new DocumentOperationException("Could not map barcodes to traces: " +
+                                                 e.getMessage() + " " +
+                                                 "Trace separator: " + traceSeparator + ", " +
+                                                 "trace name part: " + traceNamePart + ", " +
+                                                 "barcode separator: " + barcodeSeparator + ", " +
+                                                 "barcode name part: " + barcodeNamePart + ".", e);
         }
     }
 
@@ -62,7 +67,7 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @return Map of barcodes to traces.
      * @throws DocumentOperationException
      */
-    private Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
+    private static Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
     map(Map<NucleotideSequenceDocument, String> tracesToNameParts,
         Map<NucleotideSequenceDocument, String> barcodesToNameParts)
             throws DocumentOperationException {
@@ -87,11 +92,7 @@ public class FileNameMapper extends BarcodesToTracesMapper {
 
             if (barcode == null) {
                 throw new DocumentOperationException("Trace '" + traceToNamePart.getKey().getName() + "' " +
-                                                     "has no associated barcode. " +
-                                                     "Trace separator: " + traceSeparator + ", " +
-                                                     "trace name part: " + traceNamePart + ", " +
-                                                     "barcode separator: " + barcodeSeparator + ", " +
-                                                     "barcode name part: " + barcodeNamePart + ".");
+                                                     "has no associated barcode. ");
             }
 
             result.get(barcode).add(traceToNamePart.getKey());
@@ -109,7 +110,7 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @return Map of documents to the part of their name used for the mapping.
      * @throws DocumentOperationException
      */
-    private Map<NucleotideSequenceDocument, String>
+    private static Map<NucleotideSequenceDocument, String>
     mapDocumentToPartOfName(List<NucleotideSequenceDocument> documents, String separator, int i)
             throws DocumentOperationException {
         Map<NucleotideSequenceDocument, String> result = new HashMap<NucleotideSequenceDocument, String>();
@@ -136,7 +137,7 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @param i
      * @return s.split(sep)[i].
      */
-    private String splitAndReturnIth(String s, String sep, int i) throws IndexOutOfBoundsException {
+    private static String splitAndReturnIth(String s, String sep, int i) throws IndexOutOfBoundsException {
         return s.split(sep)[i];
     }
 
@@ -146,7 +147,7 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @param n
      * @return Nth ordinal.
      */
-    private String getOrdinalString(int n) {
+    private static String getOrdinalString(int n) {
         String nString = String.valueOf(n);
 
         String nAbsString = String.valueOf(Math.abs(n));
