@@ -31,6 +31,7 @@
     <property name="validation.classes" location="validation.classes"/>
     <property name="validation.build" location="validation.build"/>
     <property name="validation.resources" location="../validation/resources"/>
+    <property name="validation.test" location="../validation/test"/>
 
     <!-- setup reference to the Ivy Ant tasks library -->
     <path id="ivy.lib.path">
@@ -126,6 +127,13 @@
             </classpath>
             <src path="${test}"/>
         </javac>
+        <javac target="1.6" source="1.6" destdir="${test.classes}" debug="true">
+            <classpath>
+                <path refid="classpath"/>
+                <pathelement location="${validation.classes}"/>
+            </classpath>
+            <src path="${validation.test}"/>
+        </javac>
     </target>
 
     <target name="test" depends="clean,prepare,compile-tests">
@@ -133,7 +141,6 @@
             <batchtest todir="${report}">
                 <fileset dir="${test.classes}">
                     <include name="**/*Test.class"/>
-                    <exclude name="**/AssemblyTest.class"/>
                 </fileset>
             </batchtest>
             <classpath>
