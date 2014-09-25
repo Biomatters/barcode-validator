@@ -87,11 +87,10 @@ public class FileNameMapper extends BarcodesToTracesMapper {
 
             if (barcode == null) {
                 throw new DocumentOperationException("Trace '" + traceToNamePart.getKey().getName() + "' " +
-                                                     "has no associated barcode. " +
-                                                     "Trace separator: " + traceSeparator + ", " +
-                                                     "trace name part: " + traceNamePart + ", " +
-                                                     "barcode separator: " + barcodeSeparator + ", " +
-                                                     "barcode name part: " + barcodeNamePart + ".");
+                        "has no associated barcode.\n\n" +
+                        "No matches for " + traceToNamePart.getValue() + " in " +
+                        NamePartOption.getLabelForPartNumber(barcodeNamePart) + " part of barcode names separated by " +
+                        NameSeparatorOption.getLabelForPartNumber(barcodeSeparator) + ".");
             }
 
             result.get(barcode).add(traceToNamePart.getKey());
@@ -146,7 +145,7 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @param n
      * @return Nth ordinal.
      */
-    private String getOrdinalString(int n) {
+    private static String getOrdinalString(int n) {
         String nString = String.valueOf(n);
 
         String nAbsString = String.valueOf(Math.abs(n));

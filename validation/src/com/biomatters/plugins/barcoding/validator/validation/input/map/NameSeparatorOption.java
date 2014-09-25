@@ -35,4 +35,17 @@ public class NameSeparatorOption extends Options.ComboBoxOption<Options.OptionVa
     public String getSeparatorString() {
         return getValue().getName();
     }
+
+    /**
+     * @param separatorString The part number.  See {@link #getSeparatorString()} ()}
+     * @return The label to show to the user for the specified separator string
+     */
+    public static String getLabelForPartNumber(String separatorString) {
+        for (Options.OptionValue value : VALUES) {
+            if(separatorString.equals(value.getName())) {
+                return value.getLabel();
+            }
+        }
+        return null;
+    }
 }

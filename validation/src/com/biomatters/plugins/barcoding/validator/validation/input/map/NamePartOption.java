@@ -43,4 +43,17 @@ public class NamePartOption extends Options.ComboBoxOption<Options.OptionValue> 
     public int getPart() {
         return Integer.parseInt(getValue().getName());
     }
+
+    /**
+     * @param partNumber The part number.  See {@link #getPart()}
+     * @return The label to show to the user for the specified part number
+     */
+    public static String getLabelForPartNumber(int partNumber) {
+        for (Options.OptionValue value : VALUES) {
+            if(Integer.toString(partNumber).equals(value.getName())) {
+                return value.getLabel();
+            }
+        }
+        return null;
+    }
 }
