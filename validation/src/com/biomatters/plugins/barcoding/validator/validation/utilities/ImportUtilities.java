@@ -89,7 +89,7 @@ public class ImportUtilities {
         /* Filter barcodes. */
         for (AnnotatedPluginDocument importedDocument : importedDocuments) {
             if (DefaultSequenceListDocument.class.isAssignableFrom(importedDocument.getDocumentClass())) {
-                result.addAll(((DefaultSequenceListDocument) importedDocument.getDocument()).getNucleotideSequences());
+                result.addAll(((DefaultSequenceListDocument)importedDocument.getDocument()).getNucleotideSequences());
             } else if (DefaultNucleotideSequence.class.isAssignableFrom(importedDocument.getDocumentClass())) {
                 result.add((NucleotideSequenceDocument) importedDocument.getDocument());
             }
@@ -114,7 +114,7 @@ public class ImportUtilities {
             /* Import contigs. */
             importedDocuments = importDocuments(
                     Collections.singletonList(sourcePath),
-                    Arrays.asList((Class) DefaultSequenceListDocument.class, (Class) SequenceAlignmentDocument.class),
+                    Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)SequenceAlignmentDocument.class),
                     CONTIGS_ALLOWED_FILE_EXTENSIONS
             );
         } catch (DocumentOperationException e) {
@@ -136,7 +136,7 @@ public class ImportUtilities {
      *
      * @param sourcePaths Paths of source files or folders containing source files, from which documents are imported.
      * @param expectedDocumentTypes Expected types of imported documents.
-     * @param allowedFileExtensions Allowed file extensions  source files.
+     * @param allowedFileExtensions Allowed source file extensions.
      * @return Documents.
      * @throws DocumentOperationException
      */

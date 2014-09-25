@@ -7,7 +7,10 @@ import com.biomatters.plugins.barcoding.validator.validation.input.map.FileNameM
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Gen Li
@@ -65,6 +68,7 @@ public class InputTest extends Assert {
 
     private static String getRegularExpressionForSeparator(String separator) {
         String regex = separatorToRegularExpression.get(separator);
+
         if (regex != null) {
             return regex;
         }

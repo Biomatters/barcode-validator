@@ -1,12 +1,11 @@
 package com.biomatters.plugins.barcoding.validator.validation.assembly;
 
-import com.biomatters.geneious.publicapi.documents.sequence.*;
-import com.biomatters.geneious.publicapi.plugin.*;
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
+import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.utilities.Execution;
 import com.biomatters.geneious.publicapi.utilities.FileUtilities;
-
 import com.biomatters.plugins.barcoding.validator.validation.utilities.ImportUtilities;
-
 import jebl.util.ProgressListener;
 
 import java.io.BufferedWriter;

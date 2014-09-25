@@ -1,15 +1,11 @@
 package com.biomatters.plugins.barcoding.validator.validation.assembly;
 
-import com.biomatters.geneious.publicapi.documents.DocumentField;
-import com.biomatters.geneious.publicapi.documents.URN;
-import com.biomatters.geneious.publicapi.documents.XMLSerializationException;
-import com.biomatters.geneious.publicapi.documents.sequence.*;
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
-
 import com.biomatters.geneious.publicapi.plugin.TestGeneious;
-import org.jdom.Element;
-
 import org.junit.Assert;
 import org.junit.Test;
 

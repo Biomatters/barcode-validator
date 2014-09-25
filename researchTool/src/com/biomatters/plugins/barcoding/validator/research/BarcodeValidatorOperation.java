@@ -5,8 +5,8 @@ import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.plugin.*;
-import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3AssemblerRunner;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3AssemblerOptions;
+import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3AssemblerRunner;
 import com.biomatters.plugins.barcoding.validator.validation.input.Input;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.ErrorProbabilityOptions;
@@ -16,7 +16,10 @@ import jebl.util.ProgressListener;
 
 import javax.swing.*;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Gen Li

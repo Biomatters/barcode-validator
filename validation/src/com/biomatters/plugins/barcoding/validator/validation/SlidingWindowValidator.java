@@ -70,8 +70,8 @@ public class SlidingWindowValidator {
         int satisfied = 0, qualitiesLength = qualities.length;
 
         /* Check quality values. */
-        for (int i = 0; i < qualitiesLength; i++) {
-            if (qualities[i] >= minQuality) {
+        for (int quality : qualities) {
+            if (quality >= minQuality) {
                 satisfied++;
             }
         }

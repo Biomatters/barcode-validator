@@ -1,12 +1,11 @@
 package com.biomatters.plugins.barcoding.validator.validation.trimming;
 
-import java.util.List;
-
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationInterval;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceCharSequence;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Trims by checking whether bases meet particular criteria
