@@ -181,7 +181,14 @@ public class ImportUtilities {
         try {
             for (File source : sources) {
                 if (source.isDirectory()) {
-                    result.addAll(importDocuments(Arrays.asList(source.listFiles()), allowedFileExtensions));
+                    File[] subSource = source.listFiles();
+
+                    if (subSource == null) {
+                        throw new DocumentOperationException("Could not list files under directory '" +
+                                                             source.getAbsolutePath() + "'.");
+                    }
+
+                    result.addAll(importDocuments(Arrays.asList(subSource), allowedFileExtensions));
                 } else if (fileNameHasOneOfExtensions(source.getName(), allowedFileExtensions)) {
                     result.addAll(PluginUtilities.importDocuments(source, ProgressListener.EMPTY));
                 }
