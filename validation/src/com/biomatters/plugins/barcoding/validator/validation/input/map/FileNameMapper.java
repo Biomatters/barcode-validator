@@ -49,13 +49,11 @@ public class FileNameMapper extends BarcodesToTracesMapper {
 
             /* Map. */
             return map(tracesToNameParts, barcodesToNameParts);
-        } catch (DocumentOperationException e) {
-            throw new DocumentOperationException("Could not map barcodes to traces: " +
-                                                 e.getMessage() + " " +
-                                                 "Trace separator: " + traceSeparator + ", " +
-                                                 "trace name part: " + traceNamePart + ", " +
-                                                 "barcode separator: " + barcodeSeparator + ", " +
-                                                 "barcode name part: " + barcodeNamePart + ".", e);
+        } catch (NoMatchException e) {
+            throw new DocumentOperationException(e.getMessage() + "\n\n" +
+                    "No matches searching for <strong>" + e.getSearchString() + "</strong> in " +
+                    NamePartOption.getLabelForPartNumber(barcodeNamePart) + " part of barcode names separated by " +
+                    NameSeparatorOption.getLabelForPartNumber(barcodeSeparator) + ".", e);
         }
     }
 
@@ -70,7 +68,7 @@ public class FileNameMapper extends BarcodesToTracesMapper {
     private static Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
     map(Map<NucleotideSequenceDocument, String> tracesToNameParts,
         Map<NucleotideSequenceDocument, String> barcodesToNameParts)
-            throws DocumentOperationException {
+            throws NoMatchException {
         Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>> result
                 = new HashMap<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>();
 
@@ -91,17 +89,26 @@ public class FileNameMapper extends BarcodesToTracesMapper {
             }
 
             if (barcode == null) {
-                throw new DocumentOperationException("Trace '" + traceToNamePart.getKey().getName() + "' " +
-                        "has no associated barcode.\n\n" +
-                        "No matches for " + traceToNamePart.getValue() + " in " +
-                        NamePartOption.getLabelForPartNumber(barcodeNamePart) + " part of barcode names separated by " +
-                        NameSeparatorOption.getLabelForPartNumber(barcodeSeparator) + ".");
+                throw new NoMatchException(traceToNamePart.getKey().getName(), traceToNamePart.getValue());
             }
 
             result.get(barcode).add(traceToNamePart.getKey());
         }
 
         return result;
+    }
+
+    private static class NoMatchException extends Exception {
+        private String searchString;
+
+        private NoMatchException(String fullName, String searchString) {
+            super("Trace <strong>" + fullName + "</strong> has no associated barcode.");
+            this.searchString = searchString;
+        }
+
+        public String getSearchString() {
+            return searchString;
+        }
     }
 
     /**
@@ -158,7 +165,7 @@ public class FileNameMapper extends BarcodesToTracesMapper {
         int nAbsStringLength = nAbsString.length();
 
         int indexOfSecondDigit = nAbsStringLength - 2;
-        if (nAbsStringLength > 1 && Integer.valueOf(nAbsString.substring(indexOfSecondDigit, indexOfSecondDigit+1)) == 1) {
+        if (nAbsStringLength > 1 && Integer.valueOf(nAbsString.substring(indexOfSecondDigit, indexOfSecondDigit + 1)) == 1) {
             return nString + "th";
         }
 
