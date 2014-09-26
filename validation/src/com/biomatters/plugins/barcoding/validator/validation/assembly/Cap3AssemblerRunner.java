@@ -2,6 +2,7 @@ package com.biomatters.plugins.barcoding.validator.validation.assembly;
 
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
+import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.utilities.Execution;
 import com.biomatters.geneious.publicapi.utilities.FileUtilities;
@@ -43,7 +44,7 @@ public class Cap3AssemblerRunner {
      * @return Contigs.
      * @throws DocumentOperationException
      */
-    public static List<SequenceAlignmentDocument> assemble(List<NucleotideSequenceDocument> sequences,
+    public static List<SequenceAlignmentDocument> assemble(List<DefaultNucleotideGraphSequence> sequences,
                                                            int minOverlapLength,
                                                            int minOverlapIdentity) throws DocumentOperationException {
         try {
@@ -102,7 +103,7 @@ public class Cap3AssemblerRunner {
      * @param sequences Sequences.
      * @return Fasta file path.
      */
-    private static String createFastaFile(List<NucleotideSequenceDocument> sequences) throws IOException {
+    private static String createFastaFile(List<DefaultNucleotideGraphSequence> sequences) throws IOException {
         File fastaFile = FileUtilities.createTempFile("temp", ".fasta", false);
 
         BufferedWriter writer = new BufferedWriter(new FileWriter(fastaFile));
@@ -120,7 +121,7 @@ public class Cap3AssemblerRunner {
      * @param sequences Sequences.
      * @return Fasta file output.
      */
-    private static String toFastaFileFormat(List<NucleotideSequenceDocument> sequences) {
+    private static String toFastaFileFormat(List<DefaultNucleotideGraphSequence> sequences) {
         StringBuilder fastaOutput = new StringBuilder();
 
         /* Generate fasta file output. */

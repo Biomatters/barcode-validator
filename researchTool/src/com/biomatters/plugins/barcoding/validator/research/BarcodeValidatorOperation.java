@@ -4,7 +4,11 @@ import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
+import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.plugin.*;
+import com.biomatters.plugins.barcoding.validator.validation.SlidingWindowTraceValidation;
+import com.biomatters.plugins.barcoding.validator.validation.SlidingWindowValidationOptions;
+import com.biomatters.plugins.barcoding.validator.validation.ValidationResult;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3AssemblerOptions;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3AssemblerRunner;
 import com.biomatters.plugins.barcoding.validator.validation.input.Input;
@@ -76,14 +80,14 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         InputOptions inputSplitterOptions = barcodeValidatorOptions.getInputOptions();
         ErrorProbabilityOptions trimmingOptions = barcodeValidatorOptions.getTrimmingOptions();
         Cap3AssemblerOptions cap3AssemblerOptions = barcodeValidatorOptions.getAssemblyOptions();
+        SlidingWindowValidationOptions traceValidationOptions = barcodeValidatorOptions.getTraceValidationOptions();
 
-        Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
-                suppliedBarcodesToSuppliedTraces;
-        Map<List<NucleotideSequenceDocument>, List<NucleotideSequenceDocument>>
-                suppliedTracesToTrimmedTraces
-                = new HashMap<List<NucleotideSequenceDocument>, List<NucleotideSequenceDocument>>();
-        Map<NucleotideSequenceDocument, SequenceAlignmentDocument>
-                suppliedBarcodesToAssembledBarcodes
+        Map<NucleotideSequenceDocument, List<DefaultNucleotideGraphSequence>> suppliedBarcodesToSuppliedTraces;
+
+        Map<List<DefaultNucleotideGraphSequence>, List<DefaultNucleotideGraphSequence>> suppliedTracesToTrimmedTraces
+                = new HashMap<List<DefaultNucleotideGraphSequence>, List<DefaultNucleotideGraphSequence>>();
+
+        Map<NucleotideSequenceDocument, SequenceAlignmentDocument> suppliedBarcodesToAssembledBarcodes
                 = new HashMap<NucleotideSequenceDocument, SequenceAlignmentDocument>();
 
         CompositeProgressListener composite = new CompositeProgressListener(progressListener, 3);
@@ -99,11 +103,19 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         CompositeProgressListener trimmingProgress
                 = new CompositeProgressListener(composite, suppliedBarcodesToSuppliedTraces.size());
 
-        for (List<NucleotideSequenceDocument> traces : suppliedBarcodesToSuppliedTraces.values()) {
+        for (List<DefaultNucleotideGraphSequence> traces : suppliedBarcodesToSuppliedTraces.values()) {
             trimmingProgress.beginSubtask();
 
             suppliedTracesToTrimmedTraces.put(traces, trimTraces(traces, trimmingOptions));
         }
+
+        /* Validate traces. */
+        List<DefaultNucleotideGraphSequence> trimmedTracesAll = new ArrayList<DefaultNucleotideGraphSequence>();
+        for (List<DefaultNucleotideGraphSequence> trimmedTraces : suppliedTracesToTrimmedTraces.values()) {
+            trimmedTracesAll.addAll(trimmedTraces);
+        }
+
+        ValidationResult traceValidationResult = validateTraces(trimmedTracesAll, traceValidationOptions);
 
         /* Assemble contigs from trimmed traces. */
         composite.beginSubtask("Assembling traces");
@@ -111,13 +123,13 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         CompositeProgressListener assemblyProgress
                 = new CompositeProgressListener(composite, suppliedTracesToTrimmedTraces.size());
 
-        for (Map.Entry<List<NucleotideSequenceDocument>, List<NucleotideSequenceDocument>>
+        for (Map.Entry<List<DefaultNucleotideGraphSequence>, List<DefaultNucleotideGraphSequence>>
                 suppliedTracesToTrimmedTracesEntry : suppliedTracesToTrimmedTraces.entrySet()) {
             assemblyProgress.beginSubtask();
 
             NucleotideSequenceDocument suppliedBarcode = null;
 
-            for (Map.Entry<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
+            for (Map.Entry<NucleotideSequenceDocument, List<DefaultNucleotideGraphSequence>>
                     suppliedBarcodesToSuppliedTracesEntry : suppliedBarcodesToSuppliedTraces.entrySet()) {
                 if (suppliedBarcodesToSuppliedTracesEntry.getValue().equals(suppliedTracesToTrimmedTracesEntry.getKey())) {
                     suppliedBarcode = suppliedBarcodesToSuppliedTracesEntry.getKey();
@@ -153,7 +165,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
      * @return Map of barcodes to traces.
      * @throws DocumentOperationException
      */
-    private Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
+    private Map<NucleotideSequenceDocument, List<DefaultNucleotideGraphSequence>>
     groupTracesToBarcodes(InputOptions options) throws DocumentOperationException {
         return Input.processInputs(options.getTraceFilePaths(),
                                    options.getBarcodeFilePaths(),
@@ -168,10 +180,18 @@ public class BarcodeValidatorOperation extends DocumentOperation {
      * @return Trimmed traces.
      * @throws DocumentOperationException
      */
-    private List<NucleotideSequenceDocument> trimTraces(List<NucleotideSequenceDocument> traces,
-                                                        ErrorProbabilityOptions options)
+    private List<DefaultNucleotideGraphSequence> trimTraces(List<DefaultNucleotideGraphSequence> traces,
+                                                            ErrorProbabilityOptions options)
             throws DocumentOperationException {
-        return SequenceTrimmer.trimNucleotideSequenceDocuments(traces, options.getErrorProbabilityLimit());
+        return SequenceTrimmer.trimSequences(traces, options.getErrorProbabilityLimit());
+    }
+
+    private ValidationResult validateTraces(List<DefaultNucleotideGraphSequence> traces,
+                                            SlidingWindowValidationOptions options) {
+        return new SlidingWindowTraceValidation(options.getWindowSize(),
+                                               options.getStepSize(),
+                                               options.getMinimumQuality(),
+                                               options.getMinimumRatioSatisfied()).validate(traces);
     }
 
     /**
@@ -182,7 +202,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
      * @return Contigs.
      * @throws DocumentOperationException
      */
-    private SequenceAlignmentDocument assembleTraces(List<NucleotideSequenceDocument> traces,
+    private SequenceAlignmentDocument assembleTraces(List<DefaultNucleotideGraphSequence> traces,
                                                      Cap3AssemblerOptions options)
             throws DocumentOperationException {
         List<SequenceAlignmentDocument> result = Cap3AssemblerRunner.assemble(traces,

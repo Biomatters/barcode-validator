@@ -16,7 +16,8 @@ public interface BulkBarcodeValidation {
     /**
      *
      * @param barcodeSequences A collection of user supplied barcode sequences
-     * @return A map containing a {@link com.biomatters.plugins.barcoding.validator.validation.ValidationResult} for each input sequence
+     * @return A map containing a {@link com.biomatters.plugins.barcoding.validator.validation.ValidationResult}
+     *         for each input sequence
      */
     public Map<SequenceDocument, ValidationResult> validate(List<SequenceDocument> barcodeSequences);
 }

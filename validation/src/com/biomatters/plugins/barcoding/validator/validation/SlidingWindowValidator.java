@@ -11,7 +11,7 @@ public class SlidingWindowValidator {
     public static boolean validate(NucleotideGraphSequenceDocument sequence,
                                    int winSize,
                                    int stepSize,
-                                   double minQuality,
+                                   int minQuality,
                                    double minRatioSatisfied) throws DocumentOperationException {
         try {
             for (int i = 0; i <= sequence.getSequenceLength() - winSize; i += stepSize) {
@@ -54,13 +54,7 @@ public class SlidingWindowValidator {
         return result;
     }
 
-    private static boolean validateQualities(int[] qualities, double minQuality, double minRatioSatisfied) {
-        if (minQuality < 0 || minQuality > 1) {
-            throw new IllegalArgumentException("Minimum quality value out of range, " +
-                                               "valid range: 0 - 1 inclusive, " +
-                                               "actual value: " + minQuality + ".");
-        }
-
+    private static boolean validateQualities(int[] qualities, int minQuality, double minRatioSatisfied) {
         if (minRatioSatisfied < 0 || minRatioSatisfied > 1) {
             throw new IllegalArgumentException("Minimum ratio satisfied value out of range, " +
                                                "valid range: 0 - 1 inclusive, " +

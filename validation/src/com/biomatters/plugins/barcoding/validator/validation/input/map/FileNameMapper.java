@@ -1,6 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.validation.input.map;
 
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
+import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 
 import java.util.ArrayList;
@@ -40,15 +41,15 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @throws DocumentOperationException
      */
     @Override
-    public Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
-    map(List<NucleotideSequenceDocument> barcodes, List<NucleotideSequenceDocument> traces)
+    public Map<NucleotideSequenceDocument, List<DefaultNucleotideGraphSequence>>
+    map(List<NucleotideSequenceDocument> barcodes, List<DefaultNucleotideGraphSequence> traces)
             throws DocumentOperationException {
         try {
             /* Map documents to, the part of the name of each document used for the mapping. */
-            Map<NucleotideSequenceDocument, String> tracesToNameParts =
-                    mapDocumentToPartOfName(traces, traceSeparator, traceNamePart);
+            Map<DefaultNucleotideGraphSequence, String> tracesToNameParts =
+                    mapTracesToPartOfName(traces, traceSeparator, traceNamePart);
             Map<NucleotideSequenceDocument, String> barcodesToNameParts =
-                    mapDocumentToPartOfName(barcodes, barcodeSeparator, barcodeNamePart);
+                    mapBarcodesToPartOfName(barcodes, barcodeSeparator, barcodeNamePart);
 
             /* Map. */
             return map(tracesToNameParts, barcodesToNameParts);
@@ -71,19 +72,19 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @return Map of barcodes to traces.
      * @throws DocumentOperationException
      */
-    private static Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>
-    map(Map<NucleotideSequenceDocument, String> tracesToNameParts,
+    private static Map<NucleotideSequenceDocument, List<DefaultNucleotideGraphSequence>>
+    map(Map<DefaultNucleotideGraphSequence, String> tracesToNameParts,
         Map<NucleotideSequenceDocument, String> barcodesToNameParts)
             throws NoMatchException {
-        Map<NucleotideSequenceDocument, List<NucleotideSequenceDocument>> result
-                = new HashMap<NucleotideSequenceDocument, List<NucleotideSequenceDocument>>();
+        Map<NucleotideSequenceDocument, List<DefaultNucleotideGraphSequence>> result
+                = new HashMap<NucleotideSequenceDocument, List<DefaultNucleotideGraphSequence>>();
 
         for (NucleotideSequenceDocument barcode : barcodesToNameParts.keySet()) {
-            result.put(barcode, new ArrayList<NucleotideSequenceDocument>());
+            result.put(barcode, new ArrayList<DefaultNucleotideGraphSequence>());
         }
 
         /* Match traces to barcodes. */
-        for (Map.Entry<NucleotideSequenceDocument, String> traceToNamePart : tracesToNameParts.entrySet()) {
+        for (Map.Entry<DefaultNucleotideGraphSequence, String> traceToNamePart : tracesToNameParts.entrySet()) {
             String namePart = traceToNamePart.getValue();
 
             NucleotideSequenceDocument barcode = null;
@@ -128,7 +129,7 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @throws DocumentOperationException
      */
     private static Map<NucleotideSequenceDocument, String>
-    mapDocumentToPartOfName(List<NucleotideSequenceDocument> documents, String separator, int i)
+    mapDocumentsToPartOfName(List<NucleotideSequenceDocument> documents, String separator, int i)
             throws DocumentOperationException {
         Map<NucleotideSequenceDocument, String> result = new HashMap<NucleotideSequenceDocument, String>();
 
@@ -145,6 +146,47 @@ public class FileNameMapper extends BarcodesToTracesMapper {
         }
 
         return result;
+    }
+
+    /**
+     * Maps traces to, the part of the name of each trace used for the mapping. Given name n, separator s, and
+     * index i, name part = n.split(s)[i].
+     *
+     * @param traces Traces.
+     * @param separator Separator.
+     * @param i Index.
+     * @return Map of traces to, the part of the name of each trace used for the mapping.
+     * @throws DocumentOperationException
+     */
+    private static Map<DefaultNucleotideGraphSequence, String>
+    mapTracesToPartOfName(List<DefaultNucleotideGraphSequence> traces, String separator, int i)
+            throws DocumentOperationException {
+        Map<NucleotideSequenceDocument, String> resultNSDs
+                = mapDocumentsToPartOfName(new ArrayList<NucleotideSequenceDocument>(traces), separator, i);
+
+        Map<DefaultNucleotideGraphSequence, String> result = new HashMap<DefaultNucleotideGraphSequence, String>();
+
+        for (Map.Entry<NucleotideSequenceDocument, String> traceNSDToNamePart : resultNSDs.entrySet()) {
+            result.put((DefaultNucleotideGraphSequence)traceNSDToNamePart.getKey(), traceNSDToNamePart.getValue());
+        }
+
+        return result;
+    }
+
+    /**
+     * Maps barcodes to, the part of the name of each barcode used for the mapping. Given name n, separator s, and
+     * index i, name part = n.split(s)[i].
+     *
+     * @param barcodes Barcodes.
+     * @param separator Separator.
+     * @param i Index.
+     * @return Map of barcodes to, the part of the name of each barcode used for the mapping.
+     * @throws DocumentOperationException
+     */
+    private static Map<NucleotideSequenceDocument, String>
+    mapBarcodesToPartOfName(List<NucleotideSequenceDocument> barcodes, String separator, int i)
+            throws DocumentOperationException {
+        return mapDocumentsToPartOfName(barcodes, separator, i);
     }
 
     /**
