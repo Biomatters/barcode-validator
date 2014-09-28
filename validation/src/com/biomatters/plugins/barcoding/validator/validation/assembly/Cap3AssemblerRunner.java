@@ -12,7 +12,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.URL;
 import java.util.List;
 
 /**
@@ -22,10 +21,6 @@ import java.util.List;
  *         Created on 22/08/14 12:07 PM
  */
 public class Cap3AssemblerRunner {
-    private static final String CAP3_ASSEMBLER_WINDOWS_FILENAME = "cap3.exe";
-    private static final String CAP3_ASSEMBLER_MAC_FILENAME     = "cap3.osx";
-    private static final String CAP3_ASSEMBLER_LINUX_FILENAME   = "cap3.linux";
-
     private static final String CAP3_ASSEMBLER_RESULT_FILE_EXTENSION = ".cap.ace";
 
     private static final String MIN_OVERLAP_LENGTH_COMMANDLINE_OPTION   = "-o";
@@ -38,17 +33,18 @@ public class Cap3AssemblerRunner {
      * Assembles contigs.
      *
      * @param sequences Sequences.
-     * @param minOverlapLength Minimum overlap length.
+     * @param executableLocation The command to execute cap3.  Either "cap3" if it is on the path or the location of the executable.
+     *@param minOverlapLength Minimum overlap length.
      * @param minOverlapIdentity Minimum overlap identity.
      * @return Contigs.
      * @throws DocumentOperationException
      */
     public static List<SequenceAlignmentDocument> assemble(List<NucleotideSequenceDocument> sequences,
-                                                           int minOverlapLength,
+                                                           String executableLocation, int minOverlapLength,
                                                            int minOverlapIdentity) throws DocumentOperationException {
         try {
             return ImportUtilities.importContigs(runCap3Assembler(createFastaFile(sequences),
-                                                                  minOverlapLength,
+                    executableLocation, minOverlapLength,
                                                                   minOverlapIdentity));
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not assemble contigs: " + e.getMessage(), e);
@@ -63,6 +59,7 @@ public class Cap3AssemblerRunner {
      * Runs the CAP3 assembler.
      *
      * @param fastaFilePath Fasta file path.
+     * @param executableLocation The command to execute cap3.  Either "cap3" if it is on the path or the location of the executable.
      * @param minOverlapLength Minimum overlap length.
      * @param minOverlapIdentity Minimum overlap identity.
      * @return {@value #CAP3_ASSEMBLER_RESULT_FILE_EXTENSION} output file path.
@@ -70,11 +67,11 @@ public class Cap3AssemblerRunner {
      * @throws InterruptedException
      * @throws IOException
      */
-    private static String runCap3Assembler(String fastaFilePath, int minOverlapLength, int minOverlapIdentity)
+    private static String runCap3Assembler(String fastaFilePath, String executableLocation, int minOverlapLength, int minOverlapIdentity)
             throws DocumentOperationException, InterruptedException, IOException {
         Execution exec = new Execution(
                 new String[] {
-                        getCap3AssemblerFilePath(),
+                        executableLocation,
                         fastaFilePath,
                         MIN_OVERLAP_LENGTH_COMMANDLINE_OPTION,
                         String.valueOf(minOverlapLength),
@@ -137,43 +134,5 @@ public class Cap3AssemblerRunner {
         }
 
         return fastaOutput.toString();
-    }
-
-    /**
-     * Returns the path of the CAP3 assembler executable for the current OS.
-     *
-     * @return Path of the CAP3 assembler executable for the current OS.
-     * @throws DocumentOperationException If a CAP3 assembler executable is not available for the current OS.
-     */
-    private static String getCap3AssemblerFilePath() throws DocumentOperationException {
-        URL cap3AssemblerURL = Cap3AssemblerRunner.class.getResource(getCap3AssemblerFileName());
-
-        if (cap3AssemblerURL == null) {
-            throw new DocumentOperationException("Missing plugin resource: " +
-                                                 "Try re-installing the plugin. " +
-                                                 "Contact support@mooreasoftware.org if the issue still persists.");
-        }
-
-        return cap3AssemblerURL.getPath().replace("%20", " ");
-    }
-
-    /**
-     * Returns the file name of the CAP3 assembler executable for the current OS.
-     *
-     * @return File name of the CAP3 assembler executable for the current OS.
-     * @throws DocumentOperationException If a CAP3 assembler executable is not available for the current OS.
-     */
-    private static String getCap3AssemblerFileName() throws DocumentOperationException {
-        String operatingSystem = System.getProperty("os.name").toLowerCase();
-
-        if (operatingSystem.contains("windows")) {
-            return CAP3_ASSEMBLER_WINDOWS_FILENAME;
-        } else if (operatingSystem.contains("mac")) {
-            return CAP3_ASSEMBLER_MAC_FILENAME;
-        } else if (operatingSystem.contains("linux")) {
-            return CAP3_ASSEMBLER_LINUX_FILENAME;
-        } else {
-            throw new DocumentOperationException("Unsupported operating system: " + operatingSystem);
-        }
     }
 }

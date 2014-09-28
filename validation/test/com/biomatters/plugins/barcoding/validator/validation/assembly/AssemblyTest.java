@@ -7,8 +7,10 @@ import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleot
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.TestGeneious;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -20,6 +22,9 @@ import java.util.List;
 public class AssemblyTest extends Assert {
     @Test
     public void testContigAssembled() throws DocumentOperationException {
+        String commandForCap3 = "cap3";
+        Assume.assumeTrue(canRun(commandForCap3));
+
         TestGeneious.initializePlugins(
                 "com.biomatters.plugins.fileimportexport.AceImporter.AceImporterPlugin",  // Required to process Cap3 results
                 "com.biomatters.plugins.local.LocalDatabasePlugin"  // Required becasue Ace importer requires a WritableDatabaseService
@@ -35,7 +40,7 @@ public class AssemblyTest extends Assert {
         documents.add(document);
         documents.add(document);
 
-        List<SequenceAlignmentDocument> result = Cap3AssemblerRunner.assemble(documents, 40, 90);
+        List<SequenceAlignmentDocument> result = Cap3AssemblerRunner.assemble(documents, commandForCap3, 40, 90);
         assertEquals(1, result.size());
 
         List<SequenceDocument> sequences = result.get(0).getSequences();
@@ -44,6 +49,15 @@ public class AssemblyTest extends Assert {
         for (int i = 1; i < sequences.size(); i++) {
             String withNoGaps = sequences.get(i).getSequenceString().replace("-", "");
             assertEquals(theSequence, withNoGaps);
+        }
+    }
+
+    public static boolean canRun(String executablePath) {
+        try {
+            Runtime.getRuntime().exec(executablePath);
+            return true;
+        } catch (IOException e) {
+            return false;
         }
     }
 }

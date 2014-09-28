@@ -186,8 +186,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                                                      Cap3AssemblerOptions options)
             throws DocumentOperationException {
         List<SequenceAlignmentDocument> result = Cap3AssemblerRunner.assemble(traces,
-                                                                              options.getMinOverlapLength(),
-                                                                              options.getMinOverlapIdentity());
+                options.getExecutable(), options.getMinOverlapLength(), options.getMinOverlapIdentity());
         if (result.size() != 1) {
             throw new DocumentOperationException("todo?");
         }
