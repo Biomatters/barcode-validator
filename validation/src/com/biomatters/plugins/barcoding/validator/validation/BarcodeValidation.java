@@ -18,9 +18,10 @@ public abstract class BarcodeValidation implements Validation {
      *
      * @param originalSequence The user supplied barcode sequence to validate
      * @param generatedSequence The barcode sequence generated from the user supplied traces
+     * @param options Options obtained from calling {@link #getOptions()}
      * @return a {@link com.biomatters.plugins.barcoding.validator.validation.ValidationResult}
      */
-    public abstract ValidationResult validate(SequenceDocument originalSequence, SequenceDocument generatedSequence);
+    public abstract ValidationResult validate(SequenceDocument originalSequence, SequenceDocument generatedSequence, ValidationOptions options);
 
     /**
      * @return List of BarcodeValidation objects.

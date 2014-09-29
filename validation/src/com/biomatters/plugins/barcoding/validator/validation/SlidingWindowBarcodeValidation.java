@@ -8,7 +8,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
  */
 public class SlidingWindowBarcodeValidation extends BarcodeValidation {
     @Override
-    public ValidationResult validate(SequenceDocument originalSequence, SequenceDocument generatedSequence) {
+    public ValidationResult validate(SequenceDocument originalSequence, SequenceDocument generatedSequence, ValidationOptions options) {
         return null;
     }
 
