@@ -3,6 +3,7 @@ package com.biomatters.plugins.barcoding.validator.research;
 import com.biomatters.geneious.publicapi.databaseservice.DatabaseServiceException;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
+import com.biomatters.geneious.publicapi.documents.PluginDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
@@ -97,7 +98,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             List<NucleotideGraphSequenceDocument> trimmedTraces = performTrimmingStep(operationCallback, trimmingOptions, entry.getValue(), stepsProgress);
 
             stepsProgress.beginSubtask("Validating Traces...");
-            validateTraces(trimmedTraces, traceValidationOptions);
+            validateTraces(trimmedTraces, traceValidationOptions, stepsProgress, operationCallback);
 
             stepsProgress.beginSubtask("Assembling...");
             performAssemblyStep(operationCallback, CAP3Options, setName, stepsProgress, trimmedTraces);
@@ -220,17 +221,26 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         return SequenceTrimmer.trimSequences(traces, options.getErrorProbabilityLimit());
     }
 
-    private void validateTraces(List<NucleotideGraphSequenceDocument> traces, Map<String, ValidationOptions> options)
+    private void validateTraces(List<NucleotideGraphSequenceDocument> traces, Map<String, ValidationOptions> options, CompositeProgressListener progress, OperationCallback operationCallback)
             throws DocumentOperationException {
         Map<String, ValidationResult> failures = new HashMap<String, ValidationResult>();
 
-        for (TraceValidation validation : TraceValidation.getTraceValidations()) {
+        List<TraceValidation> validationTasks = TraceValidation.getTraceValidations();
+        CompositeProgressListener perTaskProgress = new CompositeProgressListener(progress, validationTasks.size());
+        for (TraceValidation validation : validationTasks) {
+            perTaskProgress.beginSubtask();
             ValidationOptions validationOptions = validation.getOptions();
 
             ValidationResult result = validation.validate(traces, options.get(validationOptions.getName()));
 
             if (!result.isPassed()) {
                 failures.put(validationOptions.getLabel(), result);
+            }
+            List<PluginDocument> docsToAddToResults = result.getIntermediateDocumentsToAddToResults();
+            CompositeProgressListener resultAddingProgress = new CompositeProgressListener(perTaskProgress, docsToAddToResults.size());
+            for (PluginDocument docToAdd : docsToAddToResults) {
+                resultAddingProgress.beginSubtask();
+                operationCallback.addDocument(docToAdd, false, resultAddingProgress);
             }
         }
 
