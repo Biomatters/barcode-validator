@@ -104,7 +104,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             performAssemblyStep(operationCallback, CAP3Options, setName, stepsProgress, trimmedTraces);
 
             stepsProgress.beginSubtask("Validating Barcode Sequences...");
-            // Should be done as part of BV-16
+            // Should be done as part of BV-16, don't forget to add intermediate docs by calling addIntermediateResultsToCallback()
         }
         composite.setComplete();
     }
@@ -236,16 +236,20 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             if (!result.isPassed()) {
                 failures.put(validationOptions.getLabel(), result);
             }
-            List<PluginDocument> docsToAddToResults = result.getIntermediateDocumentsToAddToResults();
-            CompositeProgressListener resultAddingProgress = new CompositeProgressListener(perTaskProgress, docsToAddToResults.size());
-            for (PluginDocument docToAdd : docsToAddToResults) {
-                resultAddingProgress.beginSubtask();
-                operationCallback.addDocument(docToAdd, false, resultAddingProgress);
-            }
+            addIntermediateResultsToCallback(result, perTaskProgress, operationCallback);
         }
 
         if (!failures.isEmpty()) {
             throw new DocumentOperationException(buildValidationFailureMessage(failures));
+        }
+    }
+
+    private static void addIntermediateResultsToCallback(ValidationResult result, CompositeProgressListener perTaskProgress, OperationCallback operationCallback) throws DocumentOperationException {
+        List<PluginDocument> docsToAddToResults = result.getIntermediateDocumentsToAddToResults();
+        CompositeProgressListener resultAddingProgress = new CompositeProgressListener(perTaskProgress, docsToAddToResults.size());
+        for (PluginDocument docToAdd : docsToAddToResults) {
+            resultAddingProgress.beginSubtask();
+            operationCallback.addDocument(docToAdd, false, resultAddingProgress);
         }
     }
 
