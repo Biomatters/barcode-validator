@@ -108,8 +108,8 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         composite.setComplete();
     }
 
-    public void performAssemblyStep(OperationCallback operationCallback, CAP3Options options, String setName, CompositeProgressListener stepsProgress, List<NucleotideGraphSequenceDocument> trimmedTraces) throws DocumentOperationException {
-        CompositeProgressListener assemblyProgress = new CompositeProgressListener(stepsProgress, 4);
+    public NucleotideSequenceDocument performAssemblyStep(OperationCallback operationCallback, CAP3Options options, String setName, CompositeProgressListener stepsProgress, List<NucleotideGraphSequenceDocument> trimmedTraces) throws DocumentOperationException {
+        CompositeProgressListener assemblyProgress = new CompositeProgressListener(stepsProgress, 3);
         assemblyProgress.beginSubtask();
         SequenceAlignmentDocument assembly = assembleTraces(trimmedTraces, options);
         assemblyProgress.beginSubtask();
@@ -117,9 +117,15 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         contigDocument.setName(setName + " Contig");
         operationCallback.addDocument(contigDocument, false, assemblyProgress);
         assemblyProgress.beginSubtask();
-        // todo consensus
-        assemblyProgress.beginSubtask();
-        // todo add to folder
+        SequenceDocument consensus = assembly.getSequence(assembly.getContigReferenceSequenceIndex());
+        operationCallback.addDocument(consensus, false, assemblyProgress);
+        if(consensus instanceof NucleotideSequenceDocument) {
+            return (NucleotideSequenceDocument)consensus;
+        } else {
+            throw new DocumentOperationException("Assembly of nucleotide sequences produced non-nucleotide consensus: " +
+                    "Was " + consensus.getClass().getSimpleName() + "\n\n" +
+                    "Please contact support@geneious.com with your input files and options.");
+        }
     }
 
     public List<NucleotideGraphSequenceDocument> performTrimmingStep(OperationCallback operationCallback, ErrorProbabilityOptions trimmingOptions, List<NucleotideGraphSequenceDocument> traces, CompositeProgressListener stepsProgress) throws DocumentOperationException {
