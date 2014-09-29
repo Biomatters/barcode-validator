@@ -1,7 +1,5 @@
 package com.biomatters.plugins.barcoding.validator.research.options;
 
-import com.biomatters.geneious.publicapi.components.Dialogs;
-import com.biomatters.geneious.publicapi.plugin.Icons;
 import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorMockupPlugin;
 import com.biomatters.plugins.barcoding.validator.research.Utilities;

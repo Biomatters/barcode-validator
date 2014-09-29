@@ -2,7 +2,6 @@ package com.biomatters.plugins.barcoding.validator.validation.input;
 
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
-import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.plugins.barcoding.validator.validation.input.map.BarcodesToTracesMapperFactory;
 import com.biomatters.plugins.barcoding.validator.validation.input.map.BarcodesToTracesMapperOptions;

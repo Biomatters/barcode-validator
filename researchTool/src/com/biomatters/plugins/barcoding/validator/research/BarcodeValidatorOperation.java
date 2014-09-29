@@ -6,8 +6,8 @@ import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSeque
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.plugin.*;
-import com.biomatters.plugins.barcoding.validator.validation.SlidingWindowTraceValidation;
-import com.biomatters.plugins.barcoding.validator.validation.SlidingWindowValidationOptions;
+import com.biomatters.plugins.barcoding.validator.validation.TraceValidation;
+import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationResult;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3AssemblerOptions;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3AssemblerRunner;
@@ -67,7 +67,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                                                           ProgressListener progressListener,
                                                           Options options) throws DocumentOperationException {
         if (!(options instanceof BarcodeValidatorOptions)) {
-            throw new DocumentOperationException("Unexpected Options type, " +
+            throw new DocumentOperationException("Wrong Options type, " +
                                                  "expected: BarcodeValidatorOptions, " +
                                                  "actual: " + options.getClass().getSimpleName() + ".");
         }
@@ -80,7 +80,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         InputOptions inputSplitterOptions = barcodeValidatorOptions.getInputOptions();
         ErrorProbabilityOptions trimmingOptions = barcodeValidatorOptions.getTrimmingOptions();
         Cap3AssemblerOptions cap3AssemblerOptions = barcodeValidatorOptions.getAssemblyOptions();
-        SlidingWindowValidationOptions traceValidationOptions = barcodeValidatorOptions.getTraceValidationOptions();
+        Map<String, Options> traceValidationOptions = barcodeValidatorOptions.getTraceValidationOptions();
 
         Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces;
 
@@ -115,7 +115,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             trimmedTracesAll.addAll(trimmedTraces);
         }
 
-        ValidationResult traceValidationResult = validateTraces(trimmedTracesAll, traceValidationOptions);
+        validateTraces(trimmedTracesAll, traceValidationOptions);
 
         /* Assemble contigs from trimmed traces. */
         composite.beginSubtask("Assembling traces");
@@ -186,12 +186,23 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         return SequenceTrimmer.trimSequences(traces, options.getErrorProbabilityLimit());
     }
 
-    private ValidationResult validateTraces(List<NucleotideGraphSequenceDocument> traces,
-                                            SlidingWindowValidationOptions options) {
-        return new SlidingWindowTraceValidation(options.getWindowSize(),
-                                               options.getStepSize(),
-                                               options.getMinimumQuality(),
-                                               options.getMinimumRatioSatisfied()).validate(traces);
+    private void validateTraces(List<NucleotideGraphSequenceDocument> traces, Map<String, Options> options)
+            throws DocumentOperationException {
+        Map<String, ValidationResult> failures = new HashMap<String, ValidationResult>();
+
+        for (TraceValidation validation : TraceValidation.getTraceValidations()) {
+            ValidationOptions validationOptions = validation.getOptions();
+
+            ValidationResult result = validation.validate(traces, options.get(validationOptions.getName()));
+
+            if (!result.isPassed()) {
+                failures.put(validationOptions.getLabel(), result);
+            }
+        }
+
+        if (!failures.isEmpty()) {
+            throw new DocumentOperationException(buildValidationFailureMessage(failures));
+        }
     }
 
     /**
@@ -206,11 +217,25 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                                                      Cap3AssemblerOptions options)
             throws DocumentOperationException {
         List<SequenceAlignmentDocument> result = Cap3AssemblerRunner.assemble(traces,
-                options.getExecutable(), options.getMinOverlapLength(), options.getMinOverlapIdentity());
+                                                                              options.getExecutable(),
+                                                                              options.getMinOverlapLength(),
+                                                                              options.getMinOverlapIdentity());
         if (result.size() != 1) {
             throw new DocumentOperationException("todo?");
         }
 
         return result.get(0);
+    }
+
+    private String buildValidationFailureMessage(Map<String, ValidationResult> results) {
+        StringBuilder messageBuilder = new StringBuilder();
+
+        messageBuilder.append("Failed validations:\n\n");
+
+        for (Map.Entry<String, ValidationResult> result : results.entrySet()) {
+            messageBuilder.append(result.getKey() + " - " + result.getValue().getMessage()).append("\n\n");
+        }
+
+        return messageBuilder.toString();
     }
 }

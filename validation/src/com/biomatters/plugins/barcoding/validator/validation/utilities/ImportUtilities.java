@@ -212,7 +212,7 @@ public class ImportUtilities {
             throws DocumentOperationException {
         for (AnnotatedPluginDocument document : documents) {
             if (!isDocumentOfTypes(document, types)) {
-                throw new DocumentOperationException(importedDocumentUnexpectedTypeMessage(
+                throw new DocumentOperationException(buildImportedDocumentUnexpectedTypeMessage(
                         types,
                         document.getDocumentClass(),
                         document.getDocument().getName())
@@ -246,9 +246,9 @@ public class ImportUtilities {
      * @param importedDocumentName Imported document name.
      * @return Error message.
      */
-    private static String importedDocumentUnexpectedTypeMessage(List<Class> expectedTypes,
-                                                                Class importedDocumentType,
-                                                                String importedDocumentName) {
+    private static String buildImportedDocumentUnexpectedTypeMessage(List<Class> expectedTypes,
+                                                                     Class importedDocumentType,
+                                                                     String importedDocumentName) {
         StringBuilder messageBuilder = new StringBuilder();
 
         messageBuilder.append("Imported document '").append(importedDocumentName).append(" is of an unexpected type, ")

@@ -1,7 +1,10 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.components.Dialogs;
-import com.biomatters.geneious.publicapi.plugin.*;
+import com.biomatters.geneious.publicapi.plugin.DocumentOperation;
+import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
+import com.biomatters.geneious.publicapi.plugin.Options;
+import com.biomatters.geneious.publicapi.plugin.PluginUtilities;
 import com.biomatters.geneious.publicapi.utilities.IconUtilities;
 import com.biomatters.plugins.barcoding.validator.research.options.*;
 import com.biomatters.plugins.cap3.Cap3AssemblerOptions;

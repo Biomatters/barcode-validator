@@ -1,12 +1,17 @@
 package com.biomatters.plugins.barcoding.validator.research.report;
 
-import com.biomatters.geneious.publicapi.documents.*;
+import com.biomatters.geneious.publicapi.documents.AbstractPluginDocument;
+import com.biomatters.geneious.publicapi.documents.DocumentField;
+import com.biomatters.geneious.publicapi.documents.XMLSerializationException;
 import com.biomatters.geneious.publicapi.utilities.IconUtilities;
 import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.biomatters.plugins.barcoding.validator.research.data.Set;
 import org.jdom.Element;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**

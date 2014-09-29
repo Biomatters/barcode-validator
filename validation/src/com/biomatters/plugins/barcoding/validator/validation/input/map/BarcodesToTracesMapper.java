@@ -1,7 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.validation.input.map;
 
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 
 import java.util.List;

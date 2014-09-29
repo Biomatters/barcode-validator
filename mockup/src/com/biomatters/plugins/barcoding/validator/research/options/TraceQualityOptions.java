@@ -3,8 +3,6 @@ package com.biomatters.plugins.barcoding.validator.research.options;
 import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorMockupPlugin;
 
-import java.util.Arrays;
-
 /**
  * @author Matthew Cheung
  *         Created on 22/07/14 12:47 PM
