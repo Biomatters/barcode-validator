@@ -2,9 +2,9 @@ package com.biomatters.plugins.barcoding.validator.validation.utilities;
 
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.DefaultSequenceListDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
-import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentImportException;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
@@ -39,16 +39,16 @@ public class ImportUtilities {
      * @return Traces.
      * @throws DocumentOperationException
      */
-    public static List<DefaultNucleotideGraphSequence> importTraces(List<String> sourcePaths)
+    public static List<NucleotideGraphSequenceDocument> importTraces(List<String> sourcePaths)
             throws DocumentOperationException {
-        List<DefaultNucleotideGraphSequence> result = new ArrayList<DefaultNucleotideGraphSequence>();
+        List<NucleotideGraphSequenceDocument> result = new ArrayList<NucleotideGraphSequenceDocument>();
 
         List<AnnotatedPluginDocument> importedDocuments;
         try {
             /* Import traces. */
             importedDocuments = importDocuments(
                     sourcePaths,
-                    Arrays.asList((Class)DefaultNucleotideGraphSequence.class),
+                    Arrays.asList((Class)NucleotideGraphSequenceDocument.class),
                     TRACE_ALLOWED_FILE_EXTENSIONS
             );
         } catch (DocumentOperationException e) {
@@ -56,7 +56,7 @@ public class ImportUtilities {
         }
 
         for (AnnotatedPluginDocument importedDocument : importedDocuments) {
-            result.add((DefaultNucleotideGraphSequence)importedDocument.getDocument());
+            result.add((NucleotideGraphSequenceDocument)importedDocument.getDocument());
         }
 
         return result;

@@ -1,6 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
-import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 
@@ -25,10 +25,10 @@ public class SlidingWindowTraceValidation implements TraceValidation {
     }
 
     @Override
-    public ValidationResult validate(List<DefaultNucleotideGraphSequence> traces) {
+    public ValidationResult validate(List<NucleotideGraphSequenceDocument> traces) {
         List<String> failedTraceNames = new ArrayList<String>();
 
-        for (DefaultNucleotideGraphSequence trace : traces) {
+        for (NucleotideGraphSequenceDocument trace : traces) {
             try {
                 if (!SlidingWindowValidator.validate(trace, winSize, stepSize, minQuality, minRatioSatisfied)) {
                     failedTraceNames.add(trace.getName());

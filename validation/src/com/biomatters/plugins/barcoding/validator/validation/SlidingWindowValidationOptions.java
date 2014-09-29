@@ -47,10 +47,10 @@ public class SlidingWindowValidationOptions extends Options {
     }
 
     private void addMinimumQualityOption() {
-        addIntegerOption(MINIMUM_QUALITY_OPTION_NAME, "Minimum quality:", 0, Integer.MIN_VALUE, Integer.MAX_VALUE);
+        addIntegerOption(MINIMUM_QUALITY_OPTION_NAME, "Minimum quality:", 40, 1, Integer.MAX_VALUE);
     }
 
     private void addMinimumRatioSatisfiedOption() {
-        addDoubleOption(MINIMUM_RATIO_SATISFIED_OPTION_NAME, "Minimum ratio satisfied:", 0.0, 0.0, 100.0).setUnits("%");
+        addDoubleOption(MINIMUM_RATIO_SATISFIED_OPTION_NAME, "Minimum ratio satisfied:", 80.0, 0.0, 100.0).setUnits("%");
     }
 }

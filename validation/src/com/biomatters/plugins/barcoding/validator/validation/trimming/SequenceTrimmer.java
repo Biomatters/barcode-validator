@@ -1,7 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.validation.trimming;
 
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceCharSequence;
-import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 
 import java.util.ArrayList;
@@ -18,20 +18,20 @@ public class SequenceTrimmer {
     }
 
     /**
-     * Trims DefaultNucleotideGraphSequences: Removes regions from their ends.
+     * Trims NucleotideGraphSequenceDocument: Removes regions from their ends.
      *
      * @param sequences Sequences.
      * @param errorProbabilityLimit Error probability limit.
      * @return Trimmed sequences.
      * @throws DocumentOperationException
      */
-    public static List<DefaultNucleotideGraphSequence> trimSequences(List<DefaultNucleotideGraphSequence> sequences,
+    public static List<NucleotideGraphSequenceDocument> trimSequences(List<NucleotideGraphSequenceDocument> sequences,
                                                                     double errorProbabilityLimit)
             throws DocumentOperationException {
-        List<DefaultNucleotideGraphSequence> trimmedSequences = new ArrayList<DefaultNucleotideGraphSequence>();
+        List<NucleotideGraphSequenceDocument> trimmedSequences = new ArrayList<NucleotideGraphSequenceDocument>();
 
         try {
-            for (DefaultNucleotideGraphSequence sequence : sequences) {
+            for (NucleotideGraphSequenceDocument sequence : sequences) {
                 Trimmage trimmage = ErrorProbabilityTrimmer.getTrimmage(sequence,
                                                                         TrimmableEnds.Both,
                                                                         errorProbabilityLimit);
@@ -46,15 +46,15 @@ public class SequenceTrimmer {
     }
 
     /**
-     * Trims a DefaultNucleotideGraphSequence: Removes regions from its ends.
+     * Trims a NucleotideGraphSequenceDocument: Removes regions from its ends.
      *
      * @param sequence Sequence.
      * @param trimmage Region lengths.
      * @return Trimmed sequence.
      * @throws DocumentOperationException
      */
-    private static DefaultNucleotideGraphSequence
-    trimNucleotideSequenceDocument(DefaultNucleotideGraphSequence sequence, Trimmage trimmage)
+    private static NucleotideGraphSequenceDocument
+    trimNucleotideSequenceDocument(NucleotideGraphSequenceDocument sequence, Trimmage trimmage)
             throws DocumentOperationException {
         try {
             return null;
