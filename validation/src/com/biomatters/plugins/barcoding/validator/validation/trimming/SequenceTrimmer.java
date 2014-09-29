@@ -1,16 +1,10 @@
 package com.biomatters.plugins.barcoding.validator.validation.trimming;
 
-import com.biomatters.geneious.publicapi.documents.DocumentField;
-import com.biomatters.geneious.publicapi.documents.URN;
-import com.biomatters.geneious.publicapi.documents.XMLSerializationException;
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
-import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotation;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceCharSequence;
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
-import org.jdom.Element;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -24,31 +18,49 @@ public class SequenceTrimmer {
     }
 
     /**
-     * Trims NucleotideSequenceDocuments: Removes regions from the ends of their sequences.
+     * Trims NucleotideGraphSequenceDocument: Removes regions from their ends.
      *
-     * @param documents Documents.
+     * @param sequences Sequences.
      * @param errorProbabilityLimit Error probability limit.
-     * @return Trimmed documents.
+     * @return Trimmed sequences.
      * @throws DocumentOperationException
      */
-    public static List<NucleotideSequenceDocument>
-    trimNucleotideSequenceDocuments(List<NucleotideSequenceDocument> documents, double errorProbabilityLimit)
+    public static List<NucleotideGraphSequenceDocument> trimSequences(List<NucleotideGraphSequenceDocument> sequences,
+                                                                    double errorProbabilityLimit)
             throws DocumentOperationException {
-        List<NucleotideSequenceDocument> trimmedSequences = new ArrayList<NucleotideSequenceDocument>();
+        List<NucleotideGraphSequenceDocument> trimmedSequences = new ArrayList<NucleotideGraphSequenceDocument>();
 
         try {
-            for (NucleotideSequenceDocument trace : documents) {
-                Trimmage trimmage = ErrorProbabilityTrimmer.getTrimmage(trace,
+            for (NucleotideGraphSequenceDocument sequence : sequences) {
+                Trimmage trimmage = ErrorProbabilityTrimmer.getTrimmage(sequence,
                                                                         TrimmableEnds.Both,
                                                                         errorProbabilityLimit);
 
-                trimmedSequences.add(trimNucleotideSequenceDocument(trace, trimmage));
+                trimmedSequences.add(trimNucleotideSequenceDocument(sequence, trimmage));
             }
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not trim documents: " + e.getMessage(), e);
         }
 
         return trimmedSequences;
+    }
+
+    /**
+     * Trims a NucleotideGraphSequenceDocument: Removes regions from its ends.
+     *
+     * @param sequence Sequence.
+     * @param trimmage Region lengths.
+     * @return Trimmed sequence.
+     * @throws DocumentOperationException
+     */
+    private static NucleotideGraphSequenceDocument
+    trimNucleotideSequenceDocument(NucleotideGraphSequenceDocument sequence, Trimmage trimmage)
+            throws DocumentOperationException {
+        try {
+            return null;
+        } catch (IndexOutOfBoundsException e) {
+            throw new DocumentOperationException("Could not trim '" + sequence.getName() + "': " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -60,120 +72,5 @@ public class SequenceTrimmer {
      */
     public static SequenceCharSequence trimCharacterSequence(SequenceCharSequence sequence, Trimmage trimmage) {
         return sequence.subSequence(trimmage.trimAtStart, sequence.length() - trimmage.trimAtEnd);
-    }
-
-    /**
-     * Trims a NucleotideSequenceDocument: Removes regions from the ends of its sequence.
-     *
-     * @param document Document.
-     * @param trimmage Region lengths.
-     * @return Trimmed document.
-     * @throws DocumentOperationException
-     */
-    private static NucleotideSequenceDocument trimNucleotideSequenceDocument(NucleotideSequenceDocument document,
-                                                                             Trimmage trimmage)
-            throws DocumentOperationException {
-        try {
-            return createNucleotideSequenceDocument(trimCharacterSequence(document.getCharSequence(), trimmage),
-                                                                          document.getSequenceAnnotations(),
-                                                                          document.isCircular(),
-                                                                          document.getDisplayableFields(),
-                                                                          document.getName(),
-                                                                          document.getURN(),
-                                                                          document.getCreationDate(),
-                                                                          document.getDescription());
-        } catch (IndexOutOfBoundsException e) {
-            throw new DocumentOperationException("Could not trim '" + document.getName() + "': " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Creates a NucleotideSequenceDocument.
-     *
-     * @return Document.
-     */
-    private static NucleotideSequenceDocument
-    createNucleotideSequenceDocument(final SequenceCharSequence sequence,
-                                     final List<SequenceAnnotation> sequenceAnnotations,
-                                     final boolean isCircular,
-                                     final List<DocumentField> displayableFields,
-                                     final String name,
-                                     final URN urn,
-                                     final Date creationDate,
-                                     final String description) {
-        return new NucleotideSequenceDocument() {
-            @Override
-            public String getSequenceString() {
-                return sequence.toString();
-            }
-
-            @Override
-            public int getSequenceLength() {
-                return sequence.length();
-            }
-
-            @Override
-            public SequenceCharSequence getCharSequence() {
-                return sequence;
-            }
-
-            @Override
-            public List<SequenceAnnotation> getSequenceAnnotations() {
-                return sequenceAnnotations;
-            }
-
-            @Override
-            public boolean isCircular() {
-                return isCircular;
-            }
-
-            @Override
-            public List<DocumentField> getDisplayableFields() {
-                return displayableFields;
-            }
-
-            @Override
-            public Object getFieldValue(String fieldCodeName) {
-                for (DocumentField field : displayableFields)
-                    if (field.getCode().equals(fieldCodeName))
-                        return field;
-
-                return null;
-            }
-
-            @Override
-            public String getName() {
-                return name;
-            }
-
-            @Override
-            public URN getURN() {
-                return urn;
-            }
-
-            @Override
-            public Date getCreationDate() {
-                return creationDate;
-            }
-
-            @Override
-            public String getDescription() {
-                return description;
-            }
-
-            @Override
-            public String toHTML() {
-                return null;
-            }
-
-            @Override
-            public Element toXML() {
-                return null;
-            }
-
-            @Override
-            public void fromXML(Element element) throws XMLSerializationException {
-            }
-        };
     }
 }

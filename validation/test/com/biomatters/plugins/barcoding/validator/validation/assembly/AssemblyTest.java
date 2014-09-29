@@ -1,9 +1,9 @@
 package com.biomatters.plugins.barcoding.validator.validation.assembly;
 
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
-import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideSequence;
+import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.TestGeneious;
 import org.junit.Assert;
@@ -12,7 +12,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -26,17 +25,19 @@ public class AssemblyTest extends Assert {
         Assume.assumeTrue(canRun(commandForCap3));
 
         TestGeneious.initializePlugins(
-                "com.biomatters.plugins.fileimportexport.AceImporter.AceImporterPlugin",  // Required to process Cap3 results
-                "com.biomatters.plugins.local.LocalDatabasePlugin"  // Required becasue Ace importer requires a WritableDatabaseService
+                "com.biomatters.plugins.fileimportexport.AceImporter.AceImporterPlugin", // Required to process Cap3 results
+                "com.biomatters.plugins.local.LocalDatabasePlugin" // Required because Ace importer requires a WritableDatabaseService
         );
         final String theSequence = "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG";
 
-        NucleotideSequenceDocument document = new DefaultNucleotideSequence("testDoc",
-                                                                            "Test document",
-                                                                            theSequence,
-                                                                            new Date());
+        NucleotideGraphSequenceDocument document = new DefaultNucleotideGraphSequence(null,
+                                                                                      null,
+                                                                                      theSequence,
+                                                                                      null,
+                                                                                      null);
 
-        List<NucleotideSequenceDocument> documents = new ArrayList<NucleotideSequenceDocument>();
+
+        List<NucleotideGraphSequenceDocument> documents = new ArrayList<NucleotideGraphSequenceDocument>();
         documents.add(document);
         documents.add(document);
 

@@ -1,10 +1,10 @@
 package com.biomatters.plugins.barcoding.validator.validation.utilities;
 
-import com.biomatters.geneious.publicapi.documents.*;
+import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.DefaultSequenceListDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
-import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentImportException;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
@@ -39,25 +39,24 @@ public class ImportUtilities {
      * @return Traces.
      * @throws DocumentOperationException
      */
-    public static List<NucleotideSequenceDocument> importTraces(List<String> sourcePaths)
+    public static List<NucleotideGraphSequenceDocument> importTraces(List<String> sourcePaths)
             throws DocumentOperationException {
-        List<NucleotideSequenceDocument> result = new ArrayList<NucleotideSequenceDocument>();
+        List<NucleotideGraphSequenceDocument> result = new ArrayList<NucleotideGraphSequenceDocument>();
 
         List<AnnotatedPluginDocument> importedDocuments;
         try {
             /* Import traces. */
             importedDocuments = importDocuments(
                     sourcePaths,
-                    Arrays.asList((Class) DefaultNucleotideGraphSequence.class),
+                    Arrays.asList((Class)NucleotideGraphSequenceDocument.class),
                     TRACE_ALLOWED_FILE_EXTENSIONS
             );
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not import traces: " + e.getMessage(), e);
         }
 
-        /* Filter traces. */
         for (AnnotatedPluginDocument importedDocument : importedDocuments) {
-            result.add((NucleotideSequenceDocument) importedDocument.getDocument());
+            result.add((NucleotideGraphSequenceDocument)importedDocument.getDocument());
         }
 
         return result;
@@ -91,7 +90,7 @@ public class ImportUtilities {
             if (DefaultSequenceListDocument.class.isAssignableFrom(importedDocument.getDocumentClass())) {
                 result.addAll(((DefaultSequenceListDocument)importedDocument.getDocument()).getNucleotideSequences());
             } else if (DefaultNucleotideSequence.class.isAssignableFrom(importedDocument.getDocumentClass())) {
-                result.add((NucleotideSequenceDocument) importedDocument.getDocument());
+                result.add((NucleotideSequenceDocument)importedDocument.getDocument());
             }
         }
 
