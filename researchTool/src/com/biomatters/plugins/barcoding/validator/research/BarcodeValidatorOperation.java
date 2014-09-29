@@ -80,7 +80,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         InputOptions inputSplitterOptions = barcodeValidatorOptions.getInputOptions();
         ErrorProbabilityOptions trimmingOptions = barcodeValidatorOptions.getTrimmingOptions();
         Cap3AssemblerOptions cap3AssemblerOptions = barcodeValidatorOptions.getAssemblyOptions();
-        Map<String, Options> traceValidationOptions = barcodeValidatorOptions.getTraceValidationOptions();
+        Map<String, ValidationOptions> traceValidationOptions = barcodeValidatorOptions.getTraceValidationOptions();
 
         Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces;
 
@@ -186,7 +186,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         return SequenceTrimmer.trimSequences(traces, options.getErrorProbabilityLimit());
     }
 
-    private void validateTraces(List<NucleotideGraphSequenceDocument> traces, Map<String, Options> options)
+    private void validateTraces(List<NucleotideGraphSequenceDocument> traces, Map<String, ValidationOptions> options)
             throws DocumentOperationException {
         Map<String, ValidationResult> failures = new HashMap<String, ValidationResult>();
 
@@ -233,7 +233,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         messageBuilder.append("Failed validations:\n\n");
 
         for (Map.Entry<String, ValidationResult> result : results.entrySet()) {
-            messageBuilder.append(result.getKey() + " - " + result.getValue().getMessage()).append("\n\n");
+            messageBuilder.append(result.getKey()).append(" - ").append(result.getValue().getMessage()).append("\n\n");
         }
 
         return messageBuilder.toString();

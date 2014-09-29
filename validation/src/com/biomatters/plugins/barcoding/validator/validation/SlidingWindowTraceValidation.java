@@ -2,7 +2,6 @@ package com.biomatters.plugins.barcoding.validator.validation;
 
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
-import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 
 import java.util.ArrayList;
@@ -14,7 +13,7 @@ import java.util.List;
  */
 public class SlidingWindowTraceValidation extends TraceValidation {
     @Override
-    public ValidationResult validate(List<NucleotideGraphSequenceDocument> traces, Options options) {
+    public ValidationResult validate(List<NucleotideGraphSequenceDocument> traces, ValidationOptions options) {
         if (!(options instanceof SlidingWindowValidationOptions))
             throw new IllegalArgumentException("Wrong options supplied: " +
                                                "Expected: SlidingWindowValidationOptions, " +

@@ -18,9 +18,10 @@ public abstract class TraceValidation implements Validation {
      * Validates a set of traces.
      *
      * @param traces The user supplied traces
+     * @param options Options obtained from calling {@link #getOptions()}
      * @return a {@link com.biomatters.plugins.barcoding.validator.validation.ValidationResult}
      */
-    public abstract ValidationResult validate(List<NucleotideGraphSequenceDocument> traces, Options options);
+    public abstract ValidationResult validate(List<NucleotideGraphSequenceDocument> traces, ValidationOptions options);
 
     /**
      * @return List of TraceValidation objects.
