@@ -5,7 +5,7 @@ import com.biomatters.plugins.barcoding.validator.validation.BarcodeValidation;
 import com.biomatters.plugins.barcoding.validator.validation.TraceValidation;
 import com.biomatters.plugins.barcoding.validator.validation.Validation;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
-import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3AssemblerOptions;
+import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.ErrorProbabilityOptions;
 
@@ -50,8 +50,8 @@ public class BarcodeValidatorOptions extends Options {
         return getChildOptions().get(TRACE_VALIDATION_OPTIONS_NAME).getChildOptions();
     }
 
-    public Cap3AssemblerOptions getAssemblyOptions() {
-        return (Cap3AssemblerOptions)getChildOptions().get(ASSEMBLY_OPTIONS_NAME);
+    public CAP3Options getAssemblyOptions() {
+        return (CAP3Options)getChildOptions().get(ASSEMBLY_OPTIONS_NAME);
     }
 
     private void addInputOptions() {
@@ -99,6 +99,6 @@ public class BarcodeValidatorOptions extends Options {
     }
 
     private void addAssemblyOptions() {
-        addCollapsibleChildOptions(ASSEMBLY_OPTIONS_NAME, "Assembly", "", new Cap3AssemblerOptions(), false, true);
+        addCollapsibleChildOptions(ASSEMBLY_OPTIONS_NAME, "Assembly", "", new CAP3Options(), false, true);
     }
 }

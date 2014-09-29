@@ -20,14 +20,16 @@ import java.util.List;
  */
 public class AssemblyTest extends Assert {
     @Test
-    public void testContigAssembled() throws DocumentOperationException {
-        String commandForCap3 = "cap3";
-        Assume.assumeTrue(canRun(commandForCap3));
+    public void testContigAssembly() throws DocumentOperationException {
+        String cap3ExecutablePath = "cap3";
+
+        Assume.assumeTrue(canRun(cap3ExecutablePath));
 
         TestGeneious.initializePlugins(
-                "com.biomatters.plugins.fileimportexport.AceImporter.AceImporterPlugin", // Required to process Cap3 results
-                "com.biomatters.plugins.local.LocalDatabasePlugin" // Required because Ace importer requires a WritableDatabaseService
+                "com.biomatters.plugins.fileimportexport.AceImporter.AceImporterPlugin",
+                "com.biomatters.plugins.local.LocalDatabasePlugin"
         );
+
         final String theSequence = "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG";
 
         NucleotideGraphSequenceDocument document = new DefaultNucleotideGraphSequence(null,
@@ -36,12 +38,11 @@ public class AssemblyTest extends Assert {
                                                                                       null,
                                                                                       null);
 
-
         List<NucleotideGraphSequenceDocument> documents = new ArrayList<NucleotideGraphSequenceDocument>();
         documents.add(document);
         documents.add(document);
 
-        List<SequenceAlignmentDocument> result = Cap3AssemblerRunner.assemble(documents, commandForCap3, 40, 90);
+        List<SequenceAlignmentDocument> result = CAP3Runner.assemble(documents, cap3ExecutablePath, 40, 90);
         assertEquals(1, result.size());
 
         List<SequenceDocument> sequences = result.get(0).getSequences();
@@ -49,6 +50,7 @@ public class AssemblyTest extends Assert {
 
         for (int i = 1; i < sequences.size(); i++) {
             String withNoGaps = sequences.get(i).getSequenceString().replace("-", "");
+
             assertEquals(theSequence, withNoGaps);
         }
     }
@@ -56,6 +58,7 @@ public class AssemblyTest extends Assert {
     public static boolean canRun(String executablePath) {
         try {
             Runtime.getRuntime().exec(executablePath);
+
             return true;
         } catch (IOException e) {
             return false;

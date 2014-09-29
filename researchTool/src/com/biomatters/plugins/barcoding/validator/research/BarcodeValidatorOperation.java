@@ -9,8 +9,8 @@ import com.biomatters.geneious.publicapi.plugin.*;
 import com.biomatters.plugins.barcoding.validator.validation.TraceValidation;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationResult;
-import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3AssemblerOptions;
-import com.biomatters.plugins.barcoding.validator.validation.assembly.Cap3AssemblerRunner;
+import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
+import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Runner;
 import com.biomatters.plugins.barcoding.validator.validation.input.Input;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.ErrorProbabilityOptions;
@@ -79,7 +79,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         /* Get options. */
         InputOptions inputSplitterOptions = barcodeValidatorOptions.getInputOptions();
         ErrorProbabilityOptions trimmingOptions = barcodeValidatorOptions.getTrimmingOptions();
-        Cap3AssemblerOptions cap3AssemblerOptions = barcodeValidatorOptions.getAssemblyOptions();
+        CAP3Options CAP3Options = barcodeValidatorOptions.getAssemblyOptions();
         Map<String, Options> traceValidationOptions = barcodeValidatorOptions.getTraceValidationOptions();
 
         Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces;
@@ -138,7 +138,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
             suppliedBarcodesToAssembledBarcodes.put(
                     suppliedBarcode,
-                    assembleTraces(suppliedTracesToTrimmedTracesEntry.getValue(), cap3AssemblerOptions)
+                    assembleTraces(suppliedTracesToTrimmedTracesEntry.getValue(), CAP3Options)
             );
         }
 
@@ -214,12 +214,13 @@ public class BarcodeValidatorOperation extends DocumentOperation {
      * @throws DocumentOperationException
      */
     private SequenceAlignmentDocument assembleTraces(List<NucleotideGraphSequenceDocument> traces,
-                                                     Cap3AssemblerOptions options)
+                                                     CAP3Options options)
             throws DocumentOperationException {
-        List<SequenceAlignmentDocument> result = Cap3AssemblerRunner.assemble(traces,
-                                                                              options.getExecutable(),
-                                                                              options.getMinOverlapLength(),
-                                                                              options.getMinOverlapIdentity());
+        List<SequenceAlignmentDocument> result = CAP3Runner.assemble(traces,
+                                                                     options.getExecutablePath(),
+                                                                     options.getMinOverlapLength(),
+                                                                     options.getMinOverlapIdentity());
+
         if (result.size() != 1) {
             throw new DocumentOperationException("todo?");
         }

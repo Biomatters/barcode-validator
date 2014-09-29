@@ -15,36 +15,38 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Functionality for utilizing the CAP3 assembler. Non-instantiable.
+ * Functionality for utilizing CAP3. Non-instantiable.
  *
  * @author Gen Li
  *         Created on 22/08/14 12:07 PM
  */
-public class Cap3AssemblerRunner {
+public class CAP3Runner {
     private static final String CAP3_ASSEMBLER_RESULT_FILE_EXTENSION = ".cap.ace";
 
     private static final String MIN_OVERLAP_LENGTH_COMMANDLINE_OPTION   = "-o";
     private static final String MIN_OVERLAP_IDENTITY_COMMANDLINE_OPTION = "-p";
 
-    private Cap3AssemblerRunner() {
+    private CAP3Runner() {
     }
 
     /**
      * Assembles contigs.
      *
      * @param sequences Sequences.
-     * @param executableLocation The command to execute cap3.  Either "cap3" if it is on the path or the location of the executable.
-     *@param minOverlapLength Minimum overlap length.
+     * @param executablePath CAP3 executable path.
+     * @param minOverlapLength Minimum overlap length.
      * @param minOverlapIdentity Minimum overlap identity.
      * @return Contigs.
      * @throws DocumentOperationException
      */
     public static List<SequenceAlignmentDocument> assemble(List<NucleotideGraphSequenceDocument> sequences,
-                                                           String executableLocation, int minOverlapLength,
+                                                           String executablePath,
+                                                           int minOverlapLength,
                                                            int minOverlapIdentity) throws DocumentOperationException {
         try {
             return ImportUtilities.importContigs(runCap3Assembler(createFastaFile(sequences),
-                    executableLocation, minOverlapLength,
+                                                                  executablePath,
+                                                                  minOverlapLength,
                                                                   minOverlapIdentity));
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not assemble contigs: " + e.getMessage(), e);
@@ -56,10 +58,10 @@ public class Cap3AssemblerRunner {
     }
 
     /**
-     * Runs the CAP3 assembler.
+     * Runs CAP3.
      *
-     * @param fastaFilePath Fasta file path.
-     * @param executableLocation The command to execute cap3.  Either "cap3" if it is on the path or the location of the executable.
+     * @param fastafilePath Fasta file path.
+     * @param executablePath CAP3 executable path.
      * @param minOverlapLength Minimum overlap length.
      * @param minOverlapIdentity Minimum overlap identity.
      * @return {@value #CAP3_ASSEMBLER_RESULT_FILE_EXTENSION} output file path.
@@ -67,12 +69,15 @@ public class Cap3AssemblerRunner {
      * @throws InterruptedException
      * @throws IOException
      */
-    private static String runCap3Assembler(String fastaFilePath, String executableLocation, int minOverlapLength, int minOverlapIdentity)
+    private static String runCap3Assembler(String fastafilePath,
+                                           String executablePath,
+                                           int minOverlapLength,
+                                           int minOverlapIdentity)
             throws DocumentOperationException, InterruptedException, IOException {
         Execution exec = new Execution(
                 new String[] {
-                        executableLocation,
-                        fastaFilePath,
+                        executablePath,
+                        fastafilePath,
                         MIN_OVERLAP_LENGTH_COMMANDLINE_OPTION,
                         String.valueOf(minOverlapLength),
                         MIN_OVERLAP_IDENTITY_COMMANDLINE_OPTION,
@@ -85,12 +90,12 @@ public class Cap3AssemblerRunner {
         );
 
         /* Set working directory as input fasta file's containing directory. */
-        exec.setWorkingDirectory(fastaFilePath.substring(0, fastaFilePath.lastIndexOf(File.separator)));
+        exec.setWorkingDirectory(fastafilePath.substring(0, fastafilePath.lastIndexOf(File.separator)));
 
         /* Run. */
         exec.execute();
 
-        return fastaFilePath + CAP3_ASSEMBLER_RESULT_FILE_EXTENSION;
+        return fastafilePath + CAP3_ASSEMBLER_RESULT_FILE_EXTENSION;
     }
 
     /**
@@ -104,7 +109,7 @@ public class Cap3AssemblerRunner {
 
         BufferedWriter writer = new BufferedWriter(new FileWriter(fastaFile));
 
-        writer.write(toFastaFileFormat(sequences));
+        writer.write(toFastaFormat(sequences));
 
         writer.close();
 
@@ -112,15 +117,15 @@ public class Cap3AssemblerRunner {
     }
 
     /**
-     * Generates fasta file output from sequences.
+     * Generates fasta output from sequences.
      *
      * @param sequences Sequences.
-     * @return Fasta file output.
+     * @return Fasta output.
      */
-    private static String toFastaFileFormat(List<NucleotideGraphSequenceDocument> sequences) {
+    private static String toFastaFormat(List<NucleotideGraphSequenceDocument> sequences) {
         StringBuilder fastaOutput = new StringBuilder();
 
-        /* Generate fasta file output. */
+        /* Generate fasta output. */
         for (NucleotideGraphSequenceDocument sequence : sequences) {
             fastaOutput.append(">").append(sequence.getName()).append(" ").append(sequence.getDescription())
                     .append("\n")
