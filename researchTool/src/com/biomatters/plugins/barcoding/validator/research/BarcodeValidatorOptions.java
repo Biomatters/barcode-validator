@@ -54,6 +54,9 @@ public class BarcodeValidatorOptions extends Options {
      */
     public Map<String, ValidationOptions> getTraceValidationOptions() {
         Options traceValidationOptions = getChildOptions().get(TRACE_VALIDATION_OPTIONS_NAME);
+        if(traceValidationOptions == null) {
+            return Collections.emptyMap();
+        }
         Map<String, ValidationOptions> result = new HashMap<String, ValidationOptions>();
         for (Map.Entry<String, Options> entry : traceValidationOptions.getChildOptions().entrySet()) {
             if(entry.getValue() instanceof ValidationOptions) {
