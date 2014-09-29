@@ -59,7 +59,7 @@ public class BarcodeValidatorOptions extends Options {
             if(entry.getValue() instanceof ValidationOptions) {
                 result.put(entry.getKey(), (ValidationOptions)entry.getValue());
             } else {
-                throw new IllegalStateException();
+                throw new IllegalStateException("Child Options of " + TRACE_VALIDATION_OPTIONS_NAME + " was not a ValidationOptions.  All child options should be obtained from calling Validation.getOptions().");
             }
         }
         return Collections.unmodifiableMap(result);
