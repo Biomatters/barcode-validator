@@ -6,6 +6,7 @@ import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.*;
 import com.biomatters.plugins.barcoding.validator.validation.TraceValidation;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
@@ -21,7 +22,6 @@ import jebl.util.ProgressListener;
 
 import javax.swing.*;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,9 +65,6 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
     @Override
     public void performOperation(AnnotatedPluginDocument[] annotatedPluginDocuments, ProgressListener progressListener, Options options, SequenceSelection sequenceSelection, OperationCallback operationCallback) throws DocumentOperationException {
-
-
-
         if (!(options instanceof BarcodeValidatorOptions)) {
             throw new DocumentOperationException("Wrong Options type, " +
                                                  "expected: BarcodeValidatorOptions, " +
@@ -82,83 +79,112 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         Cap3AssemblerOptions cap3AssemblerOptions = barcodeValidatorOptions.getAssemblyOptions();
         Map<String, ValidationOptions> traceValidationOptions = barcodeValidatorOptions.getTraceValidationOptions();
 
-        Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces;
-
-        Map<List<NucleotideGraphSequenceDocument>, List<NucleotideGraphSequenceDocument>> suppliedTracesToTrimmedTraces
-                = new HashMap<List<NucleotideGraphSequenceDocument>, List<NucleotideGraphSequenceDocument>>();
-
-        Map<NucleotideSequenceDocument, SequenceAlignmentDocument> suppliedBarcodesToAssembledBarcodes
-                = new HashMap<NucleotideSequenceDocument, SequenceAlignmentDocument>();
-
-        CompositeProgressListener composite = new CompositeProgressListener(progressListener, 3);
+        CompositeProgressListener composite = new CompositeProgressListener(progressListener, 0.1, 0.9);
 
         /* Split inputs. */
         composite.beginSubtask("Grouping traces to barcodes");
+        Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces = groupTracesToBarcodes(inputSplitterOptions);
 
-        suppliedBarcodesToSuppliedTraces = groupTracesToBarcodes(inputSplitterOptions);
+        composite.beginSubtask();
+        CompositeProgressListener pipelineProgress = new CompositeProgressListener(composite, suppliedBarcodesToSuppliedTraces.size());
+        for (Map.Entry<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> entry : suppliedBarcodesToSuppliedTraces.entrySet()) {
+            String setName = getNameForInputSet(entry.getKey(), entry.getValue());
+            pipelineProgress.beginSubtask("Validating " + setName);
+            setSubFolder(operationCallback, setName);
+            CompositeProgressListener stepsProgress = new CompositeProgressListener(pipelineProgress, 4);
 
-        /* Trim traces. */
-        composite.beginSubtask("Trimming traces");
+            stepsProgress.beginSubtask("Trimming...");
+            List<NucleotideGraphSequenceDocument> trimmedTraces = performTrimmingStep(operationCallback, trimmingOptions, entry.getValue(), stepsProgress);
 
-        CompositeProgressListener trimmingProgress
-                = new CompositeProgressListener(composite, suppliedBarcodesToSuppliedTraces.size());
+            stepsProgress.beginSubtask("Validating Traces...");
+            validateTraces(trimmedTraces, traceValidationOptions);
 
-        for (List<NucleotideGraphSequenceDocument> traces : suppliedBarcodesToSuppliedTraces.values()) {
-            trimmingProgress.beginSubtask();
+            stepsProgress.beginSubtask("Assembling...");
+            performAssemblyStep(operationCallback, cap3AssemblerOptions, setName, stepsProgress, trimmedTraces);
 
-            suppliedTracesToTrimmedTraces.put(traces, trimTraces(traces, trimmingOptions));
-        }
-
-        /* Validate traces. */
-        List<NucleotideGraphSequenceDocument> trimmedTracesAll = new ArrayList<NucleotideGraphSequenceDocument>();
-        for (List<NucleotideGraphSequenceDocument> trimmedTraces : suppliedTracesToTrimmedTraces.values()) {
-            trimmedTracesAll.addAll(trimmedTraces);
-        }
-
-        validateTraces(trimmedTracesAll, traceValidationOptions);
-
-        /* Assemble contigs from trimmed traces. */
-        composite.beginSubtask("Assembling traces");
-
-        CompositeProgressListener assemblyProgress
-                = new CompositeProgressListener(composite, suppliedTracesToTrimmedTraces.size());
-
-        for (Map.Entry<List<NucleotideGraphSequenceDocument>, List<NucleotideGraphSequenceDocument>>
-                suppliedTracesToTrimmedTracesEntry : suppliedTracesToTrimmedTraces.entrySet()) {
-            assemblyProgress.beginSubtask();
-
-            NucleotideSequenceDocument suppliedBarcode = null;
-
-            for (Map.Entry<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>>
-                    suppliedBarcodesToSuppliedTracesEntry : suppliedBarcodesToSuppliedTraces.entrySet()) {
-                if (suppliedBarcodesToSuppliedTracesEntry.getValue().equals(suppliedTracesToTrimmedTracesEntry.getKey())) {
-                    suppliedBarcode = suppliedBarcodesToSuppliedTracesEntry.getKey();
-                }
-            }
-
-            suppliedBarcodesToAssembledBarcodes.put(
-                    suppliedBarcode,
-                    assembleTraces(suppliedTracesToTrimmedTracesEntry.getValue(), cap3AssemblerOptions)
-            );
-        }
-
-        for (Map.Entry<NucleotideSequenceDocument, SequenceAlignmentDocument>
-                suppliedBarcodeToAssembledBarcode : suppliedBarcodesToAssembledBarcodes.entrySet()) {
-            AnnotatedPluginDocument contigDocument
-                    = DocumentUtilities.createAnnotatedPluginDocument(suppliedBarcodeToAssembledBarcode.getValue());
-
-            /* Rename contig. */
-            contigDocument.setName(suppliedBarcodeToAssembledBarcode.getKey().getName() + " Contig");
-            try {
-                operationCallback.setSubFolder(suppliedBarcodeToAssembledBarcode.getKey().getName());
-            } catch (DatabaseServiceException e) {
-                // todo If we failed here deliver all results to the main selected folder?
-            }
-            operationCallback.addDocument(contigDocument, false, ProgressListener.EMPTY); // todo progress
-
+            stepsProgress.beginSubtask("Validating Barcode Sequences...");
+            // Should be done as part of BV-16
         }
         composite.setComplete();
     }
+
+    public void performAssemblyStep(OperationCallback operationCallback, Cap3AssemblerOptions cap3AssemblerOptions, String setName, CompositeProgressListener stepsProgress, List<NucleotideGraphSequenceDocument> trimmedTraces) throws DocumentOperationException {
+        CompositeProgressListener assemblyProgress = new CompositeProgressListener(stepsProgress, 4);
+        assemblyProgress.beginSubtask();
+        SequenceAlignmentDocument assembly = assembleTraces(trimmedTraces, cap3AssemblerOptions);
+        assemblyProgress.beginSubtask();
+        AnnotatedPluginDocument contigDocument = DocumentUtilities.createAnnotatedPluginDocument(assembly);
+        contigDocument.setName(setName + " Contig");
+        operationCallback.addDocument(assembly, false, assemblyProgress);
+        assemblyProgress.beginSubtask();
+        // todo consensus
+        assemblyProgress.beginSubtask();
+        // todo add to folder
+    }
+
+    public List<NucleotideGraphSequenceDocument> performTrimmingStep(OperationCallback operationCallback, ErrorProbabilityOptions trimmingOptions, List<NucleotideGraphSequenceDocument> traces, CompositeProgressListener stepsProgress) throws DocumentOperationException {
+        List<NucleotideGraphSequenceDocument> trimmedTraces = trimTraces(traces, trimmingOptions);
+        CompositeProgressListener savingProgress = new CompositeProgressListener(stepsProgress, trimmedTraces.size());
+        for (NucleotideGraphSequenceDocument trimmedTrace : trimmedTraces) {
+            savingProgress.beginSubtask();
+            operationCallback.addDocument(trimmedTrace, false, savingProgress);
+        }
+        return trimmedTraces;
+    }
+
+
+    private String getNameForInputSet(NucleotideSequenceDocument barcodeSequence, List<? extends SequenceDocument> traces) {
+        if(barcodeSequence != null) {
+            return barcodeSequence.getName();
+        }
+        if(traces.isEmpty()) {
+            return getDefaultName();
+        }
+        StringBuilder sameName = new StringBuilder();
+        for (int i = 0; i < Integer.MAX_VALUE; i++) {
+            String character = null;
+            for (SequenceDocument trace : traces) {
+                if(i >= trace.getName().length()) {
+                    break;
+                }
+                char toCompare = trace.getName().charAt(i);
+                if(character == null) {
+                    character = String.valueOf(toCompare);
+                } else if(!character.equals(String.valueOf(toCompare))) {
+                    break;
+                }
+            }
+            sameName.append(character);
+        }
+        return sameName.toString();
+    }
+
+    private static int SET_NUM = 1;
+    private String getDefaultName() {
+        return "Set " + SET_NUM++;
+    }
+
+    /**
+     * Sets the sub folder for the {@link com.biomatters.geneious.publicapi.plugin.DocumentOperation.OperationCallback}
+     * and handles the {@link com.biomatters.geneious.publicapi.databaseservice.DatabaseServiceException} that can
+     * occur if the sub folder cannot be created.
+     * <br/>
+     * If a {@link com.biomatters.geneious.publicapi.databaseservice.DatabaseServiceException} it is logged and all
+     * results will be instead delivered to the original destination folder.  The user will not be notified.
+     *
+     * @param operationCallback The callback provided to {@link #performOperation(com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument[], jebl.util.ProgressListener, com.biomatters.geneious.publicapi.plugin.Options, com.biomatters.geneious.publicapi.plugin.SequenceSelection, com.biomatters.geneious.publicapi.plugin.DocumentOperation.OperationCallback)}
+     * @param barcodeName The barcode name.  Is used as the name of the sub folder.
+     */
+    private static void setSubFolder(OperationCallback operationCallback, String barcodeName) {
+        try {
+            operationCallback.setSubFolder(barcodeName);
+        } catch (DatabaseServiceException e) {
+            // When running through the plugin this is OK.  However we should decide on a proper logging system before
+            // moving this to the cloud.
+            e.printStackTrace();
+        }
+    }
+
 
     /**
      * Groups traces to barcodes.
