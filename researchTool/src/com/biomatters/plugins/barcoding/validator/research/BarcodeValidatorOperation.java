@@ -139,26 +139,37 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         return trimmedTraces;
     }
 
-
-    private String getNameForInputSet(NucleotideSequenceDocument barcodeSequence, List<? extends SequenceDocument> traces) {
+    /**
+     *
+     * @param barcodeSequence The barcode sequence in the set being validated
+     * @param traces The traces in the set being validated
+     * @return a name for the set of barcode and trace documents
+     */
+    static String getNameForInputSet(NucleotideSequenceDocument barcodeSequence, List<? extends SequenceDocument> traces) {
         if(barcodeSequence != null) {
             return barcodeSequence.getName();
         }
-        if(traces.isEmpty()) {
+        String identicalPartOfNames = getIdenticalPartOfNames(traces);
+        if(identicalPartOfNames.length() == 0) {
             return getDefaultName();
+        } else {
+            return identicalPartOfNames;
         }
+    }
+
+    private static String getIdenticalPartOfNames(List<? extends SequenceDocument> traces) {
         StringBuilder sameName = new StringBuilder();
         for (int i = 0; i < Integer.MAX_VALUE; i++) {
             String character = null;
             for (SequenceDocument trace : traces) {
                 if(i >= trace.getName().length()) {
-                    break;
+                    return sameName.toString();
                 }
                 char toCompare = trace.getName().charAt(i);
                 if(character == null) {
                     character = String.valueOf(toCompare);
                 } else if(!character.equals(String.valueOf(toCompare))) {
-                    break;
+                    return sameName.toString();
                 }
             }
             sameName.append(character);
@@ -167,7 +178,12 @@ public class BarcodeValidatorOperation extends DocumentOperation {
     }
 
     private static int SET_NUM = 1;
-    private String getDefaultName() {
+
+    /**
+     *
+     * @return A unique name (for this run) for a set of input
+     */
+    private static String getDefaultName() {
         return "Set " + SET_NUM++;
     }
 
