@@ -1,5 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
+import com.biomatters.geneious.publicapi.databaseservice.DatabaseServiceException;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
@@ -63,16 +64,15 @@ public class BarcodeValidatorOperation extends DocumentOperation {
     }
 
     @Override
-    public List<AnnotatedPluginDocument> performOperation(AnnotatedPluginDocument[] annotatedDocuments,
-                                                          ProgressListener progressListener,
-                                                          Options options) throws DocumentOperationException {
+    public void performOperation(AnnotatedPluginDocument[] annotatedPluginDocuments, ProgressListener progressListener, Options options, SequenceSelection sequenceSelection, OperationCallback operationCallback) throws DocumentOperationException {
+
+
+
         if (!(options instanceof BarcodeValidatorOptions)) {
             throw new DocumentOperationException("Wrong Options type, " +
                                                  "expected: BarcodeValidatorOptions, " +
                                                  "actual: " + options.getClass().getSimpleName() + ".");
         }
-
-        List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
 
         BarcodeValidatorOptions barcodeValidatorOptions = (BarcodeValidatorOptions)options;
 
@@ -149,13 +149,15 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
             /* Rename contig. */
             contigDocument.setName(suppliedBarcodeToAssembledBarcode.getKey().getName() + " Contig");
+            try {
+                operationCallback.setSubFolder(suppliedBarcodeToAssembledBarcode.getKey().getName());
+            } catch (DatabaseServiceException e) {
+                // todo If we failed here deliver all results to the main selected folder?
+            }
+            operationCallback.addDocument(contigDocument, false, ProgressListener.EMPTY); // todo progress
 
-            result.add(contigDocument);
         }
-
         composite.setComplete();
-
-        return result;
     }
 
     /**
