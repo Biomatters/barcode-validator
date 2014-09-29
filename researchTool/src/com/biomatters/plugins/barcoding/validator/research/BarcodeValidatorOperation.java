@@ -115,7 +115,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         assemblyProgress.beginSubtask();
         AnnotatedPluginDocument contigDocument = DocumentUtilities.createAnnotatedPluginDocument(assembly);
         contigDocument.setName(setName + " Contig");
-        operationCallback.addDocument(assembly, false, assemblyProgress);
+        operationCallback.addDocument(contigDocument, false, assemblyProgress);
         assemblyProgress.beginSubtask();
         // todo consensus
         assemblyProgress.beginSubtask();
