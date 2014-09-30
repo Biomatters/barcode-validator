@@ -262,7 +262,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             perTaskProgress.beginSubtask();
             ValidationOptions validationOptions = validation.getOptions();
 
-            ValidationResult result = validation.validate(traces, options.get(validationOptions.getName()));
+            ValidationResult result = validation.validate(traces, options.get(validationOptions.getIdentifier()));
             operationCallback.addValidationResult(result, perTaskProgress);
         }
     }
