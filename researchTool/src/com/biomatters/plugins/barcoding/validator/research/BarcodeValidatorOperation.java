@@ -236,7 +236,14 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             throws DocumentOperationException {
         return SequenceTrimmer.trimSequences(traces, options.getErrorProbabilityLimit());
     }
-
+    
+    /**
+     * Validates traces.
+     *
+     * @param traces Traces.
+     * @param options
+     * @throws DocumentOperationException
+     */
     private void validateTraces(List<NucleotideGraphSequenceDocument> traces, Map<String, ValidationOptions> options, CompositeProgressListener progress, OperationCallback operationCallback)
             throws DocumentOperationException {
         Map<String, ValidationResult> failures = new HashMap<String, ValidationResult>();
@@ -247,7 +254,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             perTaskProgress.beginSubtask();
             ValidationOptions validationOptions = validation.getOptions();
 
-            ValidationResult result = validation.validate(traces, options.get(validationOptions.getName()));
+            ValidationResult result = validation.validate(traces, options.get(validationOptions.getIdentifier()));
 
             if (!result.isPassed()) {
                 failures.put(validationOptions.getLabel(), result);

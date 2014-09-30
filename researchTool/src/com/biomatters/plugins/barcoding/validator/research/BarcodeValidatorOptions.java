@@ -48,23 +48,19 @@ public class BarcodeValidatorOptions extends Options {
     }
 
     /**
-     *
-     * @return A map from {@link com.biomatters.plugins.barcoding.validator.validation.ValidationOptions#getName()} to {@link com.biomatters.plugins.barcoding.validator.validation.ValidationOptions}
-     * for all {@link com.biomatters.plugins.barcoding.validator.validation.TraceValidation}s that have been loaded.
+     * @return Map of {@link com.biomatters.plugins.barcoding.validator.validation.ValidationOptions#getIdentifier()}
+     *         to {@link com.biomatters.plugins.barcoding.validator.validation.ValidationOptions}
+     *         for all loaded {@link com.biomatters.plugins.barcoding.validator.validation.TraceValidation}s.
      */
     public Map<String, ValidationOptions> getTraceValidationOptions() {
         Options traceValidationOptions = getChildOptions().get(TRACE_VALIDATION_OPTIONS_NAME);
-        if(traceValidationOptions == null) {
-            return Collections.emptyMap();
-        }
+
         Map<String, ValidationOptions> result = new HashMap<String, ValidationOptions>();
+
         for (Map.Entry<String, Options> entry : traceValidationOptions.getChildOptions().entrySet()) {
-            if(entry.getValue() instanceof ValidationOptions) {
-                result.put(entry.getKey(), (ValidationOptions)entry.getValue());
-            } else {
-                throw new IllegalStateException("Child Options of " + TRACE_VALIDATION_OPTIONS_NAME + " was not a ValidationOptions.  All child options should be obtained from calling Validation.getOptions().");
-            }
+            result.put(entry.getKey(), (ValidationOptions)entry.getValue());
         }
+
         return Collections.unmodifiableMap(result);
     }
 
@@ -81,26 +77,25 @@ public class BarcodeValidatorOptions extends Options {
     }
 
     private void addValidationOptions(List<? extends Validation> validations, String name, String label) {
-        if (validations.isEmpty()) {
-            return;
-        }
-
         Options validationOptions = new Options(BarcodeValidatorOptions.class);
 
         for (Validation validation : validations) {
             ValidationOptions options = validation.getOptions();
-            validationOptions.addChildOptions(options.getName(),
+
+            validationOptions.addChildOptions(options.getIdentifier(),
                                               options.getLabel(),
                                               options.getDescription(),
                                               options,
                                               true);
         }
 
-        validationOptions.addChildOptionsPageChooser("chooser",
-                                                     "Validation steps: ",
-                                                     Collections.<String>emptyList(),
-                                                     PageChooserType.BUTTONS,
-                                                     true);
+        if (!validations.isEmpty()) {
+            validationOptions.addChildOptionsPageChooser("chooser",
+                                                         "Validation steps: ",
+                                                         Collections.<String>emptyList(),
+                                                         PageChooserType.BUTTONS,
+                                                         true);
+        }
 
         addCollapsibleChildOptions(name, label, "", validationOptions, false, true);
     }
@@ -111,8 +106,8 @@ public class BarcodeValidatorOptions extends Options {
 
     private void addBarcodeValidationOptions() {
         addValidationOptions(BarcodeValidation.getBarcodeValidations(),
-                BARCODE_VALIDATION_OPTIONS_NAME,
-                "Barcode validation");
+                             BARCODE_VALIDATION_OPTIONS_NAME,
+                             "Barcode validation");
     }
 
     private void addAssemblyOptions() {
