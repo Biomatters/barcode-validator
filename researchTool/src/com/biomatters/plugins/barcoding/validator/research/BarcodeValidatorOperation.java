@@ -2,10 +2,12 @@ package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.databaseservice.DatabaseServiceException;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
+import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
+import com.biomatters.geneious.publicapi.implementations.DefaultAlignmentDocument;
 import com.biomatters.geneious.publicapi.plugin.*;
 import com.biomatters.plugins.barcoding.validator.output.ValidationCallback;
 import com.biomatters.plugins.barcoding.validator.output.ValidationDocumentOperationCallback;
@@ -134,7 +136,17 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         assemblyProgress.beginSubtask();
         SequenceAlignmentDocument assembly = assembleTraces(trimmedTraces, options);
         assemblyProgress.beginSubtask();
-//        assembly.setName(setName + " Contig"); todo Need to rename in some other way
+        AnnotatedPluginDocument apd = DocumentUtilities.getAnnotatedPluginDocumentThatContains(assembly);
+        if(apd != null) {
+            // If the PluginDocument is already wrapped in an APD we have to set the name on that
+            apd.setName(setName);
+        } else if(assembly instanceof DefaultAlignmentDocument) {
+            ((DefaultAlignmentDocument)assembly).setName(setName + " Contig");
+        }
+
+        if(assembly.canSetSequenceNames()) {
+            assembly.setSequenceName(0, setName + " Consensus Sequence", true);
+        }
         callback.addAssembly(assembly, assemblyProgress);
         assemblyProgress.beginSubtask();
         SequenceDocument consensus = assembly.getSequence(assembly.getContigReferenceSequenceIndex());
