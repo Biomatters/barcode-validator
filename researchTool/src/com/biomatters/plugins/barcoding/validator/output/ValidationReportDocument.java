@@ -3,11 +3,9 @@ package com.biomatters.plugins.barcoding.validator.output;
 import com.biomatters.geneious.publicapi.documents.*;
 import org.jdom.Element;
 
-import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Represents the result of running the validation pipeline on a set of barcode sequences and their associated traces.
@@ -28,11 +26,13 @@ public class ValidationReportDocument implements PluginDocument, PluginDocument.
         this.outputs = outputs;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public ValidationReportDocument() {
         // for de-serialization
     }
 
-    public ValidationReportDocument(Element element) throws XMLSerializationException {
+    @Override
+    public void fromXML(Element element) throws XMLSerializationException {
         name = element.getChildText(NAME_KEY);
         if(name == null) {
             name = "";
@@ -87,10 +87,5 @@ public class ValidationReportDocument implements PluginDocument, PluginDocument.
     @Override
     public String toHTML() {
         return null;
-    }
-
-    @Override
-    public void fromXML(Element element) throws XMLSerializationException {
-        throw new UnsupportedOperationException("Cannot use fromXML(), must use ValidationOutputDocument(Element e).");
     }
 }

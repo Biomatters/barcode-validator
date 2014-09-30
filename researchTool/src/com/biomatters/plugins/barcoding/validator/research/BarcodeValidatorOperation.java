@@ -2,7 +2,6 @@ package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.databaseservice.DatabaseServiceException;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
-import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
@@ -125,6 +124,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         }
 
         composite.beginSubtask();
+        setSubFolder(operationCallback, null);
         operationCallback.addDocument(new ValidationReportDocument("Validation Report", outputs), false, composite);
         composite.setComplete();
     }
