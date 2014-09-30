@@ -1,7 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
-import com.biomatters.geneious.publicapi.plugin.Options;
 
 import java.util.Arrays;
 import java.util.List;
@@ -26,7 +25,7 @@ public abstract class TraceValidation implements Validation {
     /**
      * @return List of TraceValidation objects.
      */
-    public static List<TraceValidation> getTraceValidations() { // todo: load using classpath?
+    public static List<TraceValidation> getTraceValidations() {
         TraceValidation[] traceValidations = {
                 new SlidingWindowTraceValidation()
         };

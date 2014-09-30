@@ -4,6 +4,8 @@ import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSeque
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 
 /**
+ * Sliding window based algorithm for validating sequence qualities. Non-instantiable.
+ *
  * @author Gen Li
  *         Created on 22/09/14 9:43 AM
  */
@@ -11,6 +13,17 @@ public class SlidingWindowValidator {
     private SlidingWindowValidator() {
     }
 
+    /**
+     * Validates sequence.
+     *
+     * @param sequence Sequence.
+     * @param winSize Window size.
+     * @param stepSize Step size.
+     * @param minQuality Minimum base quality.
+     * @param minRatioSatisfied Minimum ratio of bases to satisfy minimum base quality.
+     * @return Validation result.
+     * @throws DocumentOperationException
+     */
     public static boolean validate(NucleotideGraphSequenceDocument sequence,
                                    int winSize,
                                    int stepSize,
@@ -26,6 +39,7 @@ public class SlidingWindowValidator {
                                                  "step size: " + stepSize + ", window size: " + winSize + ".");
         }
 
+        /* Validate sequences. */
         try {
             for (int i = 0; i <= sequence.getSequenceLength() - winSize; i += stepSize) {
                 if (!validateQualities(getQualityWindow(sequence, i, winSize), minQuality, minRatioSatisfied)) {

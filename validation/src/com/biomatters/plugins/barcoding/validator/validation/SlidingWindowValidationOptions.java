@@ -5,6 +5,10 @@ package com.biomatters.plugins.barcoding.validator.validation;
  *         Created on 26/09/14 9:42 AM
  */
 public class SlidingWindowValidationOptions extends ValidationOptions {
+    private static final String IDENTIFIER  = "slidingWindowValiator";
+    private static final String LABEL       = "Quality (Sliding Window)";
+    private static final String DESCRIPTION = "Validate sequence quality using sliding window approach.";
+
     private static final String WINDOW_SIZE_OPTION_NAME             = "windowSize";
     private static final String STEP_SIZE_OPTION_NAME               = "stepSize";
     private static final String MINIMUM_QUALITY_OPTION_NAME         = "minimumQuality";
@@ -52,18 +56,27 @@ public class SlidingWindowValidationOptions extends ValidationOptions {
         addDoubleOption(MINIMUM_RATIO_SATISFIED_OPTION_NAME, "Minimum ratio satisfied:", 80.0, 0.0, 100.0).setUnits("%");
     }
 
+    /**
+     * @return The identifier of the option.
+     */
     @Override
-    public String getName() {
-        return "slidingWindowValidation";
+    public String getIdentifier() {
+        return IDENTIFIER;
     }
 
+    /**
+     * @return A label associated with the option.
+     */
     @Override
     public String getLabel() {
-        return "Quality (Sliding Window)";
+        return LABEL;
     }
 
+    /**
+     * @return A description of the option.
+     */
     @Override
     public String getDescription() {
-        return "Validate sequence quality using sliding window approach.";
+        return DESCRIPTION;
     }
 }
