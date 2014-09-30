@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Algorithm for mapping barcodes to traces via file names.
+ * Maps barcodes to traces via file name matching.
  *
  * @author Gen Li
  *         Created on 4/09/14 12:40 PM
@@ -45,9 +45,10 @@ public class FileNameMapper extends BarcodesToTracesMapper {
     map(List<NucleotideSequenceDocument> barcodes, List<NucleotideGraphSequenceDocument> traces)
             throws DocumentOperationException {
         try {
-            /* Map documents to, the part of the name of each document used for the mapping. */
+            /* Map documents to part of their names used for mapping. */
             Map<NucleotideGraphSequenceDocument, String> tracesToNameParts =
                     mapTracesToPartOfName(traces, traceSeparator, traceNamePart);
+
             Map<NucleotideSequenceDocument, String> barcodesToNameParts =
                     mapBarcodesToPartOfName(barcodes, barcodeSeparator, barcodeNamePart);
 
@@ -67,8 +68,8 @@ public class FileNameMapper extends BarcodesToTracesMapper {
     /**
      * Maps barcodes to traces.
      *
-     * @param tracesToNameParts Map of traces to, the part of the name of each trace used for the mapping.
-     * @param barcodesToNameParts Map of barcodes to, the part of the name of each barcode used for the mapping.
+     * @param tracesToNameParts Map of traces to part of their names used for mapping.
+     * @param barcodesToNameParts Map of barcodes to part of their names used for mapping.
      * @return Map of barcodes to traces.
      * @throws DocumentOperationException
      */
@@ -83,7 +84,7 @@ public class FileNameMapper extends BarcodesToTracesMapper {
             result.put(barcode, new ArrayList<NucleotideGraphSequenceDocument>());
         }
 
-        /* Match traces to barcodes. */
+        /* Map barcodes to traces. */
         for (Map.Entry<NucleotideGraphSequenceDocument, String> traceToNamePart : tracesToNameParts.entrySet()) {
             String namePart = traceToNamePart.getValue();
 
@@ -119,13 +120,13 @@ public class FileNameMapper extends BarcodesToTracesMapper {
     }
 
     /**
-     * Maps documents to, the part of the name of each document used for the mapping. Given name n, separator s, and
-     * index i, name part = n.split(s)[i].
+     * Maps documents to part of their names used for mapping. Given name n, separator s, and index i:
+     * name part = n.split(s)[i].
      *
      * @param documents Documents.
      * @param separator Separator.
      * @param i Index.
-     * @return Map of documents to, the part of the name of each document used for the mapping.
+     * @return Map of documents to part of their names used for mapping.
      * @throws DocumentOperationException
      */
     private static Map<NucleotideSequenceDocument, String>
@@ -149,13 +150,13 @@ public class FileNameMapper extends BarcodesToTracesMapper {
     }
 
     /**
-     * Maps traces to, the part of the name of each trace used for the mapping. Given name n, separator s, and
-     * index i, name part = n.split(s)[i].
+     * Maps traces to part of their names used for mapping. Given name n, separator s, and index i:
+     * name part = n.split(s)[i].
      *
      * @param traces Traces.
      * @param separator Separator.
      * @param i Index.
-     * @return Map of traces to, the part of the name of each trace used for the mapping.
+     * @return Map of traces to part of their names used for mapping.
      * @throws DocumentOperationException
      */
     private static Map<NucleotideGraphSequenceDocument, String>
@@ -174,8 +175,8 @@ public class FileNameMapper extends BarcodesToTracesMapper {
     }
 
     /**
-     * Maps barcodes to, the part of the name of each barcode used for the mapping. Given name n, separator s, and
-     * index i, name part = n.split(s)[i].
+     * Maps barcodes to part of their names used for mapping. Given name n, separator s, and index i:
+     * name part = n.split(s)[i].
      *
      * @param barcodes Barcodes.
      * @param separator Separator.

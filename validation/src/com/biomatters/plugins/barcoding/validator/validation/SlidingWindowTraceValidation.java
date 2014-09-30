@@ -8,21 +8,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Validation task on trace quality using sliding window based algorithm.
+ *
  * @author Gen Li
  *         Created on 25/09/14 1:32 PM
  */
 public class SlidingWindowTraceValidation extends TraceValidation {
+    /**
+     * Validates traces.
+     *
+     * @param traces The user supplied traces.
+     * @param options Options obtained from calling {@link #getOptions()}.
+     * @return Validation result.
+     */
     @Override
     public ValidationResult validate(List<NucleotideGraphSequenceDocument> traces, ValidationOptions options) {
-        if (!(options instanceof SlidingWindowValidationOptions))
+        if (!(options instanceof SlidingWindowValidationOptions)) {
             throw new IllegalArgumentException("Wrong options supplied: " +
                                                "Expected: SlidingWindowValidationOptions, " +
                                                "actual: " + options.getClass().getSimpleName() + ".");
+        }
 
         SlidingWindowValidationOptions SWVOptions = (SlidingWindowValidationOptions)options;
 
         List<String> failedTraceNames = new ArrayList<String>();
 
+        /* Validate traces and accumulate results. */
         for (NucleotideGraphSequenceDocument trace : traces) {
             try {
                 if (!SlidingWindowValidator.validate(trace,
@@ -44,11 +55,20 @@ public class SlidingWindowTraceValidation extends TraceValidation {
         return new ValidationResult(true, "Validation success.");
     }
 
+    /**
+     * @return Associated options.
+     */
     @Override
     public ValidationOptions getOptions() {
         return new SlidingWindowValidationOptions();
     }
 
+    /**
+     * Returns message for when one or more traces fail validation.
+     *
+     * @param failedTraceNames Names of traces that failed validation.
+     * @return Message.
+     */
     private static String getValidationFailureMessage(List<String> failedTraceNames) {
         return "Validation failure. Failed traces: " + StringUtilities.join(", ", failedTraceNames) + ".";
     }

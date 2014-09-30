@@ -22,6 +22,7 @@ import java.util.*;
  *         Created on 5/09/14 3:09 PM
  */
 public class ImportUtilities {
+    /* Allowed file extensions. */
     private final static Set<String> TRACE_ALLOWED_FILE_EXTENSIONS
             = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("ab1")));
     private final static Set<String> BARCODE_ALLOWED_FILE_EXTENSIONS
@@ -35,7 +36,7 @@ public class ImportUtilities {
     /**
      * Imports traces.
      *
-     * @param sourcePaths Paths of source files or folders containing source files, from which traces are imported.
+     * @param sourcePaths Paths of source files and/or folders containing source files.
      * @return Traces.
      * @throws DocumentOperationException
      */
@@ -44,8 +45,9 @@ public class ImportUtilities {
         List<NucleotideGraphSequenceDocument> result = new ArrayList<NucleotideGraphSequenceDocument>();
 
         List<AnnotatedPluginDocument> importedDocuments;
+
         try {
-            /* Import traces. */
+            /* Import documents. */
             importedDocuments = importDocuments(
                     sourcePaths,
                     Arrays.asList((Class)NucleotideGraphSequenceDocument.class),
@@ -65,7 +67,7 @@ public class ImportUtilities {
     /**
      * Imports barcodes.
      *
-     * @param sourcePaths Paths of source files or folders containing source files, from which barcodes are imported.
+     * @param sourcePaths Paths of source files and/or folders containing source files.
      * @return Barcodes.
      * @throws DocumentOperationException
      */
@@ -74,8 +76,9 @@ public class ImportUtilities {
         List<NucleotideSequenceDocument> result = new ArrayList<NucleotideSequenceDocument>();
 
         List<AnnotatedPluginDocument> importedDocuments;
+
         try {
-            /* Import barcodes. */
+            /* Import documents. */
             importedDocuments = importDocuments(
                     sourcePaths,
                     Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)DefaultNucleotideSequence.class),
@@ -85,7 +88,7 @@ public class ImportUtilities {
             throw new DocumentOperationException("Could not import barcodes: " + e.getMessage(), e);
         }
 
-        /* Filter barcodes. */
+        /* Filter out barcodes. */
         for (AnnotatedPluginDocument importedDocument : importedDocuments) {
             if (DefaultSequenceListDocument.class.isAssignableFrom(importedDocument.getDocumentClass())) {
                 result.addAll(((DefaultSequenceListDocument)importedDocument.getDocument()).getNucleotideSequences());
@@ -100,7 +103,7 @@ public class ImportUtilities {
     /**
      * Imports contigs.
      *
-     * @param sourcePath Paths of source files or folders containing source files, from which contigs are imported.
+     * @param sourcePath Paths of source files and/or folders containing source files.
      * @return Contigs.
      * @throws DocumentOperationException
      */
@@ -110,7 +113,7 @@ public class ImportUtilities {
 
         List<AnnotatedPluginDocument> importedDocuments;
         try {
-            /* Import contigs. */
+            /* Import documents. */
             importedDocuments = importDocuments(
                     Collections.singletonList(sourcePath),
                     Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)SequenceAlignmentDocument.class),
@@ -120,7 +123,7 @@ public class ImportUtilities {
             throw new DocumentOperationException("Could not import contigs: " + e.getMessage(), e);
         }
 
-        /* Filter contigs. */
+        /* Filter out contigs. */
         for (AnnotatedPluginDocument importedDocument : importedDocuments) {
             if (SequenceAlignmentDocument.class.isAssignableFrom(importedDocument.getDocumentClass())) {
                 result.add((SequenceAlignmentDocument) importedDocument.getDocument());
@@ -131,11 +134,11 @@ public class ImportUtilities {
     }
 
     /**
-     * Imports documents and checks the correctness of their types.
+     * Imports documents.
      *
-     * @param sourcePaths Paths of source files or folders containing source files, from which documents are imported.
-     * @param expectedDocumentTypes Expected types of imported documents.
-     * @param allowedFileExtensions Allowed source file extensions.
+     * @param sourcePaths Paths of source files and/or folders containing source files.
+     * @param expectedDocumentTypes Expected document types.
+     * @param allowedFileExtensions Allowed file extensions.
      * @return Documents.
      * @throws DocumentOperationException
      */
@@ -147,6 +150,7 @@ public class ImportUtilities {
 
         List<File> files = new ArrayList<File>();
 
+        /* Check existence of source paths. */
         for (String sourcePath : sourcePaths) {
             File file = new File(sourcePath);
 
@@ -157,8 +161,10 @@ public class ImportUtilities {
             files.add(file);
         }
 
+        /* Import. */
         result = importDocuments(files, allowedFileExtensions);
 
+        /* Check types of documents. */
         checkDocumentsAreOfTypes(result, expectedDocumentTypes);
 
         return result;
@@ -167,9 +173,9 @@ public class ImportUtilities {
     /**
      * Imports documents. Folders are recursively scanned and their containing files accumulated.
      *
-     * @param sources Source files or folders containing source files, from which documents are imported.
-     * @param allowedFileExtensions Allowed file extensions for source files..
-     * @return Imported documents.
+     * @param sources Source files or folders containing source files.
+     * @param allowedFileExtensions Allowed file extensions.
+     * @return Documents.
      * @throws DocumentOperationException
      */
     private static List<AnnotatedPluginDocument> importDocuments(List<File> sources,
@@ -202,31 +208,27 @@ public class ImportUtilities {
     }
 
     /**
-     * Checks for the presence of the types of a group of document types in a group of types.
+     * Given documents D and types T, verify T contains type of each document in D.
      *
      * @param documents Documents.
      * @param types Types.
-     * @throws DocumentOperationException If the type(s) of one or more documents are not present in the group of types.
+     * @throws DocumentOperationException If verification fails.
      */
     private static void checkDocumentsAreOfTypes(List<AnnotatedPluginDocument> documents, List<Class> types)
             throws DocumentOperationException {
         for (AnnotatedPluginDocument document : documents) {
             if (!isDocumentOfTypes(document, types)) {
-                throw new DocumentOperationException(buildImportedDocumentUnexpectedTypeMessage(
-                        types,
-                        document.getDocumentClass(),
-                        document.getDocument().getName())
-                );
+                throw new DocumentOperationException(buildDocumentUnexpectedTypeMessage(types, document));
             }
         }
     }
 
     /**
-     * Checks for the presence of a document's type among a group of types.
+     * Given document D and types T, verify T contains type of D.
      *
      * @param document Document.
      * @param types Types.
-     * @return True if the document's type is among the group of types; false if not.
+     * @return True if verification succeeds and false if not.
      */
     private static boolean isDocumentOfTypes(AnnotatedPluginDocument document, List<Class> types) {
         for (Class<?> type : types) {
@@ -239,36 +241,34 @@ public class ImportUtilities {
     }
 
     /**
-     * Returns an error message for when an imported document has the wrong type.
+     * Returns error message for when document has wrong type.
      *
      * @param expectedTypes Expected types.
-     * @param importedDocumentType Imported document type.
-     * @param importedDocumentName Imported document name.
+     * @param document Document.
      * @return Error message.
      */
-    private static String buildImportedDocumentUnexpectedTypeMessage(List<Class> expectedTypes,
-                                                                     Class importedDocumentType,
-                                                                     String importedDocumentName) {
+    private static String buildDocumentUnexpectedTypeMessage(List<Class> expectedTypes,
+                                                             AnnotatedPluginDocument document) {
         StringBuilder messageBuilder = new StringBuilder();
 
-        messageBuilder.append("Imported document '").append(importedDocumentName).append(" is of an unexpected type, ")
+        messageBuilder.append("Imported document '").append(document.getName()).append(" is of an unexpected type, ")
                       .append("expected types: ");
 
         for (Class validDocumentType : expectedTypes) {
             messageBuilder.append("<? extends ").append(validDocumentType.getSimpleName()).append(">, ");
         }
 
-        messageBuilder.append("actual type: ").append(importedDocumentType.getSimpleName());
+        messageBuilder.append("actual type: ").append(document.getDocumentClass().getSimpleName());
 
         return messageBuilder.toString();
     }
 
     /**
-     * Checks for the presence of a filename's extension among a group of extensions.
+     * Given file name N and file extensions G, verify G contains N's extension.
      *
      * @param fileName Filename.
-     * @param extensions Extensions.
-     * @return True if the filename has an extension that is among the group of extensions; false if not.
+     * @param extensions File extensions.
+     * @return True if verification succeeds and false if not.
      */
     private static boolean fileNameHasOneOfExtensions(String fileName, Set<String> extensions) {
         for (String extension : extensions) {

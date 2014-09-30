@@ -46,9 +46,4 @@ public class SlidingWindowValidatorTest extends Assert {
         assertTrue(SlidingWindowValidator.validate(d4, 5, 1, 1, 80.0));
         assertFalse(SlidingWindowValidator.validate(d4, 5, 1, 1, 80.1));
     }
-
-    @Test(expected = DocumentOperationException.class)
-    public void testWindowSizeBoundary() throws DocumentOperationException{
-
-    }
 }

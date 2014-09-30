@@ -99,7 +99,7 @@ public class CAP3Runner {
     }
 
     /**
-     * Creates a fasta file from sequences.
+     * Creates fasta file from sequences.
      *
      * @param sequences Sequences.
      * @return Fasta file path.

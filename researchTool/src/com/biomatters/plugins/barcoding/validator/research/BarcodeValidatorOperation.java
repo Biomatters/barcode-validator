@@ -247,6 +247,13 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         return SequenceTrimmer.trimSequences(traces, options.getErrorProbabilityLimit());
     }
 
+    /**
+     * Validates traces.
+     *
+     * @param traces Traces.
+     * @param options
+     * @throws DocumentOperationException
+     */
     private void validateTraces(List<NucleotideGraphSequenceDocument> traces, Map<String, ValidationOptions> options, CompositeProgressListener progress, ValidationDocumentOperationCallback operationCallback)
             throws DocumentOperationException {
         List<TraceValidation> validationTasks = TraceValidation.getTraceValidations();

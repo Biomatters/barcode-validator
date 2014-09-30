@@ -1,5 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation.input;
 
+import com.biomatters.geneious.publicapi.documents.sequence.DefaultNucleotideGraph;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
@@ -26,24 +27,40 @@ public class InputTest extends Assert {
     public void mappingTestWithSeparator(String separator) throws DocumentOperationException {
         NucleotideGraphSequenceDocument t1 = new DefaultNucleotideGraphSequence("trace1" + separator + "1",
                                                                                 "",
-                                                                                null,
+                                                                                "",
                                                                                 new Date(),
-                                                                                null);
+                                                                                new DefaultNucleotideGraph(null,
+                                                                                                           null,
+                                                                                                           null,
+                                                                                                           0,
+                                                                                                           0));
         NucleotideGraphSequenceDocument t2 = new DefaultNucleotideGraphSequence("trace2" + separator + "1",
                                                                                 "",
-                                                                                null,
+                                                                                "",
                                                                                 new Date(),
-                                                                                null);
+                                                                                new DefaultNucleotideGraph(null,
+                                                                                                           null,
+                                                                                                           null,
+                                                                                                           0,
+                                                                                                           0));
         NucleotideGraphSequenceDocument t3 = new DefaultNucleotideGraphSequence("trace3" + separator + "1",
                                                                                 "",
-                                                                                null,
+                                                                                "",
                                                                                 new Date(),
-                                                                                null);
+                                                                                new DefaultNucleotideGraph(null,
+                                                                                                           null,
+                                                                                                           null,
+                                                                                                           0,
+                                                                                                           0));
         NucleotideGraphSequenceDocument t4 = new DefaultNucleotideGraphSequence("trace4" + separator + "2",
                                                                                 "",
-                                                                                null,
+                                                                                "",
                                                                                 new Date(),
-                                                                                null);
+                                                                                new DefaultNucleotideGraph(null,
+                                                                                                           null,
+                                                                                                           null,
+                                                                                                           0,
+                                                                                                           0));
 
         NucleotideSequenceDocument b1 = new DefaultNucleotideSequence("1" + separator + "barcode1", "");
         NucleotideSequenceDocument b2 = new DefaultNucleotideSequence("2" + separator + "barcode2", "");

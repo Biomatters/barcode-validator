@@ -50,25 +50,25 @@ public class CAP3Options extends Options {
     private void addExecutableOption() {
         beginAlignHorizontally(null, false);
 
+        addFileSelectionOption(EXECUTABLE_OPTION_NAME, "CAP3 executable:", "").setSelectionType(JFileChooser.FILES_ONLY);
+
         ButtonOption button = addButtonOption("help",
-                                              "",
-                                              "",
-                                              IconUtilities.getIcons("help16.png").getIcon16(),
-                                              ButtonOption.RIGHT);
+                "",
+                "",
+                IconUtilities.getIcons("help16.png").getIcon16(),
+                ButtonOption.RIGHT);
 
         button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 Dialogs.showMessageDialog(
                         "The Barcode Validator uses CAP3 " +
-                        "(<a href=\"http://genome.cshlp.org/content/9/9/868.full\">Huang and Madan 1999</a>), " +
-                        "available at " +
-                        "<a href=\"http://seq.cs.iastate.edu/\">http://seq.cs.iastate.edu</a>."
+                                "(<a href=\"http://genome.cshlp.org/content/9/9/868.full\">Huang and Madan 1999</a>), " +
+                                "available at " +
+                                "<a href=\"http://seq.cs.iastate.edu/\">http://seq.cs.iastate.edu</a>."
                 );
             }
         });
-
-        addFileSelectionOption(EXECUTABLE_OPTION_NAME, "CAP3 executable:", "").setSelectionType(JFileChooser.FILES_ONLY);
 
         endAlignHorizontally();
     }
