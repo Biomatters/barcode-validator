@@ -103,6 +103,7 @@ public class MockupReport extends AbstractPluginDocument {
             }
             builder.append("</tr>");
         }
+        int numTracesBadQualityFound = 0;
         for (Map.Entry<Set, String> entry : failed.entrySet()) {
             builder.append("<tr><td>").append(getDocumentSelectionLink("Set " + count++, entry.getKey())).append("</td>");
             String[] reasons = entry.getValue().split(",");
@@ -111,7 +112,15 @@ public class MockupReport extends AbstractPluginDocument {
                     builder.append("<td>").append(tickHtml).append("</td>");
                 } else {
                     if(reason.contains("do not match barcode")) {
-                        reason = "Traces do not match FASTA <a href=\"urn:local:matthew:1w1-3nouyxu\">View Alignment</a>";
+                        reason = "Traces do not match FASTA <a href=\"urn:local:.:3b-3noy1mm\">View Alignment</a>";
+                    }
+                    if(reason.contains("Traces don't meet quality")) {
+                        numTracesBadQualityFound++;
+                        String urnString = numTracesBadQualityFound == 1 ? "urn:local:.:32-3noy1me" :
+                                "urn:local:.:34-3noy1mh,urn:local:.:35-3noy1mh";
+                        String traceSuffix = numTracesBadQualityFound == 1 ? "" : "s";
+                        reason = numTracesBadQualityFound + " trace" + traceSuffix +
+                                " have insufficient quality. <a href=\"" + urnString + "\">View Trace" + traceSuffix + "</a>";
                     }
                     builder.append("<td title=\"More Details\">").append(crossHtml).append(reason).append("</td>");
                 }
@@ -134,6 +143,7 @@ public class MockupReport extends AbstractPluginDocument {
                 "The following trimming and assembly parameters were used.<br>" +
                 "Trimming: Max low quality bases=0, Min overlap identity=90%<br>" +
                 "Assembly: Error Probability Limit=0.05<br>" +
+                "Consensus Generation: Threshold=Highest Quality, Assign Quality=Total, No Coverage Call=?<br>" +
                 "<br><br>" +
                 "Ran validations on <strong>" + (passCount + failedCount) + "</strong> sets of barcode data:" +
                 "<ul>" +
