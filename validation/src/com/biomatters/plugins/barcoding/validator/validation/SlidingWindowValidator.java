@@ -32,7 +32,6 @@ public class SlidingWindowValidator {
         if (stepSize < 1) {
             throw new DocumentOperationException("Could not validate sequence: Negative step size.");
         }
-
         if (stepSize > winSize) {
             throw new DocumentOperationException("Could not validate sequence: " +
                                                  "Step size is greater than window size, " +
@@ -59,7 +58,6 @@ public class SlidingWindowValidator {
             throw new DocumentOperationException("Sequence document '" + sequence.getName() + "' has no sequence " +
                                                  "qualities.");
         }
-
         if (winSize < 1) {
             throw new DocumentOperationException("Negative window size: " + winSize + ".");
         }
@@ -80,19 +78,18 @@ public class SlidingWindowValidator {
                                                "actual value: " + minRatioSatisfied + ".");
         }
 
-        int satisfied = 0, qualitiesLength = qualities.length;
+        int numSatisfied = 0, qualitiesLength = qualities.length;
 
         /* Check quality values. */
         for (int quality : qualities) {
             if (quality >= minQuality) {
-                satisfied++;
+                numSatisfied++;
             }
         }
 
-        if ((double)satisfied/qualitiesLength >= minRatioSatisfied/100) {
+        if ((double)numSatisfied/qualitiesLength >= minRatioSatisfied/100) {
             return true;
         }
-
         return false;
     }
 }

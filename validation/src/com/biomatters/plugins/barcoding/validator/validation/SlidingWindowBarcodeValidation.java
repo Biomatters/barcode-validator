@@ -17,6 +17,6 @@ public class SlidingWindowBarcodeValidation extends BarcodeValidation {
      */
     @Override
     public ValidationOptions getOptions() {
-        return new SlidingWindowValidationOptions();
+        return new SlidingWindowValidationOptions(SlidingWindowBarcodeValidation.class);
     }
 }

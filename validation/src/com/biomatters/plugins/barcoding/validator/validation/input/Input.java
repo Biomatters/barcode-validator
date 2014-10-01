@@ -29,8 +29,9 @@ public class Input {
      * @return Map of barcodes to traces.
      * @throws DocumentOperationException
      */
-    public static Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>>
-    processInputs(List<String> traceFilePaths, List<String> barcodeFilePaths, BarcodesToTracesMapperOptions options)
+    public static Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> processInputs(List<String> traceFilePaths,
+                                                                                                       List<String> barcodeFilePaths,
+                                                                                                       BarcodesToTracesMapperOptions options)
             throws DocumentOperationException {
         /* Import documents. */
         List<NucleotideGraphSequenceDocument> traces = ImportUtilities.importTraces(traceFilePaths);

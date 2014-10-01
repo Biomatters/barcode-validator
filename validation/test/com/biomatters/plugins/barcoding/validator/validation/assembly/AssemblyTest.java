@@ -34,17 +34,8 @@ public class AssemblyTest extends Assert {
         );
 
         final String theSequence = "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG";
-
-        NucleotideGraphSequenceDocument document = new DefaultNucleotideGraphSequence("testDoc",
-                                                                                      "Test Document",
-                                                                                      theSequence,
-                                                                                      new Date(),
-                                                                                      new DefaultNucleotideGraph(null,
-                                                                                                                 null,
-                                                                                                                 null,
-                                                                                                                 80,
-                                                                                                                 0));
-
+        NucleotideGraphSequenceDocument document =
+                new DefaultNucleotideGraphSequence("testDoc", "Test Document", theSequence, new Date(), new DefaultNucleotideGraph(null, null, null, 80, 0));
         List<NucleotideGraphSequenceDocument> documents = new ArrayList<NucleotideGraphSequenceDocument>();
         documents.add(document);
         documents.add(document);
@@ -60,7 +51,6 @@ public class AssemblyTest extends Assert {
 
         for (int i = 1; i < sequences.size(); i++) {
             String withNoGaps = sequences.get(i).getSequenceString().replace("-", "");
-
             assertEquals(theSequence, withNoGaps);
         }
     }

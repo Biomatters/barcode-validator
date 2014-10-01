@@ -24,13 +24,14 @@ public class SlidingWindowTraceValidation extends TraceValidation {
     @Override
     public ValidationResult validate(List<NucleotideGraphSequenceDocument> traces, ValidationOptions options) {
         if (!(options instanceof SlidingWindowValidationOptions)) {
-            throw new IllegalArgumentException("Wrong options supplied: " +
-                                               "Expected: SlidingWindowValidationOptions, " +
-                                               "actual: " + options.getClass().getSimpleName() + ".");
+            throw new IllegalArgumentException(
+                    "Wrong options supplied: " +
+                    "Expected: SlidingWindowValidationOptions, " +
+                    "actual: " + options.getClass().getSimpleName() + "."
+            );
         }
 
         SlidingWindowValidationOptions SWVOptions = (SlidingWindowValidationOptions)options;
-
         List<String> failedTraceNames = new ArrayList<String>();
 
         /* Validate traces and accumulate results. */
@@ -60,7 +61,7 @@ public class SlidingWindowTraceValidation extends TraceValidation {
      */
     @Override
     public ValidationOptions getOptions() {
-        return new SlidingWindowValidationOptions();
+        return new SlidingWindowValidationOptions(SlidingWindowTraceValidation.class);
     }
 
     /**

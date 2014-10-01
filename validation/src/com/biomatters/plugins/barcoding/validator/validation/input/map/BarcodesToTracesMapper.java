@@ -12,7 +12,7 @@ import java.util.Map;
  *         Created on 3/09/14 5:26 PM
  */
 public abstract class BarcodesToTracesMapper {
-    public abstract Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>>
-    map(List<NucleotideSequenceDocument> barcodes, List<NucleotideGraphSequenceDocument> traces)
+    public abstract Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> map(List<NucleotideSequenceDocument> barcodes,
+                                                                                               List<NucleotideGraphSequenceDocument> traces)
             throws DocumentOperationException;
 }
