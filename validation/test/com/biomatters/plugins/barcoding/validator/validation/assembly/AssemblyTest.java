@@ -1,18 +1,19 @@
 package com.biomatters.plugins.barcoding.validator.validation.assembly;
 
+import com.biomatters.geneious.publicapi.documents.sequence.DefaultNucleotideGraph;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.TestGeneious;
-import com.biomatters.geneious.publicapi.utilities.SystemUtilities;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -34,11 +35,15 @@ public class AssemblyTest extends Assert {
 
         final String theSequence = "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG";
 
-        NucleotideGraphSequenceDocument document = new DefaultNucleotideGraphSequence(null,
-                                                                                      null,
-                                                                                      theSequence,
-                                                                                      null,
-                                                                                      null);
+        NucleotideGraphSequenceDocument document = new DefaultNucleotideGraphSequence("",
+                                                                                      "",
+                                                                                      "",
+                                                                                      new Date(),
+                                                                                      new DefaultNucleotideGraph(null,
+                                                                                                                 null,
+                                                                                                                 null,
+                                                                                                                 0,
+                                                                                                                 0));
 
         List<NucleotideGraphSequenceDocument> documents = new ArrayList<NucleotideGraphSequenceDocument>();
         documents.add(document);
