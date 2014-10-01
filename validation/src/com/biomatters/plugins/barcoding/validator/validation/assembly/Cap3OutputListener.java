@@ -8,14 +8,23 @@ import com.biomatters.geneious.publicapi.utilities.Execution;
  *       <p />
  *       Created on 20/12/11 12:53 PM
  */public class Cap3OutputListener extends Execution.OutputListener {
-
+    private StringBuilder stdouts = new StringBuilder();
+    private StringBuilder stderrs = new StringBuilder();
     @Override
     public void stdoutWritten(String s) {
-//        System.out.println(s);
+        stdouts.append(s).append("\n");
     }
 
     @Override
     public void stderrWritten(String s) {
-        System.err.println(s);
+        stderrs.append(s).append("\n");
+    }
+
+    public String getStdouts() {
+        return stdouts.toString();
+    }
+
+    public String getStderrs() {
+        return stderrs.toString();
     }
 }

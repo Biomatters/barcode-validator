@@ -74,6 +74,8 @@ public class CAP3Runner {
                                            int minOverlapLength,
                                            int minOverlapIdentity)
             throws DocumentOperationException, InterruptedException, IOException {
+        Cap3OutputListener listener = new Cap3OutputListener();
+
         Execution exec = new Execution(
                 new String[] {
                         executablePath,
@@ -84,7 +86,7 @@ public class CAP3Runner {
                         String.valueOf(minOverlapIdentity)
                 },
                 ProgressListener.EMPTY,
-                new Cap3OutputListener(),
+                listener,
                 (String)null,
                 false
         );
@@ -93,7 +95,12 @@ public class CAP3Runner {
         exec.setWorkingDirectory(fastafilePath.substring(0, fastafilePath.lastIndexOf(File.separator)));
 
         /* Run. */
-        exec.execute();
+        int exitCode = exec.execute();
+
+        if (exitCode == 0) {
+            throw new DocumentOperationException("CAP3 failed with exit code " + exitCode + ":\n\n" +
+                                                 listener.getStderrs());
+        }
 
         return fastafilePath + CAP3_ASSEMBLER_RESULT_FILE_EXTENSION;
     }

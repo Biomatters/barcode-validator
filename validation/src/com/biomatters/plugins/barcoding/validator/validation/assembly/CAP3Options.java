@@ -32,7 +32,7 @@ public class CAP3Options extends Options {
     }
 
     public int getMinOverlapIdentity() {
-        return ((IntegerOption)getOption(MIN_OVERLAP_LENGTH_OPTION_NAME)).getValue();
+        return ((IntegerOption)getOption(MIN_OVERLAP_IDENTITY_OPTION_NAME)).getValue();
     }
 
     public String getExecutablePath() {
