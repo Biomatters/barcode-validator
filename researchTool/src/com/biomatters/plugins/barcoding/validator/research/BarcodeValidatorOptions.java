@@ -1,7 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.plugin.Options;
-import com.biomatters.plugins.barcoding.validator.validation.BarcodeValidation;
+import com.biomatters.plugins.barcoding.validator.validation.BarcodeCompareValidation;
 import com.biomatters.plugins.barcoding.validator.validation.TraceValidation;
 import com.biomatters.plugins.barcoding.validator.validation.Validation;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
@@ -91,7 +91,7 @@ public class BarcodeValidatorOptions extends Options {
     }
 
     private void addBarcodeValidationOptions() {
-        addValidationOptions(BarcodeValidation.getBarcodeValidations(), BARCODE_VALIDATION_OPTIONS_NAME, "Barcode validation");
+        addValidationOptions(BarcodeCompareValidation.getBarcodeValidations(), BARCODE_VALIDATION_OPTIONS_NAME, "Barcode validation");
     }
 
     private void addAssemblyOptions() {
