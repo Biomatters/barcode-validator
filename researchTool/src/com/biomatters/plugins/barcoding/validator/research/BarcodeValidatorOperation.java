@@ -78,9 +78,9 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                                                  "actual: " + options.getClass().getSimpleName() + ".");
         }
 
-        CompositeProgressListener composite = new CompositeProgressListener(progressListener, 0.1, 0.8, 0.1);
-
         BarcodeValidatorOptions barcodeValidatorOptions = (BarcodeValidatorOptions)options;
+        List<ValidationOutputRecord> outputs = new ArrayList<ValidationOutputRecord>();
+        CompositeProgressListener composite = new CompositeProgressListener(progressListener, 0.1, 0.8, 0.1);
 
         /* Get options. */
         InputOptions inputSplitterOptions = barcodeValidatorOptions.getInputOptions();
@@ -88,34 +88,24 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         CAP3Options CAP3Options = barcodeValidatorOptions.getAssemblyOptions();
         Map<String, ValidationOptions> traceValidationOptions = barcodeValidatorOptions.getTraceValidationOptions();
 
-
         /* Process inputs. */
         composite.beginSubtask("Processing inputs");
-        Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces =
-                Input.processInputs(
-                    inputSplitterOptions.getTraceFilePaths(),
-                    inputSplitterOptions.getBarcodeFilePaths(),
-                    inputSplitterOptions.getMethodOption()
-                );
-
-        CompositeProgressListener validationProgress
-                = new CompositeProgressListener(composite, suppliedBarcodesToSuppliedTraces.size());
-
-        List<ValidationOutputRecord> outputs = new ArrayList<ValidationOutputRecord>();
+        Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces
+                = Input.processInputs(inputSplitterOptions.getTraceFilePaths(),
+                                      inputSplitterOptions.getBarcodeFilePaths(),
+                                      inputSplitterOptions.getMethodOption());
 
         composite.beginSubtask();
+        CompositeProgressListener validationProgress = new CompositeProgressListener(composite, suppliedBarcodesToSuppliedTraces.size());
         for (Map.Entry<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>>
                 suppliedBarcodeToSuppliedTrace : suppliedBarcodesToSuppliedTraces.entrySet()) {
             // This block could be moved into the validation module so it can be called from the future web
             // portal and distributed among different nodes as individual nodes (if we wanted to go that far).  Even now
             // it would mean we could easily multi-thread the operation.  Maybe after 0.1.
 
-            ValidationDocumentOperationCallback callback
-                    = new ValidationDocumentOperationCallback(operationCallback, false);
-
+            ValidationDocumentOperationCallback callback = new ValidationDocumentOperationCallback(operationCallback, false);
             NucleotideSequenceDocument barcode = suppliedBarcodeToSuppliedTrace.getKey();
             List<NucleotideGraphSequenceDocument> traces = suppliedBarcodeToSuppliedTrace.getValue();
-
             String barcodeName = barcode.getName();
 
             validationProgress.beginSubtask(barcodeName);
@@ -123,43 +113,28 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
             stepsProgress.beginSubtask();
             setSubFolder(operationCallback, null);
-            callback.setInputs(suppliedBarcodeToSuppliedTrace.getKey(),
-                               suppliedBarcodeToSuppliedTrace.getValue(),
-                               stepsProgress);
-
+            callback.setInputs(barcode, traces, stepsProgress);
             setSubFolder(operationCallback, barcodeName);
 
-
             stepsProgress.beginSubtask("Trimming...");
-            List<NucleotideGraphSequenceDocument> trimmedTraces = SequenceTrimmer.trimSequences(
-                    traces, trimmingOptions.getErrorProbabilityLimit());
+            List<NucleotideGraphSequenceDocument> trimmedTraces = SequenceTrimmer.trimSequences(traces, trimmingOptions.getErrorProbabilityLimit());
             callback.addTrimmedTraces(trimmedTraces, stepsProgress);
-
 
             stepsProgress.beginSubtask("Validating Traces...");
             CompositeProgressListener traceValidationProgress = new CompositeProgressListener(stepsProgress, 2);
-
             traceValidationProgress.beginSubtask();
-            List<ValidationResult> traceValidationResults
-                    = validateTraces(trimmedTraces, traceValidationOptions, traceValidationProgress);
-
+            List<ValidationResult> traceValidationResults = validateTraces(trimmedTraces, traceValidationOptions, traceValidationProgress);
             traceValidationProgress.beginSubtask();
             addValidationResultsToCallback(callback, traceValidationResults, traceValidationProgress);
 
-
             stepsProgress.beginSubtask("Assembling...");
             CompositeProgressListener assembleTracesProgress = new CompositeProgressListener(stepsProgress, 3);
-
             assembleTracesProgress.beginSubtask();
-            SequenceAlignmentDocument contig = assembleTraces(
-                    trimmedTraces, CAP3Options, barcodeName, assembleTracesProgress);
-
+            SequenceAlignmentDocument contig = assembleTraces(trimmedTraces, CAP3Options, barcodeName, assembleTracesProgress);
             assembleTracesProgress.beginSubtask();
             callback.addAssembly(contig, assembleTracesProgress);
-
             assembleTracesProgress.beginSubtask();
             callback.addConsensus(getConsensus(contig), assembleTracesProgress);
-
 
             stepsProgress.beginSubtask("Validating Barcode Sequences...");
             // Should be done as part of BV-16, don't forget to call addValidationResultsToCallback()
@@ -173,9 +148,11 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         composite.setComplete();
     }
 
-    public void addValidationResultsToCallback(ValidationDocumentOperationCallback callback, List<ValidationResult> validationResults, ProgressListener progressListener) throws DocumentOperationException {
-        CompositeProgressListener addTraceValidationResultsProgress
-                = new CompositeProgressListener(progressListener, validationResults.size());
+    public void addValidationResultsToCallback(ValidationDocumentOperationCallback callback,
+                                               List<ValidationResult> validationResults,
+                                               ProgressListener progressListener) throws DocumentOperationException {
+        CompositeProgressListener addTraceValidationResultsProgress = new CompositeProgressListener(progressListener, validationResults.size());
+
         for (ValidationResult result : validationResults) {
             addTraceValidationResultsProgress.beginSubtask();
             callback.addValidationResult(result, addTraceValidationResultsProgress);
@@ -194,17 +171,12 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                                                   ProgressListener progressListener)
             throws DocumentOperationException {
         List<ValidationResult> result = new ArrayList<ValidationResult>();
-
         List<TraceValidation> validationTasks = TraceValidation.getTraceValidations();
-
-        CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener,
-                                                                                     validationTasks.size());
+        CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, validationTasks.size());
 
         for (TraceValidation validation : validationTasks) {
             validationProgress.beginSubtask();
-
             ValidationOptions validationOptions = validation.getOptions();
-
             result.add(validation.validate(traces, options.get(validationOptions.getIdentifier())));
         }
 
@@ -214,13 +186,13 @@ public class BarcodeValidatorOperation extends DocumentOperation {
     private SequenceAlignmentDocument assembleTraces(List<NucleotideGraphSequenceDocument> traces,
                                                      CAP3Options options,
                                                      String contigName,
-                                                     ProgressListener progressListener)
-            throws DocumentOperationException {
-        CompositeProgressListener assemblyProgress = new CompositeProgressListener(progressListener, 3);
+                                                     ProgressListener progressListener) throws DocumentOperationException {
+        CompositeProgressListener assemblyProgress = new CompositeProgressListener(progressListener, 2);
 
         assemblyProgress.beginSubtask();
         SequenceAlignmentDocument contig = assembleTraces(traces, options);
 
+        assemblyProgress.beginSubtask();
         DocumentUtilities.getAnnotatedPluginDocumentThatContains(contig).setName(contigName);
 
         if (contig.canSetSequenceNames()) {
@@ -230,14 +202,15 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         return contig;
     }
 
-    private NucleotideSequenceDocument getConsensus(SequenceAlignmentDocument contig)
-            throws DocumentOperationException {
+    private NucleotideSequenceDocument getConsensus(SequenceAlignmentDocument contig) throws DocumentOperationException {
         SequenceDocument consensus = contig.getSequence(contig.getContigReferenceSequenceIndex());
 
         if (!(consensus instanceof NucleotideSequenceDocument)) {
-            throw new DocumentOperationException("Assembly of nucleotide sequences produced non-nucleotide consensus: " +
-                                                 "Was " + consensus.getClass().getSimpleName() + "\n\n" +
-                                                 "Please contact support@geneious.com with your input files and options.");
+            throw new DocumentOperationException(
+                    "Assembly of nucleotide sequences produced non-nucleotide consensus: " +
+                    "Was " + consensus.getClass().getSimpleName() + "\n\n" +
+                    "Please contact support@geneious.com with your input files and options."
+            );
         }
 
         return (NucleotideSequenceDocument)consensus;
@@ -251,13 +224,9 @@ public class BarcodeValidatorOperation extends DocumentOperation {
      * @return Contig. Contig returned is always associated with an {@link AnnotatedPluginDocument}.
      * @throws DocumentOperationException
      */
-    private SequenceAlignmentDocument assembleTraces(List<NucleotideGraphSequenceDocument> traces,
-                                                     CAP3Options options)
-            throws DocumentOperationException {
-        List<SequenceAlignmentDocument> result = CAP3Runner.assemble(traces,
-                options.getExecutablePath(),
-                options.getMinOverlapLength(),
-                options.getMinOverlapIdentity());
+    private SequenceAlignmentDocument assembleTraces(List<NucleotideGraphSequenceDocument> traces, CAP3Options options) throws DocumentOperationException {
+        List<SequenceAlignmentDocument> result
+                = CAP3Runner.assemble(traces, options.getExecutablePath(), options.getMinOverlapLength(), options.getMinOverlapIdentity());
 
         if (result.size() != 1) {
             throw new DocumentOperationException("todo?");
