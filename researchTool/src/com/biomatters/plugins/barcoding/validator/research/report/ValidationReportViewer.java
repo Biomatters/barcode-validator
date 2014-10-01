@@ -75,7 +75,7 @@ public class ValidationReportViewer extends DocumentViewer {
         boolean allPassed = recordsThatPassedAll.size() == records.size();
         boolean allFailed = recordsThatFailedAtLeastOnce.size() == records.size();
 
-        StringBuilder headerBuilder = new StringBuilder("<h1>Validation Report Mockup</h1>");
+        StringBuilder headerBuilder = new StringBuilder("<h1>Validation Report</h1>");
         appendOptionsParameters(headerBuilder);
 
         headerBuilder.append("<br><br><br>").append(
