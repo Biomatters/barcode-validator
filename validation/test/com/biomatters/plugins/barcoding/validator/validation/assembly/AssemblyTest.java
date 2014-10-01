@@ -35,14 +35,14 @@ public class AssemblyTest extends Assert {
 
         final String theSequence = "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG";
 
-        NucleotideGraphSequenceDocument document = new DefaultNucleotideGraphSequence("",
-                                                                                      "",
-                                                                                      "",
+        NucleotideGraphSequenceDocument document = new DefaultNucleotideGraphSequence("testDoc",
+                                                                                      "Test Document",
+                                                                                      theSequence,
                                                                                       new Date(),
                                                                                       new DefaultNucleotideGraph(null,
                                                                                                                  null,
                                                                                                                  null,
-                                                                                                                 0,
+                                                                                                                 80,
                                                                                                                  0));
 
         List<NucleotideGraphSequenceDocument> documents = new ArrayList<NucleotideGraphSequenceDocument>();

@@ -97,7 +97,7 @@ public class CAP3Runner {
         /* Run. */
         int exitCode = exec.execute();
 
-        if (exitCode == 0) {
+        if (exitCode != 0) {
             throw new DocumentOperationException("CAP3 failed with exit code " + exitCode + ":\n\n" +
                                                  listener.getStderrs());
         }
