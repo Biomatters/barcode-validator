@@ -3,7 +3,6 @@ package com.biomatters.plugins.barcoding.validator.research;
 import com.biomatters.geneious.publicapi.databaseservice.DatabaseServiceException;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
-import com.biomatters.geneious.publicapi.documents.PluginDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
@@ -159,8 +158,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             SequenceAlignmentDocument contig = assembleTraces(trimmedTraces,
                                                               CAP3Options,
                                                               barcodeName,
-                                                              operationCallback,
-                                                              assembleTracesProgress);
+                    assembleTracesProgress);
 
             assembleTracesProgress.beginSubtask();
             callback.addAssembly(contig, assembleTracesProgress);
@@ -243,10 +241,9 @@ public class BarcodeValidatorOperation extends DocumentOperation {
     }
 
     private SequenceAlignmentDocument assembleTraces(List<NucleotideGraphSequenceDocument> traces,
-                                                      CAP3Options options,
-                                                      String contigName,
-                                                      OperationCallback operationCallback,
-                                                      ProgressListener progressListener)
+                                                     CAP3Options options,
+                                                     String contigName,
+                                                     ProgressListener progressListener)
             throws DocumentOperationException {
         CompositeProgressListener assemblyProgress = new CompositeProgressListener(progressListener, 3);
 
@@ -287,30 +284,15 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                                                      CAP3Options options)
             throws DocumentOperationException {
         List<SequenceAlignmentDocument> result = CAP3Runner.assemble(traces,
-                                                                     options.getExecutablePath(),
-                                                                     options.getMinOverlapLength(),
-                                                                     options.getMinOverlapIdentity());
+                options.getExecutablePath(),
+                options.getMinOverlapLength(),
+                options.getMinOverlapIdentity());
 
         if (result.size() != 1) {
             throw new DocumentOperationException("todo?");
         }
 
         return result.get(0);
-    }
-
-    private static void addIntermediateResultsToCallback(ValidationResult result,
-                                                         OperationCallback operationCallback,
-                                                         ProgressListener progressListener)
-            throws DocumentOperationException {
-        List<PluginDocument> docsToAddToResults = result.getIntermediateDocumentsToAddToResults();
-
-        CompositeProgressListener resultAddingProgress = new CompositeProgressListener(progressListener,
-                                                                                       docsToAddToResults.size());
-
-        for (PluginDocument docToAdd : docsToAddToResults) {
-            resultAddingProgress.beginSubtask();
-            operationCallback.addDocument(docToAdd, false, resultAddingProgress);
-        }
     }
 
     /**
@@ -332,23 +314,5 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             // moving this to the cloud.
             e.printStackTrace();
         }
-    }
-
-    /**
-     * Returns message for when one or more validation failures occur.
-     *
-     * @param results Validation failure results.
-     * @return Message.
-     */
-    private String buildValidationFailureMessage(Map<String, ValidationResult> results) {
-        StringBuilder messageBuilder = new StringBuilder();
-
-        messageBuilder.append("Failed validations:\n\n");
-
-        for (Map.Entry<String, ValidationResult> result : results.entrySet()) {
-            messageBuilder.append(result.getKey()).append(" - ").append(result.getValue().getMessage()).append("\n\n");
-        }
-
-        return messageBuilder.toString();
     }
 }
