@@ -88,10 +88,15 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         CAP3Options CAP3Options = barcodeValidatorOptions.getAssemblyOptions();
         Map<String, ValidationOptions> traceValidationOptions = barcodeValidatorOptions.getTraceValidationOptions();
 
+
         /* Process inputs. */
         composite.beginSubtask("Processing inputs");
-        Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces
-                = processInputs(inputSplitterOptions);
+        Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces =
+                Input.processInputs(
+                    inputSplitterOptions.getTraceFilePaths(),
+                    inputSplitterOptions.getBarcodeFilePaths(),
+                    inputSplitterOptions.getMethodOption()
+                );
 
         CompositeProgressListener validationProgress
                 = new CompositeProgressListener(composite, suppliedBarcodesToSuppliedTraces.size());
@@ -128,13 +133,12 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
             /* Trim traces. */
             stepsProgress.beginSubtask("Trimming...");
-            List<NucleotideGraphSequenceDocument> trimmedTraces = trimTraces(traces,
-                                                                             trimmingOptions);
+            List<NucleotideGraphSequenceDocument> trimmedTraces = SequenceTrimmer.trimSequences(
+                    traces, trimmingOptions.getErrorProbabilityLimit());
             callback.addTrimmedTraces(trimmedTraces, stepsProgress);
 
             /* Validate traces. */
             stepsProgress.beginSubtask("Validating Traces...");
-
             CompositeProgressListener traceValidationProgress = new CompositeProgressListener(stepsProgress, 2);
 
             traceValidationProgress.beginSubtask();
@@ -181,34 +185,6 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         operationCallback.addDocument(new ValidationReportDocument("Validation Report", outputs), false, composite);
 
         composite.setComplete();
-    }
-
-    /**
-     * Groups traces to barcodes.
-     *
-     * @param options Trace and barcode file paths and Method options.
-     * @return Map of barcodes to traces.
-     * @throws DocumentOperationException
-     */
-    private Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> processInputs(InputOptions options)
-            throws DocumentOperationException {
-        return Input.processInputs(options.getTraceFilePaths(),
-                options.getBarcodeFilePaths(),
-                options.getMethodOption());
-    }
-
-    /**
-     * Trims traces.
-     *
-     * @param traces Traces.
-     * @param options
-     * @return Trimmed traces.
-     * @throws DocumentOperationException
-     */
-    private List<NucleotideGraphSequenceDocument> trimTraces(List<NucleotideGraphSequenceDocument> traces,
-                                                             ErrorProbabilityOptions options)
-            throws DocumentOperationException {
-        return SequenceTrimmer.trimSequences(traces, options.getErrorProbabilityLimit());
     }
 
     /**
