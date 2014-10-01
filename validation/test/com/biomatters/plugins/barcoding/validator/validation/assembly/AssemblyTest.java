@@ -1,5 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation.assembly;
 
+import com.biomatters.geneious.publicapi.documents.sequence.DefaultNucleotideGraph;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
@@ -12,6 +13,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -21,10 +23,11 @@ import java.util.List;
 public class AssemblyTest extends Assert {
     @Test
     public void testContigAssembly() throws DocumentOperationException {
-        String cap3ExecutablePath = "cap3";
+        Assume.assumeTrue(canRun(CAP3Options.getDefaultCap3ExecutableName()));
 
-        Assume.assumeTrue(canRun(cap3ExecutablePath));
-
+        // "com.biomatters.plugins.fileimportexport.AceImporter.AceImporterPlugin" required to process Cap3 results.
+        // "com.biomatters.plugins.local.LocalDatabasePlugin" required because Ace importer requires a
+        // WritableDatabaseService.
         TestGeneious.initializePlugins(
                 "com.biomatters.plugins.fileimportexport.AceImporter.AceImporterPlugin",
                 "com.biomatters.plugins.local.LocalDatabasePlugin"
@@ -32,17 +35,24 @@ public class AssemblyTest extends Assert {
 
         final String theSequence = "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG";
 
-        NucleotideGraphSequenceDocument document = new DefaultNucleotideGraphSequence(null,
-                                                                                      null,
-                                                                                      theSequence,
-                                                                                      null,
-                                                                                      null);
+        NucleotideGraphSequenceDocument document = new DefaultNucleotideGraphSequence("",
+                                                                                      "",
+                                                                                      "",
+                                                                                      new Date(),
+                                                                                      new DefaultNucleotideGraph(null,
+                                                                                                                 null,
+                                                                                                                 null,
+                                                                                                                 0,
+                                                                                                                 0));
 
         List<NucleotideGraphSequenceDocument> documents = new ArrayList<NucleotideGraphSequenceDocument>();
         documents.add(document);
         documents.add(document);
 
-        List<SequenceAlignmentDocument> result = CAP3Runner.assemble(documents, cap3ExecutablePath, 40, 90);
+        List<SequenceAlignmentDocument> result = CAP3Runner.assemble(documents,
+                                                                     CAP3Options.getDefaultCap3ExecutableName(),
+                                                                     40,
+                                                                     90);
         assertEquals(1, result.size());
 
         List<SequenceDocument> sequences = result.get(0).getSequences();
