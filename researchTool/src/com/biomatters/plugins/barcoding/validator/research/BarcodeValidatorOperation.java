@@ -101,10 +101,9 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         CompositeProgressListener validationProgress
                 = new CompositeProgressListener(composite, suppliedBarcodesToSuppliedTraces.size());
 
-        /* Start validation. */
         List<ValidationOutputRecord> outputs = new ArrayList<ValidationOutputRecord>();
 
-        composite.beginSubtask("Starting validation");
+        composite.beginSubtask();
         for (Map.Entry<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>>
                 suppliedBarcodeToSuppliedTrace : suppliedBarcodesToSuppliedTraces.entrySet()) {
             // This block could be moved into the validation module so it can be called from the future web
@@ -119,8 +118,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
             String barcodeName = barcode.getName();
 
-            validationProgress.beginSubtask("Validating traces for barcode " + barcodeName);
-
+            validationProgress.beginSubtask(barcodeName);
             CompositeProgressListener stepsProgress = new CompositeProgressListener(validationProgress, 5);
 
             stepsProgress.beginSubtask();
@@ -131,13 +129,13 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
             setSubFolder(operationCallback, barcodeName);
 
-            /* Trim traces. */
+
             stepsProgress.beginSubtask("Trimming...");
             List<NucleotideGraphSequenceDocument> trimmedTraces = SequenceTrimmer.trimSequences(
                     traces, trimmingOptions.getErrorProbabilityLimit());
             callback.addTrimmedTraces(trimmedTraces, stepsProgress);
 
-            /* Validate traces. */
+
             stepsProgress.beginSubtask("Validating Traces...");
             CompositeProgressListener traceValidationProgress = new CompositeProgressListener(stepsProgress, 2);
 
@@ -146,23 +144,15 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                     = validateTraces(trimmedTraces, traceValidationOptions, traceValidationProgress);
 
             traceValidationProgress.beginSubtask();
-            CompositeProgressListener addTraceValidationResultsProgress
-                    = new CompositeProgressListener(traceValidationProgress, traceValidationResults.size());
-            for (ValidationResult result : traceValidationResults) {
-                addTraceValidationResultsProgress.beginSubtask();
-                callback.addValidationResult(result, addTraceValidationResultsProgress);
-            }
+            addValidationResultsToCallback(callback, traceValidationResults, traceValidationProgress);
 
-            /* Assemble contigs and generate consensuses. */
+
             stepsProgress.beginSubtask("Assembling...");
-
             CompositeProgressListener assembleTracesProgress = new CompositeProgressListener(stepsProgress, 3);
 
             assembleTracesProgress.beginSubtask();
-            SequenceAlignmentDocument contig = assembleTraces(trimmedTraces,
-                                                              CAP3Options,
-                                                              barcodeName,
-                    assembleTracesProgress);
+            SequenceAlignmentDocument contig = assembleTraces(
+                    trimmedTraces, CAP3Options, barcodeName, assembleTracesProgress);
 
             assembleTracesProgress.beginSubtask();
             callback.addAssembly(contig, assembleTracesProgress);
@@ -170,21 +160,26 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             assembleTracesProgress.beginSubtask();
             callback.addConsensus(getConsensus(contig), assembleTracesProgress);
 
-            /* Validate barcodes. */
+
             stepsProgress.beginSubtask("Validating Barcode Sequences...");
-            // Should be done as part of BV-16, don't forget to add intermediate docs by calling
-            // callback.addValidationResult(result, perTaskProgress);()
+            // Should be done as part of BV-16, don't forget to call addValidationResultsToCallback()
 
             outputs.add(callback.getRecord());
         }
 
         composite.beginSubtask();
-
         setSubFolder(operationCallback, null);
-
         operationCallback.addDocument(new ValidationReportDocument("Validation Report", outputs), false, composite);
-
         composite.setComplete();
+    }
+
+    public void addValidationResultsToCallback(ValidationDocumentOperationCallback callback, List<ValidationResult> validationResults, ProgressListener progressListener) throws DocumentOperationException {
+        CompositeProgressListener addTraceValidationResultsProgress
+                = new CompositeProgressListener(progressListener, validationResults.size());
+        for (ValidationResult result : validationResults) {
+            addTraceValidationResultsProgress.beginSubtask();
+            callback.addValidationResult(result, addTraceValidationResultsProgress);
+        }
     }
 
     /**
