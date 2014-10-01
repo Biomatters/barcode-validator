@@ -6,6 +6,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.TestGeneious;
+import com.biomatters.geneious.publicapi.utilities.SystemUtilities;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
@@ -21,10 +22,11 @@ import java.util.List;
 public class AssemblyTest extends Assert {
     @Test
     public void testContigAssembly() throws DocumentOperationException {
-        String cap3ExecutablePath = "cap3";
+        Assume.assumeTrue(canRun(CAP3Options.getDefaultCap3ExecutableName()));
 
-        Assume.assumeTrue(canRun(cap3ExecutablePath));
-
+        // "com.biomatters.plugins.fileimportexport.AceImporter.AceImporterPlugin" required to process Cap3 results.
+        // "com.biomatters.plugins.local.LocalDatabasePlugin" required because Ace importer requires a
+        // WritableDatabaseService.
         TestGeneious.initializePlugins(
                 "com.biomatters.plugins.fileimportexport.AceImporter.AceImporterPlugin",
                 "com.biomatters.plugins.local.LocalDatabasePlugin"
@@ -42,7 +44,10 @@ public class AssemblyTest extends Assert {
         documents.add(document);
         documents.add(document);
 
-        List<SequenceAlignmentDocument> result = CAP3Runner.assemble(documents, cap3ExecutablePath, 40, 90);
+        List<SequenceAlignmentDocument> result = CAP3Runner.assemble(documents,
+                                                                     CAP3Options.getDefaultCap3ExecutableName(),
+                                                                     40,
+                                                                     90);
         assertEquals(1, result.size());
 
         List<SequenceDocument> sequences = result.get(0).getSequences();
