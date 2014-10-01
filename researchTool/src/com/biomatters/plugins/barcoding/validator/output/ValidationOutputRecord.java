@@ -82,4 +82,24 @@ public class ValidationOutputRecord implements XMLSerializable {
     public void fromXML(Element element) throws XMLSerializationException {
         throw new UnsupportedOperationException("Cannot use fromXML().  Use ValidationOutput(Element e)");
     }
+
+    /**
+     *
+     * @return true iff all validation tasks run passed
+     */
+    public boolean isAllPassed() {
+        for (RecordOfValidationResult result : validationRecords) {
+            if(!result.isPassed()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @return The {@link URN} of the input barcode sequence.  Can be used to locate the input document.
+     */
+    public URN getBarcodeSequenceUrn() {
+        return barcodeSequenceUrn;
+    }
 }

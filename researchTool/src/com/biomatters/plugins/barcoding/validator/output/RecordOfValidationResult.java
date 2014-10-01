@@ -55,4 +55,12 @@ public class RecordOfValidationResult implements XMLSerializable {
     public void fromXML(Element element) throws XMLSerializationException {
         throw new UnsupportedOperationException("Cannot use fromXML() use RecordOfValidationResult(Element e)");
     }
+
+    public boolean isPassed() {
+        return passed;
+    }
+
+    public String getMessage() {
+        return message;
+    }
 }

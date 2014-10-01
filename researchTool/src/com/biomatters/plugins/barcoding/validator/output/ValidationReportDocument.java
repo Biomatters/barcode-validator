@@ -4,6 +4,7 @@ import com.biomatters.geneious.publicapi.documents.*;
 import org.jdom.Element;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -87,5 +88,14 @@ public class ValidationReportDocument implements PluginDocument, PluginDocument.
     @Override
     public String toHTML() {
         return null;
+    }
+
+    /**
+     *
+     * @return a list of {@link com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord}.  One record
+     * per set of barcode->traces that were run through the validation process.
+     */
+    public List<ValidationOutputRecord> getRecords() {
+        return Collections.unmodifiableList(outputs);
     }
 }
