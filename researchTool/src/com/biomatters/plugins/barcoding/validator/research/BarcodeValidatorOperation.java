@@ -46,9 +46,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
     @Override
     public GeneiousActionOptions getActionOptions() {
-        return new GeneiousActionOptions("Barcode Validator", "", ICONS)
-                .setInMainToolbar(true)
-                .setMainMenuLocation(GeneiousActionOptions.MainMenu.Tools);
+        return new GeneiousActionOptions("Barcode Validator", "", ICONS).setInMainToolbar(true).setMainMenuLocation(GeneiousActionOptions.MainMenu.Tools);
     }
 
     @Override
@@ -225,8 +223,8 @@ public class BarcodeValidatorOperation extends DocumentOperation {
      * @throws DocumentOperationException
      */
     private SequenceAlignmentDocument assembleTraces(List<NucleotideGraphSequenceDocument> traces, CAP3Options options) throws DocumentOperationException {
-        List<SequenceAlignmentDocument> result
-                = CAP3Runner.assemble(traces, options.getExecutablePath(), options.getMinOverlapLength(), options.getMinOverlapIdentity());
+        List<SequenceAlignmentDocument> result =
+                CAP3Runner.assemble(traces, options.getExecutablePath(), options.getMinOverlapLength(), options.getMinOverlapIdentity());
 
         if (result.size() != 1) {
             throw new DocumentOperationException("todo?");
