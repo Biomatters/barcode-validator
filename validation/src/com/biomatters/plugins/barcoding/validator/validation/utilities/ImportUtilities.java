@@ -23,8 +23,8 @@ import java.util.*;
  */
 public class ImportUtilities {
     /* Allowed file extensions. */
-    private final static Set<String> TRACE_ALLOWED_FILE_EXTENSIONS
-            = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("ab1")));
+    public final static Set<String> TRACE_ALLOWED_FILE_EXTENSIONS
+            = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("ab1", "abi", "ab1", "scf")));
     private final static Set<String> BARCODE_ALLOWED_FILE_EXTENSIONS
             = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("fasta")));
     private final static Set<String> CONTIGS_ALLOWED_FILE_EXTENSIONS
@@ -272,7 +272,7 @@ public class ImportUtilities {
      */
     private static boolean fileNameHasOneOfExtensions(String fileName, Set<String> extensions) {
         for (String extension : extensions) {
-            if (fileName.endsWith("." + extension)) {
+            if (fileName.toLowerCase().endsWith("." + extension.toLowerCase())) {
                 return true;
             }
         }
