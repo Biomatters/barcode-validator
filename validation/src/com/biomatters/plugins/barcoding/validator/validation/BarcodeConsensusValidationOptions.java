@@ -14,10 +14,10 @@ public class BarcodeConsensusValidationOptions extends ValidationOptions {
 
     public BarcodeConsensusValidationOptions(Class cls) {
         super(cls);
-        OptionValue exactValue = new OptionValue("1", "Exactly");
-        OptionValue ninetyPercentValue = new OptionValue("0.9", "90% similar");
-        OptionValue sevenPercentValue = new OptionValue("0.75", "75% similar");
-        OptionValue fivePercentValue = new OptionValue("0.5", "50% similar");
+        OptionValue exactValue = new OptionValue("100", "Exactly");
+        OptionValue ninetyPercentValue = new OptionValue("90", "90% similar");
+        OptionValue sevenPercentValue = new OptionValue("75", "75% similar");
+        OptionValue fivePercentValue = new OptionValue("50", "50% similar");
         ComboBoxOption<OptionValue> matchesOption = addComboBoxOption(MATCHES, "FASTA matches generated barcode:", Arrays.asList(exactValue, ninetyPercentValue, sevenPercentValue, fivePercentValue), ninetyPercentValue);
     }
 

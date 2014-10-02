@@ -46,7 +46,7 @@ public class BarcodeConsensusValidation extends BarcodeCompareValidation {
             for(AnnotatedPluginDocument doc : annotatedPluginDocuments) {
                 Percentage fieldValue = (Percentage)doc.getFieldValue(DocumentField.ALIGNMENT_PERCENTAGE_IDENTICAL.getCode());
                 if (fieldValue.floatValue() < matches)
-                    return new ValidationResult(false, "failed validation");
+                    return new ValidationResult(false, "failed validation, similarity is " + fieldValue.floatValue() + "% but require up to " + matches + "%");
             }
         } catch (DocumentOperationException e) {
             e.printStackTrace();
