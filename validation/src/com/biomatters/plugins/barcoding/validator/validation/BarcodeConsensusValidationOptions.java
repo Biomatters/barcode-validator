@@ -6,6 +6,7 @@ import org.jdom.Element;
 import java.util.Arrays;
 
 /**
+ * @author Frank Lee
  * Created by frank on 2/10/14.
  */
 public class BarcodeConsensusValidationOptions extends ValidationOptions {

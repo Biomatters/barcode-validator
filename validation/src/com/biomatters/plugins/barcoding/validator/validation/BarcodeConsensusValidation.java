@@ -14,6 +14,7 @@ import jebl.util.ProgressListener;
 import java.util.List;
 
 /**
+ * @author Frank Lee
  * Created by frank on 2/10/14.
  */
 public class BarcodeConsensusValidation extends BarcodeCompareValidation {
