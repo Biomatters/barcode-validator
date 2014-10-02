@@ -120,7 +120,10 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             stepsProgress.beginSubtask("Validating Traces...");
             CompositeProgressListener traceValidationProgress = new CompositeProgressListener(stepsProgress, 2);
             traceValidationProgress.beginSubtask();
-            List<ValidationRun> traceValidationResults = validateTraces(trimmedTraces, traceValidationOptions, traceValidationProgress);
+
+            List<ValidationRun> traceValidationResults = runValidationTasks(traceValidationOptions, traceValidationProgress,
+                    TraceValidation.getTraceValidations(), createTraceValiationRunnerForTraces(trimmedTraces)
+            );
             traceValidationProgress.beginSubtask();
             addValidationResultsToCallback(callback, traceValidationResults, traceValidationProgress);
 
@@ -137,7 +140,9 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             stepsProgress.beginSubtask("Validating Barcode Sequences...");
             CompositeProgressListener validateBarcodeProgress = new CompositeProgressListener(stepsProgress, 2);
             validateBarcodeProgress.beginSubtask();
-            List<ValidationResult> barcodeValidationResults = validateBarcodes(barcode, consensus, barcodeValidationOptions, validateBarcodeProgress);
+            List<ValidationRun> barcodeValidationResults = runValidationTasks(barcodeValidationOptions, validateBarcodeProgress,
+                    BarcodeValidation.getBarcodeValidations(), createBarcodeValidationRunnerForInput(barcode, consensus)
+            );
             validateBarcodeProgress.beginSubtask();
             addValidationResultsToCallback(callback, barcodeValidationResults, validateBarcodeProgress);
             outputs.add(callback.getRecord());
@@ -147,6 +152,31 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         setSubFolder(operationCallback, null);
         operationCallback.addDocument(new ValidationReportDocument("Validation Report", outputs), false, composite);
         composite.setComplete();
+    }
+
+    public ValidationRunner<TraceValidation> createTraceValiationRunnerForTraces(final List<NucleotideGraphSequenceDocument> trimmedTraces) {
+        return new ValidationRunner<TraceValidation>() {
+            @Override
+            ValidationResult run(TraceValidation validation, ValidationOptions options) throws DocumentOperationException {
+                return validation.validate(trimmedTraces, options);
+            }
+        };
+    }
+
+    public ValidationRunner<BarcodeValidation> createBarcodeValidationRunnerForInput(
+            final NucleotideSequenceDocument barcode, final NucleotideSequenceDocument consensus) {
+        return new ValidationRunner<BarcodeValidation>() {
+            @Override
+            ValidationResult run(BarcodeValidation validation, ValidationOptions options) throws DocumentOperationException {
+                if (validation instanceof BarcodeCompareValidation) {
+                    return ((BarcodeCompareValidation) validation).validate(barcode, consensus, options);
+                } else if(validation instanceof SingleBarcodeValidaton) {
+                    throw new DocumentOperationException("Single barcode validation not implemented yet");
+                } else {
+                    throw new DocumentOperationException("Invalid validation options.");
+                }
+            }
+        };
     }
 
     private static void addValidationResultsToCallback(ValidationDocumentOperationCallback callback,
@@ -161,33 +191,55 @@ public class BarcodeValidatorOperation extends DocumentOperation {
     }
 
     /**
-     * Validates traces.
+     * Runs a list of {@link Validation}s using the specified
+     * {@link com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorOperation.ValidationRunner}
+     * and {@link com.biomatters.plugins.barcoding.validator.validation.ValidationOptions}
      *
-     * @param traces to validate.
      * @param options Map of {@link com.biomatters.plugins.barcoding.validator.validation.ValidationOptions#getIdentifier()} to
      * {@link com.biomatters.plugins.barcoding.validator.validation.ValidationOptions} of tasks to run.
      * @param progressListener to report progress to
-     * @return a map of {@link com.biomatters.plugins.barcoding.validator.validation.Validation} to
-     * {@link com.biomatters.plugins.barcoding.validator.validation.ValidationResult} obtained from running them.
+     * @return a list of {@link com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorOperation.ValidationRun}
+     * describing each run of the specified {@link com.biomatters.plugins.barcoding.validator.validation.Validation}s.
      *
      * @throws DocumentOperationException if a problem occurs during validation
      */
-    private List<ValidationRun> validateTraces(List<NucleotideGraphSequenceDocument> traces,
-                                                  Map<String, ValidationOptions> options,
-                                                  ProgressListener progressListener)
+    private <T extends Validation> List<ValidationRun> runValidationTasks(
+            Map<String, ValidationOptions> options,
+            ProgressListener progressListener,
+            List<T> validationTasks,
+            ValidationRunner<T> runner)
             throws DocumentOperationException {
         List<ValidationRun> result = new ArrayList<ValidationRun>();
-        List<TraceValidation> validationTasks = TraceValidation.getTraceValidations();
         CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, validationTasks.size());
 
-        for (TraceValidation validation : validationTasks) {
+        for (T validation : validationTasks) {
             validationProgress.beginSubtask();
-            ValidationOptions validationOptions = validation.getOptions();
-            ValidationOptions optionsToRunWith = options.get(validationOptions.getIdentifier());
-            result.add(new ValidationRun(optionsToRunWith, validation.validate(traces, optionsToRunWith)));
+            ValidationOptions templateOptionsForValidation = validation.getOptions();
+            ValidationOptions optionsToRunWith = options.get(templateOptionsForValidation.getIdentifier());
+            if (optionsToRunWith == null) {
+                throw new DocumentOperationException("Could not find validation module for identifier: '" +
+                        templateOptionsForValidation.getIdentifier() + "'");
+            }
+            result.add(new ValidationRun(optionsToRunWith, runner.run(validation, optionsToRunWith)));
         }
 
         return result;
+    }
+
+    private static abstract class ValidationRunner<T extends Validation> {
+        /**
+         * Can be used to run a series of {@link com.biomatters.plugins.barcoding.validator.validation.Validation}s
+         * on the same input data.
+         * <br/><br/>
+         * <strong>Note</strong>: Implementations are responsible for keeping track of their own input data and how
+         * each {@link com.biomatters.plugins.barcoding.validator.validation.Validation} is run.
+         *
+         * @param validation The validation to run.
+         * @param options The options to run the validation with.
+         * @return a {@link com.biomatters.plugins.barcoding.validator.validation.ValidationResult}
+         * @throws DocumentOperationException
+         */
+        abstract ValidationResult run(T validation, ValidationOptions options) throws DocumentOperationException;
     }
 
     private static class ValidationRun {
@@ -258,41 +310,6 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         }
 
         return result.get(0);
-    }
-
-    /**
-     * Validates barcodes.
-     *
-     * @param suppliedBarcode Supplied barcode.
-     * @param assembedBarcode Assembled barcode.
-     * @param options
-     * @return Validation results;
-     * @throws DocumentOperationException
-     */
-    private List<ValidationResult> validateBarcodes(SequenceDocument suppliedBarcode,
-                                                    SequenceDocument assembedBarcode,
-                                                    Map<String, ValidationOptions> options,
-                                                    ProgressListener progressListener)
-            throws DocumentOperationException {
-        List<ValidationResult> result = new ArrayList<ValidationResult>();
-        List<BarcodeValidation> barcodeValidations = BarcodeValidation.getBarcodeValidations();
-        CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, barcodeValidations.size());
-
-        for (BarcodeValidation validation : barcodeValidations) {
-            ValidationOptions validationOptions = options.get(validation.getOptions().getIdentifier());
-
-            if (validationOptions == null) {
-                throw new DocumentOperationException("Could not find validation module '" + options.get(validation.getOptions().getIdentifier() + "'"));
-            }
-
-            if (validation instanceof BarcodeCompareValidation) {
-                result.add(((BarcodeCompareValidation) validation).validate(suppliedBarcode, assembedBarcode, validationOptions));
-            } else {
-                throw new DocumentOperationException("Invalid validation options.");
-            }
-        }
-
-        return result;
     }
 
     /**
