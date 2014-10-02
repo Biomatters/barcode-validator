@@ -218,7 +218,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             ValidationOptions optionsToRunWith = options.get(templateOptionsForValidation.getIdentifier());
             if (optionsToRunWith == null) {
                 throw new DocumentOperationException("Could not find validation module for identifier: '" +
-                        templateOptionsForValidation.getIdentifier() + "'");
+                        templateOptionsForValidation.getIdentifier() + "'.");
             }
             result.add(new ValidationRun(optionsToRunWith, runner.run(validation, optionsToRunWith)));
         }
@@ -294,14 +294,15 @@ public class BarcodeValidatorOperation extends DocumentOperation {
      * @return Contig. Contig returned is always associated with an {@link AnnotatedPluginDocument}.
      * @throws DocumentOperationException
      */
-    private SequenceAlignmentDocument assembleTraces(List<NucleotideGraphSequenceDocument> traces, CAP3Options options) throws DocumentOperationException {
+    private SequenceAlignmentDocument assembleTraces(List<NucleotideGraphSequenceDocument> traces, CAP3Options options)
+            throws DocumentOperationException  {
         List<SequenceAlignmentDocument> result =
                 CAP3Runner.assemble(traces, options.getExecutablePath(), options.getMinOverlapLength(), options.getMinOverlapIdentity());
 
         int resultSize = result.size();
 
         if (resultSize != 1) {
-            throw new DocumentOperationException(
+            throw new DocumentOperationException (
                     "Unexpected number of contigs assembled:" +
                     "Expected: 1," +
                     "actual: " + resultSize + ".\n\n" +
