@@ -25,8 +25,7 @@ public class InputSelectionOptions extends Options {
     private Set<String> exts;
 
     public InputSelectionOptions(String label) {
-        super(com.biomatters.plugins.barcoding.validator.validation.input.InputOptions.class);
-        initialize(label, null);
+        this(label, null);
     }
 
     public InputSelectionOptions(String label, Set<String> exts) {
@@ -41,14 +40,15 @@ public class InputSelectionOptions extends Options {
 
         beginAlignHorizontally(null, false);
 
-        if (exts == null || exts.size() == 0)
+        if (exts == null || exts.size() == 0) {
             addFileSelectionOption(INPUT_SELECTION_OPTION_NAME, this.label, "").setSelectionType(JFileChooser.FILES_AND_DIRECTORIES);
-        else
+        } else {
             addFileSelectionOption(INPUT_SELECTION_OPTION_NAME, this.label, "", new String[0], "Browse", new FilenameFilter() {
                 @Override
                 public boolean accept(File dir, String name) {
-                    if (new File(dir, name).isDirectory())
+                    if (new File(dir, name).isDirectory()) {
                         return true;
+                    }
 
                     for (String ext : extsSet) {
                         if (name.toLowerCase().endsWith("." + ext.toLowerCase()))
@@ -58,7 +58,7 @@ public class InputSelectionOptions extends Options {
                     return false;
                 }
             }).setSelectionType(JFileChooser.FILES_AND_DIRECTORIES);
-
+        }
         endAlignHorizontally();
     }
 
@@ -69,8 +69,9 @@ public class InputSelectionOptions extends Options {
 
         if (extStr != null && extStr.trim().length() > 0) {
             exts = new HashSet<String>();
-            for (String tmp : extStr.split(SEPERATOR))
+            for (String tmp : extStr.split(SEPERATOR)) {
                 exts.add(tmp);
+            }
         }
 
         initialize(lable, exts);
