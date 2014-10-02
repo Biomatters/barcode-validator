@@ -74,4 +74,8 @@ public class RecordOfValidationResult implements XMLSerializable {
     public boolean isPassed() {
         return passed;
     }
+
+    public ValidationOptions getOptions() {
+        return options;
+    }
 }

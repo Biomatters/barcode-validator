@@ -4,13 +4,19 @@ import com.biomatters.geneious.publicapi.components.GTextPane;
 import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.plugin.DocumentViewer;
 import com.biomatters.geneious.publicapi.utilities.StringUtilities;
+import com.biomatters.plugins.barcoding.validator.output.RecordOfValidationResult;
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
 import com.biomatters.plugins.barcoding.validator.output.ValidationReportDocument;
+import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Collections2;
 
+import javax.annotation.Nullable;
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.awt.*;
+import java.util.List;
 
 /**
  * Displays a {@link com.biomatters.plugins.barcoding.validator.output.ValidationReportDocument} in a user
@@ -58,7 +64,8 @@ public class ValidationReportViewer extends DocumentViewer {
     }
 
     private static String generateHtml(ValidationReportDocument reportDocument) {
-        return getHeaderOfReport(reportDocument.getRecords());  // todo table of results by validation task
+        List<ValidationOutputRecord> records = reportDocument.getRecords();
+        return getHeaderOfReport(records) + getResultsTableForReport(records);
     }
 
     private static String getHeaderOfReport(List<ValidationOutputRecord> records) {
@@ -89,6 +96,7 @@ public class ValidationReportViewer extends DocumentViewer {
             appendHeaderLineItem(headerBuilder, "red", allFailed, recordsThatFailedAtLeastOnce,
                     "failed at least one validations");
         }
+        headerBuilder.append("</ul>");
 
         return headerBuilder.toString();
     }
@@ -115,5 +123,51 @@ public class ValidationReportViewer extends DocumentViewer {
                 "<li><font color=\"").append(colour).append("\"><strong>").append(
                 countString).append("</strong></font> sets ").append(whatHappened).append(". ").append(
                 "<a href=\"").append(StringUtilities.join(",", barcodeUrnStrings)).append("\">Select all</a></li>");
+    }
+
+    private static String getResultsTableForReport(List<ValidationOutputRecord> records) {
+        ArrayListMultimap<String, RecordOfValidationResult> typeToResultsList =
+                ArrayListMultimap.create();
+        for (ValidationOutputRecord record : records) {
+            for (RecordOfValidationResult resultsForBarcode : record.getValidationResults()) {
+                ValidationOptions options = resultsForBarcode.getOptions();
+                typeToResultsList.put(options.getLabel(), resultsForBarcode);
+            }
+        }
+        if(typeToResultsList.isEmpty()) {
+            return "<font color=\"red\"><strong>WARNING</strong></font>:There were no validation tasks run.";
+        }
+
+        // todo Should we be separating out trace and barcode validation?
+        List<String> typeListSorted = new ArrayList<String>(typeToResultsList.keySet());
+        Collections.sort(typeListSorted);
+
+        StringBuilder builder = new StringBuilder("<h2>Results</h3><table border=\"1\">");
+        builder.append("<tr><td>Set Name</td>");
+        for (String label : typeListSorted) {
+            List<RecordOfValidationResult> resultsForType = typeToResultsList.get(label);
+            Collection<RecordOfValidationResult> passed = getResultsForStatus(resultsForType, true);
+            Collection<RecordOfValidationResult> failed = getResultsForStatus(resultsForType, false);
+
+            builder.append("<td>").append(label).append(" (").append(
+                    getSelectPassFailHtml(passed, failed)).append(")</td>");
+        }
+        builder.append("</tr>");
+        // todo The rest of the table.  One line per barcode.
+        return builder.toString();
+    }
+
+    private static String getSelectPassFailHtml(Collection<RecordOfValidationResult> passed, Collection<RecordOfValidationResult> failed) {
+        // todo link to original barcode and traces?  Or just barcode?
+        return " (<a href=\"\">" + passed.size() + " Passed</a> / <a href=\"\">" + failed.size() + " Failed</a>)";
+    }
+
+    private static Collection<RecordOfValidationResult> getResultsForStatus(Collection<RecordOfValidationResult> results, final boolean passed) {
+        return Collections2.filter(results, new Predicate<RecordOfValidationResult>() {
+            @Override
+            public boolean apply(@Nullable RecordOfValidationResult input) {
+                return input != null && input.isPassed() == passed;
+            }
+        });
     }
 }

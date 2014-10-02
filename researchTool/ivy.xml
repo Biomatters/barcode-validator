@@ -2,6 +2,7 @@
     <info organisation="com.biomatters" module="BarcodeValidator" />
     <dependencies>
         <dependency org="com.biomatters" name="geneious.publicapi" rev="7.1.5" />
+        <dependency org="com.google.guava" name="guava" rev="15.0"/>
         <!-- For tests -->
         <dependency org="junit" name="junit" rev="4.11" />
     </dependencies>

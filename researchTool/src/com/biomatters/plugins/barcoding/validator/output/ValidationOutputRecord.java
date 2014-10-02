@@ -102,4 +102,8 @@ public class ValidationOutputRecord implements XMLSerializable {
     public URN getBarcodeSequenceUrn() {
         return barcodeSequenceUrn;
     }
+
+    public List<RecordOfValidationResult> getValidationResults() {
+        return validationRecords;
+    }
 }
