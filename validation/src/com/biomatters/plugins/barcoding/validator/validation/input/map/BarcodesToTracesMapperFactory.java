@@ -10,7 +10,7 @@ public class BarcodesToTracesMapperFactory {
 
     public static BarcodesToTracesMapper getBarcodesToTracesMapper(BarcodesToTracesMapperOptions options) {
 //        if (BoldListMapperOptions.class.isAssignableFrom(options.getClass())) {
-//            BoldListMapperOptions boldListMapperOptions = (ByBoldListMapperOptions)options;
+//            BoldListMapperOptions boldListMapperOptions = (BoldListMapperOptions)options;
 //        }
 //        if (GenbankXmlMapperOptions.class.isAssignableFrom(options.getClass())) {
 //            GenbankXmlMapperOptions genbankXmlMapperOptions = (GenbankXmlMapperOptions)options;

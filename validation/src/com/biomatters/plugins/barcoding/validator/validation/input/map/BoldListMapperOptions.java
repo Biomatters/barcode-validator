@@ -6,6 +6,7 @@ package com.biomatters.plugins.barcoding.validator.validation.input.map;
  */
 public class BoldListMapperOptions extends BarcodesToTracesMapperOptions {
     private static final String BOLD_LIST_FILE_SELECTION_OPTION_NAME = "traceList";
+
     public BoldListMapperOptions(Class cls) {
         super(cls);
 

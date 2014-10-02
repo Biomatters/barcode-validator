@@ -25,55 +25,24 @@ public class InputTest extends Assert {
     }
 
     public void mappingTestWithSeparator(String separator) throws DocumentOperationException {
-        NucleotideGraphSequenceDocument t1 = new DefaultNucleotideGraphSequence("trace1" + separator + "1",
-                                                                                "",
-                                                                                "",
-                                                                                new Date(),
-                                                                                new DefaultNucleotideGraph(null,
-                                                                                                           null,
-                                                                                                           null,
-                                                                                                           0,
-                                                                                                           0));
-        NucleotideGraphSequenceDocument t2 = new DefaultNucleotideGraphSequence("trace2" + separator + "1",
-                                                                                "",
-                                                                                "",
-                                                                                new Date(),
-                                                                                new DefaultNucleotideGraph(null,
-                                                                                                           null,
-                                                                                                           null,
-                                                                                                           0,
-                                                                                                           0));
-        NucleotideGraphSequenceDocument t3 = new DefaultNucleotideGraphSequence("trace3" + separator + "1",
-                                                                                "",
-                                                                                "",
-                                                                                new Date(),
-                                                                                new DefaultNucleotideGraph(null,
-                                                                                                           null,
-                                                                                                           null,
-                                                                                                           0,
-                                                                                                           0));
-        NucleotideGraphSequenceDocument t4 = new DefaultNucleotideGraphSequence("trace4" + separator + "2",
-                                                                                "",
-                                                                                "",
-                                                                                new Date(),
-                                                                                new DefaultNucleotideGraph(null,
-                                                                                                           null,
-                                                                                                           null,
-                                                                                                           0,
-                                                                                                           0));
+        NucleotideGraphSequenceDocument t1 =
+                new DefaultNucleotideGraphSequence("trace1" + separator + "1", "", "", new Date(), new DefaultNucleotideGraph(null, null, null, 0, 0));
+        NucleotideGraphSequenceDocument t2 =
+                new DefaultNucleotideGraphSequence("trace2" + separator + "1", "", "", new Date(), new DefaultNucleotideGraph(null, null, null, 0, 0));
+        NucleotideGraphSequenceDocument t3 =
+                new DefaultNucleotideGraphSequence("trace3" + separator + "1", "", "", new Date(), new DefaultNucleotideGraph(null, null, null, 0, 0));
+        NucleotideGraphSequenceDocument t4 =
+                new DefaultNucleotideGraphSequence("trace4" + separator + "2", "", "", new Date(), new DefaultNucleotideGraph(null, null, null, 0,  0));
+        List<NucleotideGraphSequenceDocument> traces = Arrays.asList(t1, t2, t3, t4);
 
         NucleotideSequenceDocument b1 = new DefaultNucleotideSequence("1" + separator + "barcode1", "");
         NucleotideSequenceDocument b2 = new DefaultNucleotideSequence("2" + separator + "barcode2", "");
-
-        List<NucleotideGraphSequenceDocument> traces = Arrays.asList(t1, t2, t3, t4);
         List<NucleotideSequenceDocument> barcodes = Arrays.asList(b1, b2);
 
         String regex = getRegularExpressionForSeparator(separator);
         FileNameMapper mapper = new FileNameMapper(regex, 1, regex, 0);
 
-        Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>>
-                mapped = mapper.map(barcodes, traces);
-
+        Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> mapped = mapper.map(barcodes, traces);
         List<NucleotideGraphSequenceDocument> mappedToB1 = mapped.get(b1);
         List<NucleotideGraphSequenceDocument> mappedToB2 = mapped.get(b2);
 

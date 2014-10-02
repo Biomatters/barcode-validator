@@ -1,7 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.plugin.Options;
-import com.biomatters.plugins.barcoding.validator.validation.BarcodeValidation;
+import com.biomatters.plugins.barcoding.validator.validation.BarcodeCompareValidation;
 import com.biomatters.plugins.barcoding.validator.validation.TraceValidation;
 import com.biomatters.plugins.barcoding.validator.validation.Validation;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
@@ -29,13 +29,9 @@ public class BarcodeValidatorOptions extends Options {
         super(cls);
 
         addInputOptions();
-
         addTrimmingOptions();
-
         addTraceValidationOptions();
-
         addAssemblyOptions();
-
         addBarcodeValidationOptions();
     }
 
@@ -53,23 +49,24 @@ public class BarcodeValidatorOptions extends Options {
      *         for all loaded {@link com.biomatters.plugins.barcoding.validator.validation.TraceValidation}s.
      */
     public Map<String, ValidationOptions> getTraceValidationOptions() {
-        Options traceValidationOptions = getChildOptions().get(TRACE_VALIDATION_OPTIONS_NAME);
-
-        Map<String, ValidationOptions> result = new HashMap<String, ValidationOptions>();
-
-        for (Map.Entry<String, Options> entry : traceValidationOptions.getChildOptions().entrySet()) {
-            result.put(entry.getKey(), (ValidationOptions)entry.getValue());
-        }
-
-        return Collections.unmodifiableMap(result);
+        return getValidationOptions(TRACE_VALIDATION_OPTIONS_NAME);
     }
 
     public CAP3Options getAssemblyOptions() {
         return (CAP3Options)getChildOptions().get(ASSEMBLY_OPTIONS_NAME);
     }
 
+    /**
+     * @return Map of {@link com.biomatters.plugins.barcoding.validator.validation.ValidationOptions#getIdentifier()}
+     *         to {@link com.biomatters.plugins.barcoding.validator.validation.ValidationOptions}
+     *         for all loaded {@link com.biomatters.plugins.barcoding.validator.validation.BarcodeValidation}s.
+     */
+    public Map<String, ValidationOptions> getBarcodeValidationOptions() {
+        return getValidationOptions(BARCODE_VALIDATION_OPTIONS_NAME);
+    }
+
     private void addInputOptions() {
-        addCollapsibleChildOptions(INPUT_OPTIONS_NAME, "Input", "", new InputOptions(), false, false);
+        addCollapsibleChildOptions(INPUT_OPTIONS_NAME, "Input", "", new InputOptions(BarcodeValidatorOptions.class), false, false);
     }
 
     private void addTrimmingOptions() {
@@ -81,20 +78,11 @@ public class BarcodeValidatorOptions extends Options {
 
         for (Validation validation : validations) {
             ValidationOptions options = validation.getOptions();
-
-            validationOptions.addChildOptions(options.getIdentifier(),
-                                              options.getLabel(),
-                                              options.getDescription(),
-                                              options,
-                                              true);
+            validationOptions.addChildOptions(options.getIdentifier(), options.getLabel(), options.getDescription(), options, true);
         }
 
         if (!validations.isEmpty()) {
-            validationOptions.addChildOptionsPageChooser("chooser",
-                                                         "Validation steps: ",
-                                                         Collections.<String>emptyList(),
-                                                         PageChooserType.BUTTONS,
-                                                         true);
+            validationOptions.addChildOptionsPageChooser("chooser", "Validation steps: ", Collections.<String>emptyList(), PageChooserType.BUTTONS, true);
         }
 
         addCollapsibleChildOptions(name, label, "", validationOptions, false, true);
@@ -105,12 +93,28 @@ public class BarcodeValidatorOptions extends Options {
     }
 
     private void addBarcodeValidationOptions() {
-        addValidationOptions(BarcodeValidation.getBarcodeValidations(),
-                             BARCODE_VALIDATION_OPTIONS_NAME,
-                             "Barcode validation");
+        addValidationOptions(BarcodeCompareValidation.getBarcodeValidations(), BARCODE_VALIDATION_OPTIONS_NAME, "Barcode validation");
     }
 
     private void addAssemblyOptions() {
-        addCollapsibleChildOptions(ASSEMBLY_OPTIONS_NAME, "Assembly", "", new CAP3Options(), false, true);
+        addCollapsibleChildOptions(ASSEMBLY_OPTIONS_NAME, "Assembly", "", new CAP3Options(BarcodeValidatorOptions.class), false, true);
+    }
+
+    /**
+     * @param optionsName Validation type.
+     * @return Map of {@link com.biomatters.plugins.barcoding.validator.validation.ValidationOptions#getIdentifier()}
+     *         to {@link com.biomatters.plugins.barcoding.validator.validation.ValidationOptions}
+     *         for all loaded {@link com.biomatters.plugins.barcoding.validator.validation.Validation}s of type
+     *         optionsName.
+     */
+    private Map<String, ValidationOptions> getValidationOptions(String optionsName) {
+        Options validationOptions = getChildOptions().get(optionsName);
+        Map<String, ValidationOptions> result = new HashMap<String, ValidationOptions>();
+
+        for (Map.Entry<String, Options> entry : validationOptions.getChildOptions().entrySet()) {
+            result.put(entry.getKey(), (ValidationOptions)entry.getValue());
+        }
+
+        return Collections.unmodifiableMap(result);
     }
 }

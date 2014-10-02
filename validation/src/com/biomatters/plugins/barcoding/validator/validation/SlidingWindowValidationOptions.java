@@ -14,13 +14,12 @@ public class SlidingWindowValidationOptions extends ValidationOptions {
     private static final String MINIMUM_QUALITY_OPTION_NAME         = "minimumQuality";
     private static final String MINIMUM_RATIO_SATISFIED_OPTION_NAME = "minimumRatioSatisfied";
 
-    public SlidingWindowValidationOptions() {
+    public SlidingWindowValidationOptions(Class cls) {
+        super(cls);
+
         addWindowSizeOption();
-
         addStepSizeOption();
-
         addMinimumQualityOption();
-
         addMinimumRatioSatisfiedOption();
     }
 

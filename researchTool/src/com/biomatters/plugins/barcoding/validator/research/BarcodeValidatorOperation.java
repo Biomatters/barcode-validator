@@ -11,9 +11,7 @@ import com.biomatters.geneious.publicapi.plugin.*;
 import com.biomatters.plugins.barcoding.validator.output.ValidationDocumentOperationCallback;
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
 import com.biomatters.plugins.barcoding.validator.output.ValidationReportDocument;
-import com.biomatters.plugins.barcoding.validator.validation.TraceValidation;
-import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
-import com.biomatters.plugins.barcoding.validator.validation.ValidationResult;
+import com.biomatters.plugins.barcoding.validator.validation.*;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Runner;
 import com.biomatters.plugins.barcoding.validator.validation.input.Input;
@@ -46,9 +44,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
     @Override
     public GeneiousActionOptions getActionOptions() {
-        return new GeneiousActionOptions("Barcode Validator", "", ICONS)
-                .setInMainToolbar(true)
-                .setMainMenuLocation(GeneiousActionOptions.MainMenu.Tools);
+        return new GeneiousActionOptions("Barcode Validator", "", ICONS).setInMainToolbar(true).setMainMenuLocation(GeneiousActionOptions.MainMenu.Tools);
     }
 
     @Override
@@ -87,6 +83,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         ErrorProbabilityOptions trimmingOptions = barcodeValidatorOptions.getTrimmingOptions();
         CAP3Options CAP3Options = barcodeValidatorOptions.getAssemblyOptions();
         Map<String, ValidationOptions> traceValidationOptions = barcodeValidatorOptions.getTraceValidationOptions();
+        Map<String, ValidationOptions> barcodeValidationOptions = barcodeValidatorOptions.getBarcodeValidationOptions();
 
         /* Process inputs. */
         composite.beginSubtask("Processing inputs");
@@ -134,11 +131,15 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             assembleTracesProgress.beginSubtask();
             callback.addAssembly(contig, assembleTracesProgress);
             assembleTracesProgress.beginSubtask();
-            callback.addConsensus(getConsensus(contig), assembleTracesProgress);
+            NucleotideSequenceDocument consensus = getConsensus(contig);
+            callback.addConsensus(consensus, assembleTracesProgress);
 
             stepsProgress.beginSubtask("Validating Barcode Sequences...");
-            // Should be done as part of BV-16, don't forget to call addValidationResultsToCallback()
-
+            CompositeProgressListener validateBarcodeProgress = new CompositeProgressListener(stepsProgress, 2);
+            validateBarcodeProgress.beginSubtask();
+            List<ValidationResult> barcodeValidationResults = validateBarcodes(barcode, consensus, barcodeValidationOptions, validateBarcodeProgress);
+            validateBarcodeProgress.beginSubtask();
+            addValidationResultsToCallback(callback, barcodeValidationResults, validateBarcodeProgress);
             outputs.add(callback.getRecord());
         }
 
@@ -223,8 +224,9 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
         if (!(consensus instanceof NucleotideSequenceDocument)) {
             throw new DocumentOperationException(
-                    "Assembly of nucleotide sequences produced non-nucleotide consensus: " +
-                    "Was " + consensus.getClass().getSimpleName() + "\n\n" +
+                    "Assembly produced consensus of unexpected type.\n" +
+                    "Expected: " + NucleotideSequenceDocument.class.getSimpleName() + "\n" +
+                    "Actual: " + consensus.getClass().getSimpleName() + ".\n\n" +
                     "Please contact support@geneious.com with your input files and options."
             );
         }
@@ -241,14 +243,56 @@ public class BarcodeValidatorOperation extends DocumentOperation {
      * @throws DocumentOperationException
      */
     private SequenceAlignmentDocument assembleTraces(List<NucleotideGraphSequenceDocument> traces, CAP3Options options) throws DocumentOperationException {
-        List<SequenceAlignmentDocument> result
-                = CAP3Runner.assemble(traces, options.getExecutablePath(), options.getMinOverlapLength(), options.getMinOverlapIdentity());
+        List<SequenceAlignmentDocument> result =
+                CAP3Runner.assemble(traces, options.getExecutablePath(), options.getMinOverlapLength(), options.getMinOverlapIdentity());
 
-        if (result.size() != 1) {
-            throw new DocumentOperationException("todo?");
+        int resultSize = result.size();
+
+        if (resultSize != 1) {
+            throw new DocumentOperationException(
+                    "Unexpected number of contigs assembled:" +
+                    "Expected: 1," +
+                    "actual: " + resultSize + ".\n\n" +
+                    "Please contact support@geneious.com with your input files and options."
+            );
         }
 
         return result.get(0);
+    }
+
+    /**
+     * Validates barcodes.
+     *
+     * @param suppliedBarcode Supplied barcode.
+     * @param assembedBarcode Assembled barcode.
+     * @param options
+     * @return Validation results;
+     * @throws DocumentOperationException
+     */
+    private List<ValidationResult> validateBarcodes(SequenceDocument suppliedBarcode,
+                                                    SequenceDocument assembedBarcode,
+                                                    Map<String, ValidationOptions> options,
+                                                    ProgressListener progressListener)
+            throws DocumentOperationException {
+        List<ValidationResult> result = new ArrayList<ValidationResult>();
+        List<BarcodeValidation> barcodeValidations = BarcodeValidation.getBarcodeValidations();
+        CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, barcodeValidations.size());
+
+        for (BarcodeValidation validation : barcodeValidations) {
+            ValidationOptions validationOptions = options.get(validation.getOptions().getIdentifier());
+
+            if (validationOptions == null) {
+                throw new DocumentOperationException("Could not find validation module '" + options.get(validation.getOptions().getIdentifier() + "'"));
+            }
+
+            if (validation instanceof BarcodeCompareValidation) {
+                result.add(((BarcodeCompareValidation) validation).validate(suppliedBarcode, assembedBarcode, validationOptions));
+            } else {
+                throw new DocumentOperationException("Invalid validation options.");
+            }
+        }
+
+        return result;
     }
 
     /**

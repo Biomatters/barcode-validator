@@ -13,8 +13,8 @@ import java.util.Map;
  */
 public class BoldListMapper extends BarcodesToTracesMapper {
     @Override
-    public Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>>
-    map(List<NucleotideSequenceDocument> barcodes, List<NucleotideGraphSequenceDocument> traces)
+    public Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> map(List<NucleotideSequenceDocument> barcodes,
+                                                                                      List<NucleotideGraphSequenceDocument> traces)
             throws DocumentOperationException {
         return null;
     }

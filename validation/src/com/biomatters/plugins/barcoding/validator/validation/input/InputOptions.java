@@ -4,6 +4,7 @@ import com.biomatters.geneious.publicapi.components.Dialogs;
 import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.geneious.publicapi.utilities.IconUtilities;
 import com.biomatters.plugins.barcoding.validator.validation.input.map.*;
+import com.biomatters.plugins.barcoding.validator.validation.utilities.ImportUtilities;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -24,13 +25,12 @@ public class InputOptions extends Options {
     public static final String MATCH_USING_GENBANK_OPTION_NAME   = "matchUsingGenbank";
     public static final String MATCH_USING_FILE_NAME_OPTION_NAME = "matchUsingFilename";
 
-    public InputOptions() {
+    public InputOptions(Class cls) {
+        super(cls);
+
         addHelpButtonOptions();
-
         addTraceInputOptions();
-
         addBarcodeInputOptions();
-
         addMethodSelectionOptions();
     }
 
@@ -43,8 +43,7 @@ public class InputOptions extends Options {
     }
 
     public BarcodesToTracesMapperOptions getMethodOption() {
-        return (BarcodesToTracesMapperOptions)
-                getChildOptions().get(((OptionValue) getChildOptionsPageChooser().getValue()).getName());
+        return (BarcodesToTracesMapperOptions)getChildOptions().get(((OptionValue) getChildOptionsPageChooser().getValue()).getName());
     }
 
     private void addHelpButtonOptions() {
@@ -65,7 +64,7 @@ public class InputOptions extends Options {
     }
 
     private void addTraceInputOptions() {
-        addMultipleOptions(TRACE_INPUT_OPTION_NAME, new InputSelectionOptions("Trace(s):"), false);
+        addMultipleOptions(TRACE_INPUT_OPTION_NAME, new InputSelectionOptions("Trace(s):", ImportUtilities.TRACE_ALLOWED_FILE_EXTENSIONS), false);
     }
 
     private void addBarcodeInputOptions() {
@@ -73,24 +72,11 @@ public class InputOptions extends Options {
     }
 
     private void addMethodSelectionOptions() {
-        addChildOptions(MATCH_USING_BOLD_OPTION_NAME,
-                        "tracelist.txt (BOLD)",
-                        "",
-                        new BoldListMapperOptions(InputOptions.class));
-        addChildOptions(MATCH_USING_GENBANK_OPTION_NAME,
-                        "XML File (Genbank)",
-                        "",
-                        new GenbankXmlMapperOptions(InputOptions.class));
-        addChildOptions(MATCH_USING_FILE_NAME_OPTION_NAME,
-                        "part of names",
-                        "",
-                        new FileNameMapperOptions(InputOptions.class));
+        addChildOptions(MATCH_USING_BOLD_OPTION_NAME, "tracelist.txt (BOLD)", "", new BoldListMapperOptions(InputOptions.class));
+        addChildOptions(MATCH_USING_GENBANK_OPTION_NAME, "XML File (Genbank)", "", new GenbankXmlMapperOptions(InputOptions.class));
+        addChildOptions(MATCH_USING_FILE_NAME_OPTION_NAME, "part of names", "", new FileNameMapperOptions(InputOptions.class));
 
-        addChildOptionsPageChooser(METHOD_OPTION_NAME,
-                                   "Match traces to sequences by: ",
-                                   Collections.<String>emptyList(),
-                                   PageChooserType.COMBO_BOX,
-                                   false);
+        addChildOptionsPageChooser(METHOD_OPTION_NAME, "Match traces to sequences by: ", Collections.<String>emptyList(), PageChooserType.COMBO_BOX, false);
     }
 
     private List<String> getFilePathsFromMultipleInputFileOptions(String optionName) {

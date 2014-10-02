@@ -21,13 +21,11 @@ public class CAP3Options extends Options {
     private final static String DEFAULT_CAP3_EXECUTABLE_NAME_WINDOWS = "cap3.exe";
     private final static String DEFAULT_CAP3_EXECUTABLE_NAME_UNIX    = "cap3";
 
-    public CAP3Options() {
-        super(CAP3Options.class);
+    public CAP3Options(Class cls) {
+        super(cls);
 
         addMinOverlapLengthOption();
-
         addMinOverlapIdentityOption();
-
         addExecutableOption();
     }
 
@@ -58,15 +56,9 @@ public class CAP3Options extends Options {
     private void addExecutableOption() {
         beginAlignHorizontally(null, false);
 
-        addFileSelectionOption(EXECUTABLE_OPTION_NAME, "CAP3 executable:", getDefaultCap3ExecutableName())
-                .setSelectionType(JFileChooser.FILES_ONLY);
+        addFileSelectionOption(EXECUTABLE_OPTION_NAME, "CAP3 executable:", getDefaultCap3ExecutableName()).setSelectionType(JFileChooser.FILES_ONLY);
 
-        ButtonOption button = addButtonOption("help",
-                                              "",
-                                              "",
-                                              IconUtilities.getIcons("help16.png").getIcon16(),
-                                              ButtonOption.RIGHT);
-
+        ButtonOption button = addButtonOption("help", "", "", IconUtilities.getIcons("help16.png").getIcon16(), ButtonOption.RIGHT);
         button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
