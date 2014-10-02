@@ -4,6 +4,7 @@ import com.biomatters.geneious.publicapi.documents.*;
 import org.jdom.Element;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -101,6 +102,14 @@ public class ValidationOutputRecord implements XMLSerializable {
      */
     public URN getBarcodeSequenceUrn() {
         return barcodeSequenceUrn;
+    }
+
+    /**
+     *
+     * @return The {@link URN}s of the input traces.  Can be used to locate the input trace documents.
+     */
+    public List<URN> getTraceDocumentUrns() {
+        return Collections.unmodifiableList(traceDocumentUrns);
     }
 
     public List<RecordOfValidationResult> getValidationResults() {

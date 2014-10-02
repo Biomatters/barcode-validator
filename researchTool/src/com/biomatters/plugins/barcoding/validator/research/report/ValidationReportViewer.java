@@ -1,8 +1,11 @@
 package com.biomatters.plugins.barcoding.validator.research.report;
 
 import com.biomatters.geneious.publicapi.components.GTextPane;
+import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
+import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.plugin.DocumentViewer;
+import com.biomatters.geneious.publicapi.utilities.IconUtilities;
 import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.biomatters.plugins.barcoding.validator.output.RecordOfValidationResult;
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
@@ -110,64 +113,137 @@ public class ValidationReportViewer extends DocumentViewer {
     }
 
     private static void appendHeaderLineItem(StringBuilder headerBuilder, String colour, boolean isAll, List<ValidationOutputRecord> records, String whatHappened) {
-        List<String> barcodeUrnStrings = new ArrayList<String>();
+        List<URN> barcodeUrns = new ArrayList<URN>();
         for (ValidationOutputRecord record : records) {
-            URN barcodeUrn = record.getBarcodeSequenceUrn();
-            if(barcodeUrn != null) {
-                barcodeUrnStrings.add(barcodeUrn.toString());
-            }
+            barcodeUrns.add(record.getBarcodeSequenceUrn());
         }
 
         String countString = (isAll ? "All " : "") + records.size();
         headerBuilder.append(
                 "<li><font color=\"").append(colour).append("\"><strong>").append(
                 countString).append("</strong></font> sets ").append(whatHappened).append(". ").append(
-                "<a href=\"").append(StringUtilities.join(",", barcodeUrnStrings)).append("\">Select all</a></li>");
+                getLinkForSelectingDocuments("Select all", barcodeUrns));
     }
 
     private static String getResultsTableForReport(List<ValidationOutputRecord> records) {
-        ArrayListMultimap<String, RecordOfValidationResult> typeToResultsList =
+        final ArrayListMultimap<String, BarcodeAndStatus> typeToResultsList =
                 ArrayListMultimap.create();
         for (ValidationOutputRecord record : records) {
             for (RecordOfValidationResult resultsForBarcode : record.getValidationResults()) {
                 ValidationOptions options = resultsForBarcode.getOptions();
-                typeToResultsList.put(options.getLabel(), resultsForBarcode);
+                typeToResultsList.put(options.getLabel(), new BarcodeAndStatus(record.getBarcodeSequenceUrn(), resultsForBarcode.isPassed()));
             }
         }
         if(typeToResultsList.isEmpty()) {
             return "<font color=\"red\"><strong>WARNING</strong></font>:There were no validation tasks run.";
         }
 
-        // todo Should we be separating out trace and barcode validation?
         List<String> typeListSorted = new ArrayList<String>(typeToResultsList.keySet());
         Collections.sort(typeListSorted);
 
         StringBuilder builder = new StringBuilder("<h2>Results</h3><table border=\"1\">");
         builder.append("<tr><td>Set Name</td>");
         for (String label : typeListSorted) {
-            List<RecordOfValidationResult> resultsForType = typeToResultsList.get(label);
-            Collection<RecordOfValidationResult> passed = getResultsForStatus(resultsForType, true);
-            Collection<RecordOfValidationResult> failed = getResultsForStatus(resultsForType, false);
+            List<BarcodeAndStatus> resultsForType = typeToResultsList.get(label);
+            Collection<BarcodeAndStatus> passed = getResultsForStatus(resultsForType, true);
+            Collection<BarcodeAndStatus> failed = getResultsForStatus(resultsForType, false);
 
             builder.append("<td>").append(label).append(" (").append(
-                    getSelectPassFailHtml(passed, failed)).append(")</td>");
+                    getStatusLinkForBarcodes(passed, "Passed")).append("/").append(
+                    getStatusLinkForBarcodes(failed, "Failed")).append(")</td>");
         }
         builder.append("</tr>");
-        // todo The rest of the table.  One line per barcode.
+
+        for (int i = 0; i < records.size(); i++) {
+            ValidationOutputRecord record = records.get(i);
+            appendLineForBarcode(builder, i, typeListSorted, record);
+        }
+        builder.append("</table>");
         return builder.toString();
     }
 
-    private static String getSelectPassFailHtml(Collection<RecordOfValidationResult> passed, Collection<RecordOfValidationResult> failed) {
-        // todo link to original barcode and traces?  Or just barcode?
-        return " (<a href=\"\">" + passed.size() + " Passed</a> / <a href=\"\">" + failed.size() + " Failed</a>)";
+    private static class BarcodeAndStatus {
+        private URN barcodeUrn;
+        private boolean passed;
+
+        private BarcodeAndStatus(URN barcodeUrn, boolean passed) {
+            this.barcodeUrn = barcodeUrn;
+            this.passed = passed;
+        }
     }
 
-    private static Collection<RecordOfValidationResult> getResultsForStatus(Collection<RecordOfValidationResult> results, final boolean passed) {
-        return Collections2.filter(results, new Predicate<RecordOfValidationResult>() {
+    private static void appendLineForBarcode(StringBuilder builder, int indexInTable, List<String> typeListSorted, ValidationOutputRecord record) {
+        builder.append("<tr><td>").append(getInputLink(record, indexInTable)).append("</td>");
+        Map<String, RecordOfValidationResult> recordsByName = new HashMap<String, RecordOfValidationResult>();
+        for (RecordOfValidationResult recordOfValidationResult : record.getValidationResults()) {
+           recordsByName.put(recordOfValidationResult.getOptions().getLabel(), recordOfValidationResult);
+        }
+        for (String typeIdentifier : typeListSorted) {
+            RecordOfValidationResult result = recordsByName.get(typeIdentifier);
+            builder.append("<td>");
+            if(result != null) {
+                builder.append(getResultString(result));
+            }
+            builder.append("</td>");
+        }
+        builder.append("</tr>");
+    }
+
+    private static String getInputLink(ValidationOutputRecord record, int indexInTable) {
+        AnnotatedPluginDocument document = DocumentUtilities.getDocumentByURN(record.getBarcodeSequenceUrn());
+        String label;
+        if(document == null) {
+            label = "Set " + (indexInTable+1);
+        } else {
+            label = document.getName();
+        }
+        List<URN> inputUrns = new ArrayList<URN>();
+        inputUrns.add(record.getBarcodeSequenceUrn());
+        for (URN urn : record.getTraceDocumentUrns()) {
+            inputUrns.add(urn);
+        }
+
+        return getLinkForSelectingDocuments(label, inputUrns);
+    }
+
+    private static String getLinkForSelectingDocuments(String label, List<URN> documentUrns) {
+        List<String> urnStrings = new ArrayList<String>();
+        for (URN inputUrn : documentUrns) {
+            urnStrings.add(inputUrn.toString());
+        }
+        return "<a href=\"" + StringUtilities.join(",", urnStrings) + "\">" + label + "</a>";
+    }
+
+    private static String getStatusLinkForBarcodes(Collection<BarcodeAndStatus> passed, String status) {
+        if(passed.isEmpty()) {
+            return "0 " + status;
+        }
+        List<URN> urns = new ArrayList<URN>();
+        for (BarcodeAndStatus barcodeAndStatus : passed) {
+            urns.add(barcodeAndStatus.barcodeUrn);
+        }
+        return getLinkForSelectingDocuments(passed.size() + " " + status, urns);
+    }
+
+    private static Collection<BarcodeAndStatus> getResultsForStatus(Collection<BarcodeAndStatus> results, final boolean passed) {
+        return Collections2.filter(results, new Predicate<BarcodeAndStatus>() {
             @Override
-            public boolean apply(@Nullable RecordOfValidationResult input) {
-                return input != null && input.isPassed() == passed;
+            public boolean apply(@Nullable BarcodeAndStatus input) {
+                return input != null && input.passed == passed;
             }
         });
+    }
+
+    private static Icon TICK_ICON = IconUtilities.getIcons("tick16.png").getIcon16();
+    private static Icon CROSS_ICON = IconUtilities.getIcons("x16.png").getIcon16();
+
+    private static String getResultString(RecordOfValidationResult result) {
+        String resultString = "<img src=\"" + IconUtilities.createIconUrl(
+                result.isPassed() ? TICK_ICON : CROSS_ICON) + "\"></img>";
+        resultString += result.getMessage();
+        if(!result.getGeneratedDocuments().isEmpty()) {
+            resultString += " " + getLinkForSelectingDocuments("Other Documents", result.getGeneratedDocuments());
+        }
+        return resultString;
     }
 }

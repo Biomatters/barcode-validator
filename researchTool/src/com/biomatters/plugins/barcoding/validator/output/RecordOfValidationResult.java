@@ -4,6 +4,7 @@ import com.biomatters.geneious.publicapi.documents.*;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import org.jdom.Element;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -20,7 +21,7 @@ public class RecordOfValidationResult implements XMLSerializable {
 
     private boolean passed;
     private String message;
-    private List<URN> docs;
+    private List<URN> docs = new ArrayList<URN>();
 
     public RecordOfValidationResult(ValidationOptions options, boolean passed, String message, List<URN> docs) {
         this.options = options;
@@ -73,6 +74,14 @@ public class RecordOfValidationResult implements XMLSerializable {
 
     public boolean isPassed() {
         return passed;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public List<URN> getGeneratedDocuments() {
+        return docs;
     }
 
     public ValidationOptions getOptions() {
