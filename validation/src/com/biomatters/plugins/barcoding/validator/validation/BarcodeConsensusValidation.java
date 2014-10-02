@@ -3,6 +3,7 @@ package com.biomatters.plugins.barcoding.validator.validation;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentField;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
+import com.biomatters.geneious.publicapi.documents.PluginDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.Percentage;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperation;
@@ -40,19 +41,27 @@ public class BarcodeConsensusValidation extends BarcodeCompareValidation {
             float matches = opt.getMatches();
             List<AnnotatedPluginDocument> annotatedPluginDocuments = alignmentOperation.performOperation(ProgressListener.EMPTY, alignmentOperation.getOptions(origianlDoc, generatedDoc), origianlDoc, generatedDoc);
             if (annotatedPluginDocuments == null || annotatedPluginDocuments.size() == 0) {
-                return new ValidationResult(false, "failed to align SequenceDocument (" + originalSequence.getName() + " and " + generatedSequence.getName() + ")");
+                return new ValidationResult(false, "Failed to align " + originalSequence.getName() + " and " + generatedSequence.getName());
             }
 
-            for(AnnotatedPluginDocument doc : annotatedPluginDocuments) {
-                Percentage fieldValue = (Percentage)doc.getFieldValue(DocumentField.ALIGNMENT_PERCENTAGE_IDENTICAL.getCode());
-                if (fieldValue.floatValue() < matches)
-                    return new ValidationResult(false, "failed validation, similarity is " + fieldValue.floatValue() + "% but require up to " + matches + "%");
+            // A pairwise alignment of two sequences should only ever produce one document
+            assert(annotatedPluginDocuments.size() == 1);
+            AnnotatedPluginDocument apd = annotatedPluginDocuments.get(0);
+            PluginDocument alignment = apd.getDocumentOrNull();
+
+            Percentage fieldValue = (Percentage) apd.getFieldValue(DocumentField.ALIGNMENT_PERCENTAGE_IDENTICAL.getCode());
+            ValidationResult validationResult;
+            if (fieldValue.floatValue() < matches) {
+                validationResult = new ValidationResult(false, "Similarity was too low.  Required " + fieldValue.floatValue() + "% but was " + matches + "%");
+            } else {
+                validationResult = new ValidationResult(true, null);
             }
+
+            validationResult.addIntermediateDocument(alignment);
+            return validationResult;
         } catch (DocumentOperationException e) {
             e.printStackTrace();
             return new ValidationResult(false, e.getMessage());
         }
-
-        return new ValidationResult(true, "validation success.");
     }
 }
