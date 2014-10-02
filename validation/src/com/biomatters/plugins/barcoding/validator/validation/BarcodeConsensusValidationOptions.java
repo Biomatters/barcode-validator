@@ -1,5 +1,8 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
+import com.biomatters.geneious.publicapi.documents.XMLSerializationException;
+import org.jdom.Element;
+
 import java.util.Arrays;
 
 /**
@@ -11,6 +14,11 @@ public class BarcodeConsensusValidationOptions extends ValidationOptions {
     private static final String LABEL       = "FSTA check";
     private static final String DESCRIPTION = "Validate provided barcode against generated consensus.";
     private static final String MATCHES       = "matches";
+
+    @SuppressWarnings("UnusedDeclaration")
+    public BarcodeConsensusValidationOptions(Element element) throws XMLSerializationException {
+        super(element);
+    }
 
     public BarcodeConsensusValidationOptions(Class cls) {
         super(cls);
