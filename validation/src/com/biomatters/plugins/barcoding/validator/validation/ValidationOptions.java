@@ -3,7 +3,12 @@ package com.biomatters.plugins.barcoding.validator.validation;
 import com.biomatters.geneious.publicapi.plugin.Options;
 
 /**
- * Options associated with Validation objects.
+ * Options used to run {@link com.biomatters.plugins.barcoding.validator.validation.Validation} tasks.
+ * <br/><br/>
+ * All implementing subclasses must support serialization to and from XML
+ * using {@link com.biomatters.geneious.publicapi.documents.XMLSerializer}.  Generally this means that they need to
+ * avoid storing internal state outside of the {@link com.biomatters.geneious.publicapi.documents.XMLSerializable#toXML()}
+ * {@link com.biomatters.geneious.publicapi.documents.XMLSerializable#fromXML(org.jdom.Element)} methods.
  *
  * @author Gen Li
  *         Created on 29/09/14 3:53 PM

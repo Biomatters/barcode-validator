@@ -8,6 +8,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDoc
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperation;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
+import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationResult;
 import jebl.util.CompositeProgressListener;
 import jebl.util.ProgressListener;
@@ -75,7 +76,7 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
     }
 
     @Override
-    public void addValidationResult(ValidationResult validationResult, ProgressListener progressListener) throws DocumentOperationException {
+    public void addValidationResult(ValidationOptions options, ValidationResult validationResult, ProgressListener progressListener) throws DocumentOperationException {
         List<PluginDocument> docsToAddToResults = validationResult.getIntermediateDocumentsToAddToResults();
         CompositeProgressListener resultAddingProgress = new CompositeProgressListener(progressListener, docsToAddToResults.size());
 
@@ -85,7 +86,10 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
             supplementaryDocUrns.add(saveDocument(docToAdd, resultAddingProgress));
         }
 
-        outputRecord.validationRecords.add(new RecordOfValidationResult(validationResult.isPassed(), validationResult.getMessage(), supplementaryDocUrns));
+        outputRecord.validationRecords.add(
+                new RecordOfValidationResult(options, validationResult.isPassed(), validationResult.getMessage(),
+                        supplementaryDocUrns)
+        );
     }
 
     public ValidationOutputRecord getRecord() {

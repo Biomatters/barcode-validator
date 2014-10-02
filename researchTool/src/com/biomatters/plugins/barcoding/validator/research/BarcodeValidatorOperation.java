@@ -123,7 +123,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             stepsProgress.beginSubtask("Validating Traces...");
             CompositeProgressListener traceValidationProgress = new CompositeProgressListener(stepsProgress, 2);
             traceValidationProgress.beginSubtask();
-            List<ValidationResult> traceValidationResults = validateTraces(trimmedTraces, traceValidationOptions, traceValidationProgress);
+            List<ValidationRun> traceValidationResults = validateTraces(trimmedTraces, traceValidationOptions, traceValidationProgress);
             traceValidationProgress.beginSubtask();
             addValidationResultsToCallback(callback, traceValidationResults, traceValidationProgress);
 
@@ -148,39 +148,55 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         composite.setComplete();
     }
 
-    public void addValidationResultsToCallback(ValidationDocumentOperationCallback callback,
-                                               List<ValidationResult> validationResults,
+    private static void addValidationResultsToCallback(ValidationDocumentOperationCallback callback,
+                                               List<ValidationRun> runs,
                                                ProgressListener progressListener) throws DocumentOperationException {
-        CompositeProgressListener addTraceValidationResultsProgress = new CompositeProgressListener(progressListener, validationResults.size());
+        CompositeProgressListener addTraceValidationResultsProgress = new CompositeProgressListener(progressListener, runs.size());
 
-        for (ValidationResult result : validationResults) {
+        for (ValidationRun run : runs) {
             addTraceValidationResultsProgress.beginSubtask();
-            callback.addValidationResult(result, addTraceValidationResultsProgress);
+            callback.addValidationResult(run.options, run.result, addTraceValidationResultsProgress);
         }
     }
 
     /**
      * Validates traces.
      *
-     * @param traces Traces.
-     * @param options
-     * @throws DocumentOperationException
+     * @param traces to validate.
+     * @param options Map of {@link com.biomatters.plugins.barcoding.validator.validation.ValidationOptions#getIdentifier()} to
+     * {@link com.biomatters.plugins.barcoding.validator.validation.ValidationOptions} of tasks to run.
+     * @param progressListener to report progress to
+     * @return a map of {@link com.biomatters.plugins.barcoding.validator.validation.Validation} to
+     * {@link com.biomatters.plugins.barcoding.validator.validation.ValidationResult} obtained from running them.
+     *
+     * @throws DocumentOperationException if a problem occurs during validation
      */
-    private List<ValidationResult> validateTraces(List<NucleotideGraphSequenceDocument> traces,
+    private List<ValidationRun> validateTraces(List<NucleotideGraphSequenceDocument> traces,
                                                   Map<String, ValidationOptions> options,
                                                   ProgressListener progressListener)
             throws DocumentOperationException {
-        List<ValidationResult> result = new ArrayList<ValidationResult>();
+        List<ValidationRun> result = new ArrayList<ValidationRun>();
         List<TraceValidation> validationTasks = TraceValidation.getTraceValidations();
         CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, validationTasks.size());
 
         for (TraceValidation validation : validationTasks) {
             validationProgress.beginSubtask();
             ValidationOptions validationOptions = validation.getOptions();
-            result.add(validation.validate(traces, options.get(validationOptions.getIdentifier())));
+            ValidationOptions optionsToRunWith = options.get(validationOptions.getIdentifier());
+            result.add(new ValidationRun(optionsToRunWith, validation.validate(traces, optionsToRunWith)));
         }
 
         return result;
+    }
+
+    private static class ValidationRun {
+        private ValidationOptions options;
+        private ValidationResult result;
+
+        private ValidationRun(ValidationOptions options, ValidationResult result) {
+            this.options = options;
+            this.result = result;
+        }
     }
 
     private SequenceAlignmentDocument assembleTraces(List<NucleotideGraphSequenceDocument> traces,
