@@ -16,6 +16,7 @@ public abstract class BarcodeValidation implements Validation {
      */
     public static List<BarcodeValidation> getBarcodeValidations() {
         BarcodeValidation[] barcodeValidations = {
+                new BarcodeConsensusValidation()
         };
 
         return Arrays.asList(barcodeValidations);
