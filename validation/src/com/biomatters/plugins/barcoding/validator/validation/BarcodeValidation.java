@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Represents a task that validates a collection of user supplied barcode sequences
+ * Represents a task that validates a collection of barcode sequences
  *
  * @author Matthew Cheung
  *         Created on 21/08/14 4:52 PM
