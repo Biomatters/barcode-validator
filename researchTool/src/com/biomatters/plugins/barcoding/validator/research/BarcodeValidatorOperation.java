@@ -205,8 +205,9 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
         if (!(consensus instanceof NucleotideSequenceDocument)) {
             throw new DocumentOperationException(
-                    "Assembly of nucleotide sequences produced non-nucleotide consensus: " +
-                    "Was " + consensus.getClass().getSimpleName() + "\n\n" +
+                    "Unexpected nucleotide consensus type: " +
+                    "Expected: " + NucleotideSequenceDocument.class.getSimpleName() + ", " +
+                    "Actual: " + consensus.getClass().getSimpleName() + ".\n\n" +
                     "Please contact support@geneious.com with your input files and options."
             );
         }
@@ -226,8 +227,15 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         List<SequenceAlignmentDocument> result =
                 CAP3Runner.assemble(traces, options.getExecutablePath(), options.getMinOverlapLength(), options.getMinOverlapIdentity());
 
-        if (result.size() != 1) {
-            throw new DocumentOperationException("todo?");
+        int resultSize = result.size();
+
+        if (resultSize != 1) {
+            throw new DocumentOperationException(
+                    "Unexpected number of contigs assembled:" +
+                    "Expected: 1," +
+                    "actual: " + resultSize + ".\n\n" +
+                    "Please contact support@geneious.com with your input files and options."
+            );
         }
 
         return result.get(0);
