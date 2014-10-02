@@ -1,8 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
-import com.biomatters.geneious.publicapi.documents.sequence.DefaultNucleotideGraph;
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraph;
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.*;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import org.junit.Assert;

@@ -11,9 +11,7 @@ import com.biomatters.geneious.publicapi.plugin.*;
 import com.biomatters.plugins.barcoding.validator.output.ValidationDocumentOperationCallback;
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
 import com.biomatters.plugins.barcoding.validator.output.ValidationReportDocument;
-import com.biomatters.plugins.barcoding.validator.validation.TraceValidation;
-import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
-import com.biomatters.plugins.barcoding.validator.validation.ValidationResult;
+import com.biomatters.plugins.barcoding.validator.validation.*;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Runner;
 import com.biomatters.plugins.barcoding.validator.validation.input.Input;
@@ -85,6 +83,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         ErrorProbabilityOptions trimmingOptions = barcodeValidatorOptions.getTrimmingOptions();
         CAP3Options CAP3Options = barcodeValidatorOptions.getAssemblyOptions();
         Map<String, ValidationOptions> traceValidationOptions = barcodeValidatorOptions.getTraceValidationOptions();
+        Map<String, ValidationOptions> barcodeValidationOptions = barcodeValidatorOptions.getBarcodeValidationOptions();
 
         /* Process inputs. */
         composite.beginSubtask("Processing inputs");
@@ -132,11 +131,15 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             assembleTracesProgress.beginSubtask();
             callback.addAssembly(contig, assembleTracesProgress);
             assembleTracesProgress.beginSubtask();
-            callback.addConsensus(getConsensus(contig), assembleTracesProgress);
+            NucleotideSequenceDocument consensus = getConsensus(contig);
+            callback.addConsensus(consensus, assembleTracesProgress);
 
             stepsProgress.beginSubtask("Validating Barcode Sequences...");
-            // Should be done as part of BV-16, don't forget to call addValidationResultsToCallback()
-
+            CompositeProgressListener validateBarcodeProgress = new CompositeProgressListener(stepsProgress, 2);
+            validateBarcodeProgress.beginSubtask();
+            List<ValidationResult> barcodeValidationResults = validateBarcodes(barcode, consensus, barcodeValidationOptions, validateBarcodeProgress);
+            validateBarcodeProgress.beginSubtask();
+            addValidationResultsToCallback(callback, barcodeValidationResults, validateBarcodeProgress);
             outputs.add(callback.getRecord());
         }
 
@@ -239,6 +242,41 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         }
 
         return result.get(0);
+    }
+
+    /**
+     * Validates barcodes.
+     *
+     * @param suppliedBarcode Supplied barcode.
+     * @param assembedBarcode Assembled barcode.
+     * @param options
+     * @return Validation results;
+     * @throws DocumentOperationException
+     */
+    private List<ValidationResult> validateBarcodes(SequenceDocument suppliedBarcode,
+                                                    SequenceDocument assembedBarcode,
+                                                    Map<String, ValidationOptions> options,
+                                                    ProgressListener progressListener)
+            throws DocumentOperationException {
+        List<ValidationResult> result = new ArrayList<ValidationResult>();
+        List<BarcodeValidation> barcodeValidations = BarcodeValidation.getBarcodeValidations();
+        CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, barcodeValidations.size());
+
+        for (BarcodeValidation validation : barcodeValidations) {
+            ValidationOptions validationOptions = options.get(validation.getOptions().getIdentifier());
+
+            if (validationOptions == null) {
+                throw new DocumentOperationException("Could not find validation module '" + options.get(validation.getOptions().getIdentifier() + "'"));
+            }
+
+            if (validation instanceof BarcodeCompareValidation) {
+                result.add(((BarcodeCompareValidation) validation).validate(suppliedBarcode, assembedBarcode, validationOptions));
+            } else {
+                throw new DocumentOperationException("Invalid validation options.");
+            }
+        }
+
+        return result;
     }
 
     /**
