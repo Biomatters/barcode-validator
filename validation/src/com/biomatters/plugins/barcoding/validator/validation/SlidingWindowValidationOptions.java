@@ -1,5 +1,8 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
+import com.biomatters.geneious.publicapi.documents.XMLSerializationException;
+import org.jdom.Element;
+
 /**
  * @author Gen Li
  *         Created on 26/09/14 9:42 AM
@@ -21,6 +24,11 @@ public class SlidingWindowValidationOptions extends ValidationOptions {
         addStepSizeOption();
         addMinimumQualityOption();
         addMinimumRatioSatisfiedOption();
+    }
+
+    @SuppressWarnings("UnusedDeclaration")
+    public SlidingWindowValidationOptions(Element element) throws XMLSerializationException {
+        super(element);
     }
 
     public int getWindowSize() {
