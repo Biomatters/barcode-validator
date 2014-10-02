@@ -205,8 +205,8 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
         if (!(consensus instanceof NucleotideSequenceDocument)) {
             throw new DocumentOperationException(
-                    "Unexpected nucleotide consensus type: " +
-                    "Expected: " + NucleotideSequenceDocument.class.getSimpleName() + ", " +
+                    "Assembly produced consensus of unexpected type.\n" +
+                    "Expected: " + NucleotideSequenceDocument.class.getSimpleName() + "\n" +
                     "Actual: " + consensus.getClass().getSimpleName() + ".\n\n" +
                     "Please contact support@geneious.com with your input files and options."
             );
