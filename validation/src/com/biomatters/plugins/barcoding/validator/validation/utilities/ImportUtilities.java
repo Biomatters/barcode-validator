@@ -23,7 +23,7 @@ import java.util.*;
  */
 public class ImportUtilities {
     /* Allowed file extensions. */
-    public final static Set<String> TRACE_ALLOWED_FILE_EXTENSIONS =   Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("ab1", "abi", "scf")));
+    public final static Set<String> TRACE_ALLOWED_FILE_EXTENSIONS    = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("ab1", "abi", "scf")));
     private final static Set<String> BARCODE_ALLOWED_FILE_EXTENSIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("fasta", "fas")));
     private final static Set<String> CONTIGS_ALLOWED_FILE_EXTENSIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("ace")));
 
