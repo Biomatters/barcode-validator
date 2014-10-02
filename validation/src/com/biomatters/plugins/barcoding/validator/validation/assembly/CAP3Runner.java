@@ -44,10 +44,7 @@ public class CAP3Runner {
                                                            int minOverlapLength,
                                                            int minOverlapIdentity) throws DocumentOperationException {
         try {
-            return ImportUtilities.importContigs(runCap3Assembler(createFastaFile(sequences),
-                                                                  executablePath,
-                                                                  minOverlapLength,
-                                                                  minOverlapIdentity));
+            return ImportUtilities.importContigs(runCap3Assembler(createFastaFile(sequences), executablePath, minOverlapLength, minOverlapIdentity));
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not assemble contigs: " + e.getMessage(), e);
         } catch (InterruptedException e) {
@@ -69,11 +66,11 @@ public class CAP3Runner {
      * @throws InterruptedException
      * @throws IOException
      */
-    private static String runCap3Assembler(String fastafilePath,
-                                           String executablePath,
-                                           int minOverlapLength,
-                                           int minOverlapIdentity)
+    private static String runCap3Assembler(String fastafilePath, String executablePath, int minOverlapLength, int minOverlapIdentity)
             throws DocumentOperationException, InterruptedException, IOException {
+        Cap3OutputListener listener = new Cap3OutputListener();
+
+        /* Run. */
         Execution exec = new Execution(
                 new String[] {
                         executablePath,
@@ -84,16 +81,16 @@ public class CAP3Runner {
                         String.valueOf(minOverlapIdentity)
                 },
                 ProgressListener.EMPTY,
-                new Cap3OutputListener(),
-                (String)null,
+                listener,
+                "",
                 false
         );
-
-        /* Set working directory as input fasta file's containing directory. */
         exec.setWorkingDirectory(fastafilePath.substring(0, fastafilePath.lastIndexOf(File.separator)));
+        int exitCode = exec.execute();
 
-        /* Run. */
-        exec.execute();
+        if (exitCode != 0) {
+            throw new DocumentOperationException("CAP3 failed with exit code " + exitCode + ":\n\n" + listener.getStderrOutput());
+        }
 
         return fastafilePath + CAP3_ASSEMBLER_RESULT_FILE_EXTENSION;
     }
@@ -108,9 +105,7 @@ public class CAP3Runner {
         File fastaFile = FileUtilities.createTempFile("temp", ".fasta", false);
 
         BufferedWriter writer = new BufferedWriter(new FileWriter(fastaFile));
-
         writer.write(toFastaFormat(sequences));
-
         writer.close();
 
         return fastaFile.getAbsolutePath();
@@ -127,10 +122,8 @@ public class CAP3Runner {
 
         /* Generate fasta output. */
         for (NucleotideGraphSequenceDocument sequence : sequences) {
-            fastaOutput.append(">").append(sequence.getName()).append(" ").append(sequence.getDescription())
-                    .append("\n")
-                    .append(sequence.getSequenceString().toUpperCase())
-                    .append("\n");
+            fastaOutput.append(">").append(sequence.getName()).append(" ").append(sequence.getDescription()).append("\n")
+                       .append(sequence.getSequenceString().toUpperCase()).append("\n");
         }
 
         /* Remove trailing new line. */

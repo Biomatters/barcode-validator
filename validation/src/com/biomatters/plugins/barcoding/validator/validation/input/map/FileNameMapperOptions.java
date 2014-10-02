@@ -15,7 +15,6 @@ public class FileNameMapperOptions extends BarcodesToTracesMapperOptions {
         super(cls);
 
         addTraceOptions();
-
         addSequenceOptions();
     }
 

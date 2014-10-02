@@ -13,8 +13,8 @@ import java.util.Map;
  */
 public class GenbankXmlMapper extends BarcodesToTracesMapper {
     @Override
-    public Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>>
-    map(List<NucleotideSequenceDocument> traces, List<NucleotideGraphSequenceDocument> barcodeSequences)
+    public Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> map(List<NucleotideSequenceDocument> traces,
+                                                                                      List<NucleotideGraphSequenceDocument> barcodeSequences)
             throws DocumentOperationException {
         return null;
     }

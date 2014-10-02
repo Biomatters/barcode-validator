@@ -272,7 +272,7 @@ public class ImportUtilities {
      */
     private static boolean fileNameHasOneOfExtensions(String fileName, Set<String> extensions) {
         for (String extension : extensions) {
-            if (fileName.toLowerCase().endsWith("." + extension.toLowerCase())) {
+            if (fileName.endsWith("." + extension)) {
                 return true;
             }
         }
