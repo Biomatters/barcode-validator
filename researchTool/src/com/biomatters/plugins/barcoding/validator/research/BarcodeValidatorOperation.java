@@ -150,7 +150,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
         composite.beginSubtask();
         setSubFolder(operationCallback, null);
-        operationCallback.addDocument(new ValidationReportDocument("Validation Report", outputs), false, composite);
+        operationCallback.addDocument(new ValidationReportDocument("Validation Report", outputs, barcodeValidatorOptions), false, composite);
         composite.setComplete();
     }
 

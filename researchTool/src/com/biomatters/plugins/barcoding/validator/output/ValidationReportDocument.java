@@ -1,6 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.output;
 
 import com.biomatters.geneious.publicapi.documents.*;
+import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorOptions;
 import org.jdom.Element;
 
 import java.util.ArrayList;
@@ -18,13 +19,23 @@ public class ValidationReportDocument implements PluginDocument, PluginDocument.
 
     private static final String NAME_KEY = "name";
     private static final String OUTPUT_KEY = "output";
+    private static final String OPTIONS_KEY = "optionsUsed";
 
     private String name;
     private List<ValidationOutputRecord> outputs;
+    private String optionsUsed;
 
-    public ValidationReportDocument(String name, List<ValidationOutputRecord> outputs) {
+    public ValidationReportDocument(String name, List<ValidationOutputRecord> outputs, BarcodeValidatorOptions options) {
         this.name = name;
         this.outputs = outputs;
+        optionsUsed = generateDescriptionFromOptions(options);
+    }
+
+    private static String generateDescriptionFromOptions(BarcodeValidatorOptions options) {
+        return "The following trimming and assembly parameters were used.<br>" +
+                "Trimming: Error Probability Limit=" + options.getTrimmingOptions().getErrorProbabilityLimit() + "<br>" +
+                "Assembly: Min Overlap Length=" + options.getAssemblyOptions().getMinOverlapLength() + "," +
+                "Min Overlap Identity=" + options.getAssemblyOptions().getMinOverlapIdentity();
     }
 
     @SuppressWarnings("UnusedDeclaration")
@@ -38,6 +49,12 @@ public class ValidationReportDocument implements PluginDocument, PluginDocument.
         if(name == null) {
             name = "";
         }
+
+        optionsUsed = element.getChildText(OPTIONS_KEY);
+        if(optionsUsed == null) {
+            optionsUsed = "";
+        }
+
         outputs = new ArrayList<ValidationOutputRecord>();
         List<Element> children = element.getChildren(OUTPUT_KEY);
         for (Element child : children) {
@@ -49,6 +66,7 @@ public class ValidationReportDocument implements PluginDocument, PluginDocument.
     public Element toXML() {
         Element element = new Element(XMLSerializable.ROOT_ELEMENT_NAME);
         element.addContent(new Element(NAME_KEY).setText(name));
+        element.addContent(new Element(OPTIONS_KEY).setText(optionsUsed));
         for (ValidationOutputRecord output : outputs) {
             element.addContent(XMLSerializer.classToXML(OUTPUT_KEY, output));
         }
@@ -97,5 +115,13 @@ public class ValidationReportDocument implements PluginDocument, PluginDocument.
      */
     public List<ValidationOutputRecord> getRecords() {
         return Collections.unmodifiableList(outputs);
+    }
+
+    /**
+     *
+     * @return a human readable summary of the options used in the operation that generated this report
+     */
+    public String getDescriptionOfOptions() {
+        return optionsUsed;
     }
 }

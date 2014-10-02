@@ -68,10 +68,10 @@ public class ValidationReportViewer extends DocumentViewer {
 
     private static String generateHtml(ValidationReportDocument reportDocument) {
         List<ValidationOutputRecord> records = reportDocument.getRecords();
-        return getHeaderOfReport(records) + getResultsTableForReport(records);
+        return getHeaderOfReport(records, reportDocument.getDescriptionOfOptions()) + getResultsTableForReport(records);
     }
 
-    private static String getHeaderOfReport(List<ValidationOutputRecord> records) {
+    private static String getHeaderOfReport(List<ValidationOutputRecord> records, String descriptionOfOptionUsed) {
         List<ValidationOutputRecord> recordsThatPassedAll = new ArrayList<ValidationOutputRecord>();
         List<ValidationOutputRecord> recordsThatFailedAtLeastOnce = new ArrayList<ValidationOutputRecord>();
         for (ValidationOutputRecord record : records) {
@@ -86,9 +86,9 @@ public class ValidationReportViewer extends DocumentViewer {
         boolean allFailed = recordsThatFailedAtLeastOnce.size() == records.size();
 
         StringBuilder headerBuilder = new StringBuilder("<h1>Validation Report</h1>");
-        appendOptionsParameters(headerBuilder);
+        headerBuilder.append(descriptionOfOptionUsed);
 
-        headerBuilder.append("<br><br><br>").append(
+        headerBuilder.append("<br><br>").append(
                 "Ran validations on <strong>").append(records.size()).append("</strong> sets of barcode data:");
 
         headerBuilder.append("<ul>");
@@ -102,14 +102,6 @@ public class ValidationReportViewer extends DocumentViewer {
         headerBuilder.append("</ul>");
 
         return headerBuilder.toString();
-    }
-
-    private static void appendOptionsParameters(StringBuilder headerBuilder) {
-        // todo List the actual options rather than these fake ones
-        headerBuilder.append("The following trimming and assembly parameters were used.<br>").append(
-                        "Trimming: Max low quality bases=0, Min overlap identity=90%<br>").append(
-                        "Assembly: Error Probability Limit=0.05<br>").append(
-                        "Consensus Generation: Threshold=Highest Quality, Assign Quality=Total, No Coverage Call=?");
     }
 
     private static void appendHeaderLineItem(StringBuilder headerBuilder, String colour, boolean isAll, List<ValidationOutputRecord> records, String whatHappened) {
