@@ -23,9 +23,12 @@ import java.util.*;
  */
 public class ImportUtilities {
     /* Allowed file extensions. */
-    private final static Set<String> TRACE_ALLOWED_FILE_EXTENSIONS =   Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("ab1")));
-    private final static Set<String> BARCODE_ALLOWED_FILE_EXTENSIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("fasta")));
-    private final static Set<String> CONTIGS_ALLOWED_FILE_EXTENSIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("ace")));
+    public final static Set<String> TRACE_ALLOWED_FILE_EXTENSIONS
+            = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("ab1", "abi", "ab1", "scf")));
+    private final static Set<String> BARCODE_ALLOWED_FILE_EXTENSIONS
+            = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("fasta")));
+    private final static Set<String> CONTIGS_ALLOWED_FILE_EXTENSIONS
+            = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("ace")));
 
     private ImportUtilities() {
     }
@@ -37,13 +40,19 @@ public class ImportUtilities {
      * @return Traces.
      * @throws DocumentOperationException
      */
-    public static List<NucleotideGraphSequenceDocument> importTraces(List<String> sourcePaths) throws DocumentOperationException {
+    public static List<NucleotideGraphSequenceDocument> importTraces(List<String> sourcePaths)
+            throws DocumentOperationException {
         List<NucleotideGraphSequenceDocument> result = new ArrayList<NucleotideGraphSequenceDocument>();
+
         List<AnnotatedPluginDocument> importedDocuments;
 
-        /* Import documents. */
         try {
-            importedDocuments = importDocuments(sourcePaths, Arrays.asList((Class)NucleotideGraphSequenceDocument.class), TRACE_ALLOWED_FILE_EXTENSIONS);
+            /* Import documents. */
+            importedDocuments = importDocuments(
+                    sourcePaths,
+                    Arrays.asList((Class)NucleotideGraphSequenceDocument.class),
+                    TRACE_ALLOWED_FILE_EXTENSIONS
+            );
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not import traces: " + e.getMessage(), e);
         }
@@ -62,14 +71,18 @@ public class ImportUtilities {
      * @return Barcodes.
      * @throws DocumentOperationException
      */
-    public static List<NucleotideSequenceDocument> importBarcodes(List<String> sourcePaths) throws DocumentOperationException {
+    public static List<NucleotideSequenceDocument> importBarcodes(List<String> sourcePaths)
+            throws DocumentOperationException {
         List<NucleotideSequenceDocument> result = new ArrayList<NucleotideSequenceDocument>();
+
         List<AnnotatedPluginDocument> importedDocuments;
 
-        /* Import documents. */
         try {
+            /* Import documents. */
             importedDocuments = importDocuments(
-                    sourcePaths, Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)DefaultNucleotideSequence.class), BARCODE_ALLOWED_FILE_EXTENSIONS
+                    sourcePaths,
+                    Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)DefaultNucleotideSequence.class),
+                    BARCODE_ALLOWED_FILE_EXTENSIONS
             );
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not import barcodes: " + e.getMessage(), e);
@@ -94,14 +107,17 @@ public class ImportUtilities {
      * @return Contigs.
      * @throws DocumentOperationException
      */
-    public static List<SequenceAlignmentDocument> importContigs(String sourcePath) throws DocumentOperationException {
+    public static List<SequenceAlignmentDocument> importContigs(String sourcePath)
+            throws DocumentOperationException {
         List<SequenceAlignmentDocument> result = new ArrayList<SequenceAlignmentDocument>();
-        List<AnnotatedPluginDocument> importedDocuments;
 
-        /* Import documents. */
+        List<AnnotatedPluginDocument> importedDocuments;
         try {
+            /* Import documents. */
             importedDocuments = importDocuments(
-                    Collections.singletonList(sourcePath), Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)SequenceAlignmentDocument.class), CONTIGS_ALLOWED_FILE_EXTENSIONS
+                    Collections.singletonList(sourcePath),
+                    Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)SequenceAlignmentDocument.class),
+                    CONTIGS_ALLOWED_FILE_EXTENSIONS
             );
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not import contigs: " + e.getMessage(), e);
@@ -126,17 +142,22 @@ public class ImportUtilities {
      * @return Documents.
      * @throws DocumentOperationException
      */
-    private static List<AnnotatedPluginDocument> importDocuments(List<String> sourcePaths, List<Class> expectedDocumentTypes, Set<String> allowedFileExtensions)
+    private static List<AnnotatedPluginDocument> importDocuments(List<String> sourcePaths,
+                                                                 List<Class> expectedDocumentTypes,
+                                                                 Set<String> allowedFileExtensions)
             throws DocumentOperationException {
         List<AnnotatedPluginDocument> result;
+
         List<File> files = new ArrayList<File>();
 
         /* Check existence of source paths. */
         for (String sourcePath : sourcePaths) {
             File file = new File(sourcePath);
+
             if (!file.exists()) {
                 throw new DocumentOperationException("File or directory '" + sourcePath + "' does not exist.");
             }
+
             files.add(file);
         }
 
@@ -157,7 +178,9 @@ public class ImportUtilities {
      * @return Documents.
      * @throws DocumentOperationException
      */
-    private static List<AnnotatedPluginDocument> importDocuments(List<File> sources, Set<String> allowedFileExtensions) throws DocumentOperationException {
+    private static List<AnnotatedPluginDocument> importDocuments(List<File> sources,
+                                                                 Set<String> allowedFileExtensions)
+            throws DocumentOperationException {
         List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
 
         try {
@@ -191,7 +214,8 @@ public class ImportUtilities {
      * @param types Types.
      * @throws DocumentOperationException If verification fails.
      */
-    private static void checkDocumentsAreOfTypes(List<AnnotatedPluginDocument> documents, List<Class> types) throws DocumentOperationException {
+    private static void checkDocumentsAreOfTypes(List<AnnotatedPluginDocument> documents, List<Class> types)
+            throws DocumentOperationException {
         for (AnnotatedPluginDocument document : documents) {
             if (!isDocumentOfTypes(document, types)) {
                 throw new DocumentOperationException(buildDocumentUnexpectedTypeMessage(types, document));
@@ -212,6 +236,7 @@ public class ImportUtilities {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -222,7 +247,8 @@ public class ImportUtilities {
      * @param document Document.
      * @return Error message.
      */
-    private static String buildDocumentUnexpectedTypeMessage(List<Class> expectedTypes, AnnotatedPluginDocument document) {
+    private static String buildDocumentUnexpectedTypeMessage(List<Class> expectedTypes,
+                                                             AnnotatedPluginDocument document) {
         StringBuilder messageBuilder = new StringBuilder();
 
         messageBuilder.append("Imported document '").append(document.getName()).append(" is of an unexpected type, ")
@@ -250,6 +276,7 @@ public class ImportUtilities {
                 return true;
             }
         }
+
         return false;
     }
 }

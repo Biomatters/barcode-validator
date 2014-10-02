@@ -4,6 +4,7 @@ import com.biomatters.geneious.publicapi.components.Dialogs;
 import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.geneious.publicapi.utilities.IconUtilities;
 import com.biomatters.plugins.barcoding.validator.validation.input.map.*;
+import com.biomatters.plugins.barcoding.validator.validation.utilities.ImportUtilities;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -63,7 +64,7 @@ public class InputOptions extends Options {
     }
 
     private void addTraceInputOptions() {
-        addMultipleOptions(TRACE_INPUT_OPTION_NAME, new InputSelectionOptions("Trace(s):"), false);
+        addMultipleOptions(TRACE_INPUT_OPTION_NAME, new InputSelectionOptions("Trace(s):", ImportUtilities.TRACE_ALLOWED_FILE_EXTENSIONS), false);
     }
 
     private void addBarcodeInputOptions() {
