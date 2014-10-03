@@ -19,23 +19,25 @@ import java.util.List;
  *         Created on 9/09/14 11:03 AM
  */
 public class SequenceTrimmer {
+    private static final int CHROMATOGRAM_NUCLEOTIDE_STATE_NUMBER_RANGE_SIZE = 4;
+
     private SequenceTrimmer() {
     }
 
     /**
      * Trims NucleotideGraphSequenceDocuments by removing regions off sequence ends.
      *
-     * @param sequences Sequences.
+     * @param documents Supplied NucleotideGraphSequenceDocuments.
      * @param errorProbabilityLimit Error probability limit.
-     * @return Trimmed sequences.
+     * @return Trimmed NucleotideGraphSequenceDocuments.
      * @throws DocumentOperationException
      */
-    public static List<NucleotideGraphSequenceDocument> trimSequences(List<NucleotideGraphSequenceDocument> sequences, double errorProbabilityLimit)
+    public static List<NucleotideGraphSequenceDocument> trimSequences(List<NucleotideGraphSequenceDocument> documents, double errorProbabilityLimit)
             throws DocumentOperationException {
         List<NucleotideGraphSequenceDocument> trimmedSequences = new ArrayList<NucleotideGraphSequenceDocument>();
 
         try {
-            for (NucleotideGraphSequenceDocument sequence : sequences) {
+            for (NucleotideGraphSequenceDocument sequence : documents) {
                 trimmedSequences.add(
                         trimNucleotideGraphSequenceDocument(sequence, ErrorProbabilityTrimmer.getTrimmage(sequence, TrimmableEnds.Both, errorProbabilityLimit))
                 );
@@ -59,54 +61,141 @@ public class SequenceTrimmer {
     }
 
     /**
+     * Trims array of chromatogram positions by removing regions off ends.
+     *
+     * @param positions Supplied chromatogram positions.
+     * @param trimmage Region lengths.
+     * @return Trimmed chromatogram positions.
+     */
+    static int[] trimChromatogramPositionsForResidues(int[] positions, Trimmage trimmage) {
+        return trimIntArray(positions, trimmage);
+    }
+
+    /**
      * Trims array of qualities by removing regions off ends.
      *
-     * @param qualities Qualities array.
+     * @param qualities Supplied qualities array.
      * @param trimmage Region lengths.
      * @return Trimmed qualities array.
      */
     static int[] trimQualities(int[] qualities, Trimmage trimmage) {
-        return Arrays.copyOfRange(qualities, trimmage.trimAtStart, qualities.length - trimmage.trimAtEnd);
+        return trimIntArray(qualities, trimmage);
     }
 
     /**
      * Trims NucleotideGraphSequenceDocument by removing regions off sequence ends.
      *
-     * @param sequence Sequence.
+     * @param document Supplied NucleotideGraphSequenceDocument.
      * @param trimmage Region lengths.
      * @return Trimmed sequence.
      * @throws DocumentOperationException
      */
-    private static NucleotideGraphSequenceDocument trimNucleotideGraphSequenceDocument(NucleotideGraphSequenceDocument sequence, Trimmage trimmage)
+    private static NucleotideGraphSequenceDocument trimNucleotideGraphSequenceDocument(NucleotideGraphSequenceDocument document, Trimmage trimmage)
             throws DocumentOperationException {
-        int[] trimmedQualities = trimQualities(getQualities(sequence), trimmage);
-
-        NucleotideGraph graph = new DefaultNucleotideGraph(null, null, trimmedQualities, trimmedQualities.length, 0);
-
-        try {
-            return new DefaultNucleotideGraphSequence(
-                    sequence.getName(), sequence.getDescription(), trimCharacterSequence(sequence.getCharSequence(), trimmage), new Date(), graph
-            );
-        } catch (IndexOutOfBoundsException e) {
-            throw new DocumentOperationException("Could not trim '" + sequence.getName() + "': " + e.getMessage(), e);
-        }
+        return new DefaultNucleotideGraphSequence(document.getName(),
+                                                  document.getDescription(),
+                                                  trimCharacterSequence(document.getCharSequence(), trimmage),
+                                                  new Date(),
+                                                  getTrimmedNucleotideGraph(document, trimmage));
     }
 
     /**
-     * Extracts quality values from sequence.
+     * Creates NucleotideGraph corresponding to NucleotideGraphSequenceDocument trimmed.
+     * NucleotideGraphSequenceDocuments are trimmed via removal of regions off sequence ends.
      *
-     * @param sequence Sequence.
+     * @param document Supplied NucleotideGraphSequenceDocument.
+     * @param trimmage Region lengths.
+     * @return Trimmed NucleotideGraph.
+     * @throws DocumentOperationException
+     */
+    private static NucleotideGraph getTrimmedNucleotideGraph(NucleotideGraphSequenceDocument document, Trimmage trimmage) throws DocumentOperationException {
+        int[][] chromatograms = getChromatograms(document);
+        int[] trimmedChromatogramPositions = trimChromatogramPositionsForResidues(getChromatogramPositionsForResidues(document), trimmage);
+        int[] trimmedQualities = trimQualities(getQualities(document), trimmage);
+
+        return DefaultNucleotideGraph.createNucleotideGraph(chromatograms,
+                trimmedChromatogramPositions,
+                trimmedQualities,
+                trimmedChromatogramPositions.length,
+                chromatograms[0].length);
+    }
+
+    /**
+     * Gets chromatograms from NucleotideGraphSequenceDocument.
+     *
+     * @param document Supplied NucleotideGraphSequenceDocument
+     * @return Chromatograms.
+     */
+    private static int[][] getChromatograms(NucleotideGraphSequenceDocument document) throws DocumentOperationException {
+        int length = document.getChromatogramLength();
+
+        int[][] chromatograms = new int[CHROMATOGRAM_NUCLEOTIDE_STATE_NUMBER_RANGE_SIZE][length];
+
+        for (int i = 0; i < length ; i++) {
+            for (int j = 0; j < CHROMATOGRAM_NUCLEOTIDE_STATE_NUMBER_RANGE_SIZE; j++) {
+                try {
+                    chromatograms[j][i] = document.getChromatogramValue(j, i);
+                } catch (UnsupportedOperationException e) {
+                    throw new DocumentOperationException("Could not get chromatograms for document '" + document.getName() + "'.\n\n" + e.getMessage(), e);
+                }
+            }
+        }
+
+        return chromatograms;
+    }
+
+    /**
+     * Gets chromatogram positions from NucleotideGraphSequenceDocument.
+     *
+     * @param document Supplied NucleotideGraphSequenceDocument.
+     * @return Chromatogram positions.
+     */
+    private static int[] getChromatogramPositionsForResidues(NucleotideGraphSequenceDocument document) throws DocumentOperationException {
+        int length = document.getSequenceLength();
+
+        int[] positions = new int[length];
+
+        for (int i = 0; i < length; i++) {
+            try {
+                positions[i] = document.getChromatogramPositionForResidue(i);
+            } catch (UnsupportedOperationException e) {
+                throw new DocumentOperationException("Could not get chromatogram positions for document '" + document.getName() + "'.\n\n" + e.getMessage(), e);
+            }
+        }
+
+        return positions;
+    }
+
+    /**
+     * Gets qualities from NucleotideGraphSequenceDocument.
+     *
+     * @param document Supplied NucleotideGraphSequenceDocument.
      * @return Qualities.
      */
-    static int[] getQualities(NucleotideGraphSequenceDocument sequence) {
-        int length = sequence.getSequenceLength();
+    private static int[] getQualities(NucleotideGraphSequenceDocument document) throws DocumentOperationException {
+        int length = document.getSequenceLength();
 
         int[] qualities = new int[length];
 
         for (int i = 0; i < length; i++) {
-            qualities[i] = sequence.getSequenceQuality(i);
+            try {
+                qualities[i] = document.getSequenceQuality(i);
+            } catch (UnsupportedOperationException e) {
+                throw new DocumentOperationException("Could not get qualities for document '" + document.getName() + ".\n\n" + e.getMessage(), e);
+            }
         }
 
         return qualities;
+    }
+
+    /**
+     * Trims integer array by removing regions off ends.
+     *
+     * @param ia Integer array.
+     * @param trimmage Region lengths.
+     * @return Trimmed integer array.
+     */
+    private static int[] trimIntArray(int[] ia, Trimmage trimmage) {
+        return Arrays.copyOfRange(ia, trimmage.trimAtStart, ia.length - trimmage.trimAtEnd);
     }
 }
