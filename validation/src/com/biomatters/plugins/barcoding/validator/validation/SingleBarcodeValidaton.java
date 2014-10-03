@@ -3,6 +3,8 @@ package com.biomatters.plugins.barcoding.validator.validation;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 
 /**
+ * Validations for single barcode sequences.
+ *
  * @author Gen Li
  *         Created on 2/10/14 12:06 PM
  */
