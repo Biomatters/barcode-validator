@@ -45,7 +45,7 @@ public class ValidationReportViewer extends DocumentViewer {
         textPane.setContentType("text/html");
         textPane.setEditable(false);
 
-        final DocumentOpeningHyperlinkListener hyperlinkListener = new DocumentOpeningHyperlinkListener("MockupReportDocumentFactory");
+        final DocumentOpeningHyperlinkListener hyperlinkListener = new DocumentOpeningHyperlinkListener("ReportDocumentFactory");
         textPane.addHyperlinkListener(hyperlinkListener);
         textPane.setText(generateHtml(reportDocument));
         final JScrollPane scroll = new JScrollPane(textPane) {
@@ -234,7 +234,7 @@ public class ValidationReportViewer extends DocumentViewer {
                 result.isPassed() ? TICK_ICON : CROSS_ICON) + "\"></img>";
         resultString += result.getMessage();
         if(!result.getGeneratedDocuments().isEmpty()) {
-            resultString += " " + getLinkForSelectingDocuments("Other Documents", result.getGeneratedDocuments());
+            resultString += " " + getLinkForSelectingDocuments("Generated Documents", result.getGeneratedDocuments());
         }
         return resultString;
     }

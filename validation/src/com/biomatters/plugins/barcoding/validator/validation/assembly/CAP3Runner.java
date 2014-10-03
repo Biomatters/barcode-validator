@@ -12,6 +12,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -44,7 +45,11 @@ public class CAP3Runner {
                                                            int minOverlapLength,
                                                            int minOverlapIdentity) throws DocumentOperationException {
         try {
-            return ImportUtilities.importContigs(runCap3Assembler(createFastaFile(sequences), executablePath, minOverlapLength, minOverlapIdentity));
+            String resultFilePath = runCap3Assembler(createFastaFile(sequences), executablePath, minOverlapLength, minOverlapIdentity);
+            if(assemblyFailed(sequences, resultFilePath)) {
+                return Collections.emptyList();
+            }
+            return ImportUtilities.importContigs(resultFilePath);
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not assemble contigs: " + e.getMessage(), e);
         } catch (InterruptedException e) {
@@ -52,6 +57,27 @@ public class CAP3Runner {
         } catch (IOException e) {
             throw new DocumentOperationException("Could not assemble contigs: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Hack method that tries to detect if assembly failed using the result file.  This is required because:
+     * <ul>
+     *     <li>CAP3 runs successfully and produces an almost empty Ace file when assembly fails.</li>
+     *     <li>The AceDocumentImporter will throw an Exception and show a dialog when it encounters this bad file.</li>
+     * </ul>
+     * @param sequences The sequences that were to be assembled
+     * @param resultFilePath The result file from CAP3
+     * @return true iff the assembly process failed
+     */
+    private static boolean assemblyFailed(List<NucleotideGraphSequenceDocument> sequences, String resultFilePath) {
+        File resultFile = new File(resultFilePath);
+        // The result file would use at least a byte per character in the sequence name.  If it doesn't it probably
+        // does not contain an assembly
+        long sizeOfDocs = 0;
+        for (NucleotideGraphSequenceDocument sequence : sequences) {
+            sizeOfDocs += sequence.getName().length();
+        }
+        return !resultFile.exists() || resultFile.length() < sizeOfDocs;
     }
 
     /**

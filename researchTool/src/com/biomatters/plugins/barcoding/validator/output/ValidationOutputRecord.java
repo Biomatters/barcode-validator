@@ -45,8 +45,8 @@ public class ValidationOutputRecord implements XMLSerializable {
             for (Element child : element.getChildren(TRIMMED)) {
                 trimmedDocumentUrns.add(URN.fromXML(child));
             }
-            assemblyUrn = URN.fromXML(element.getChild(ASSEMBLY));
-            consensusUrn = URN.fromXML(element.getChild(CONSENSUS));
+            assemblyUrn = getUrnFromElement(element, ASSEMBLY);
+            consensusUrn = getUrnFromElement(element, CONSENSUS);
 
             for (Element recordElement : element.getChildren(VALIDATION_RECORD)) {
                 validationRecords.add(XMLSerializer.classFromXML(recordElement, RecordOfValidationResult.class));
@@ -63,14 +63,29 @@ public class ValidationOutputRecord implements XMLSerializable {
         addElementsForUrnList(root, TRACE, traceDocumentUrns);
 
         addElementsForUrnList(root, TRIMMED, trimmedDocumentUrns);
-        root.addContent(assemblyUrn.toXML(ASSEMBLY));
-        root.addContent(consensusUrn.toXML(CONSENSUS));
+        addUrnToXml(root, assemblyUrn, ASSEMBLY);
+        addUrnToXml(root, consensusUrn, CONSENSUS);
 
         for (RecordOfValidationResult result : validationRecords) {
             root.addContent(XMLSerializer.classToXML(VALIDATION_RECORD, result));
         }
 
         return root;
+    }
+
+    private static URN getUrnFromElement(Element root, String childElementName) throws MalformedURNException {
+        Element childElement = root.getChild(childElementName);
+        if(childElement != null) {
+            return URN.fromXML(childElement);
+        } else {
+            return null;
+        }
+    }
+
+    private static void addUrnToXml(Element root, URN urn, String elementName) {
+        if(urn != null) {
+            root.addContent(urn.toXML(elementName));
+        }
     }
 
     public void addElementsForUrnList(Element root, String elementName, List<URN> urnList) {
