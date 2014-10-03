@@ -24,19 +24,17 @@ public class SlidingWindowBarcodeValidation extends SingleBarcodeValidaton {
         }
 
         SlidingWindowValidationOptions SWVOptions = (SlidingWindowValidationOptions)options;
-
-        /* Validate barcodes and accumulate results. */
         try {
-            if (!SlidingWindowValidator.validate(barcodeSequence,
+            if (SlidingWindowValidator.validate(barcodeSequence,
                                                  SWVOptions.getWindowSize(),
                                                  SWVOptions.getStepSize(),
                                                  SWVOptions.getMinimumQuality(),
                                                  SWVOptions.getMinimumRatioSatisfied())) {
-                return new ValidationResult(true, "Validation success.");
+                return new ValidationResult(true, null);
             }
-            return new ValidationResult(false, "Barcode '" + barcodeSequence.getName() + "' failed validation.");
+            return new ValidationResult(false, "Quality too low.");
         } catch (DocumentOperationException e) {
-            return new ValidationResult(false, e.getMessage());
+            return new ValidationResult(false, "Error: " + e.getMessage());
         }
     }
 
