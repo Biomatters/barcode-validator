@@ -6,12 +6,16 @@ import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.PluginDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.Percentage;
+import com.biomatters.geneious.publicapi.implementations.SequenceExtractionUtilities;
+import com.biomatters.geneious.publicapi.implementations.sequence.DefaultSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperation;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.PluginUtilities;
 import jebl.util.ProgressListener;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Frank Lee
@@ -37,32 +41,49 @@ public class BarcodeConsensusValidation extends BarcodeCompareValidation {
             generatedDoc = DocumentUtilities.createAnnotatedPluginDocument(generatedSequence);
         }
 
+        DefaultSequenceDocument reversedSequence = SequenceExtractionUtilities.reverseComplement(generatedSequence);
+        AnnotatedPluginDocument reversedGeneratedDoc = DocumentUtilities.getAnnotatedPluginDocumentThatContains(reversedSequence);
+        if (reversedGeneratedDoc == null) {
+            reversedGeneratedDoc = DocumentUtilities.createAnnotatedPluginDocument(reversedSequence);
+        }
+
         try {
             BarcodeConsensusValidationOptions opt = (BarcodeConsensusValidationOptions) options;
+            Map<Float, PluginDocument> interDocs = new HashMap<Float, PluginDocument>();
             float matches = opt.getMatches();
-            List<AnnotatedPluginDocument> annotatedPluginDocuments = alignmentOperation.performOperation(ProgressListener.EMPTY, alignmentOperation.getOptions(origianlDoc, generatedDoc), origianlDoc, generatedDoc);
-            if (annotatedPluginDocuments == null || annotatedPluginDocuments.size() == 0) {
-                return new ValidationResult(false, "Failed to align " + originalSequence.getName() + " and " + generatedSequence.getName());
-            }
+            float simi1 = getSimilarity(alignmentOperation, origianlDoc, generatedDoc, interDocs);
+            float simi2 = getSimilarity(alignmentOperation, origianlDoc, reversedGeneratedDoc, interDocs);
+            float simi = simi1 > simi2 ? simi1 : simi2;
 
-            // A pairwise alignment of two sequences should only ever produce one document
-            assert(annotatedPluginDocuments.size() == 1);
-            AnnotatedPluginDocument apd = annotatedPluginDocuments.get(0);
-            PluginDocument alignment = apd.getDocumentOrNull();
-
-            Percentage fieldValue = (Percentage) apd.getFieldValue(DocumentField.ALIGNMENT_PERCENTAGE_IDENTICAL.getCode());
             ValidationResult validationResult;
-            if (fieldValue.floatValue() < matches) {
-                validationResult = new ValidationResult(false, "Similarity was too low.  Required " + fieldValue.floatValue() + "% but was " + matches + "%");
+            if (simi == -1) {
+                validationResult = new ValidationResult(false, "Failed to align " + originalSequence.getName() + " and " + generatedSequence.getName());
+            } else if (simi < matches) {
+                validationResult = new ValidationResult(false, "Similarity was too low.  Required " + matches + "% but was " + simi + "%");
             } else {
                 validationResult = new ValidationResult(true, null);
             }
 
-            validationResult.addIntermediateDocument(alignment);
+            validationResult.addIntermediateDocument(interDocs.get(simi));
             return validationResult;
         } catch (DocumentOperationException e) {
             e.printStackTrace();
             return new ValidationResult(false, e.getMessage());
         }
+    }
+
+    private float getSimilarity(DocumentOperation alignmentOperation, AnnotatedPluginDocument origianlDoc, AnnotatedPluginDocument generatedDoc, Map<Float, PluginDocument> interDocs) throws DocumentOperationException {
+        List<AnnotatedPluginDocument> annotatedPluginDocuments = alignmentOperation.performOperation(ProgressListener.EMPTY, alignmentOperation.getOptions(origianlDoc, generatedDoc), origianlDoc, generatedDoc);
+        if (annotatedPluginDocuments == null || annotatedPluginDocuments.size() == 0) {
+            return -1;
+        }
+
+        // A pairwise alignment of two sequences should only ever produce one document
+        assert(annotatedPluginDocuments.size() == 1);
+        AnnotatedPluginDocument apd = annotatedPluginDocuments.get(0);
+        Percentage fieldValue = (Percentage) apd.getFieldValue(DocumentField.ALIGNMENT_SIMILARITY.getCode());
+        float ret = fieldValue.floatValue();
+        interDocs.put(ret, apd.getDocumentOrNull());
+        return ret;
     }
 }
