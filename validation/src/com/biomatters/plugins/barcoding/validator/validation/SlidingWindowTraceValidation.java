@@ -53,7 +53,7 @@ public class SlidingWindowTraceValidation extends TraceValidation {
             return new ValidationResult(false, getValidationFailureMessage(failedTraceNames));
         }
 
-        return new ValidationResult(true, "Validation success.");
+        return new ValidationResult(true, null);
     }
 
     /**
@@ -71,6 +71,6 @@ public class SlidingWindowTraceValidation extends TraceValidation {
      * @return Message.
      */
     private static String getValidationFailureMessage(List<String> failedTraceNames) {
-        return "Validation failure. Failed traces: " + StringUtilities.join(", ", failedTraceNames) + ".";
+        return "Failed traces: " + StringUtilities.join(", ", failedTraceNames) + ".";
     }
 }

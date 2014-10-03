@@ -8,8 +8,8 @@ import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSeque
  */
 public abstract class SingleBarcodeValidaton extends BarcodeValidation {
     /**
-     * @param barcodeSequence The user supplied barcode sequence.
-     * @param options Options obtained from calling {@link #getOptions()}.
+     * @param barcodeSequence The barcode sequence generated from the user's trace files.
+     * @param options Options to run the validation with.  Obtained from calling {@link #getOptions()}.
      * @return a {@link com.biomatters.plugins.barcoding.validator.validation.ValidationResult}.
      */
     public abstract ValidationResult validate(NucleotideGraphSequenceDocument barcodeSequence, ValidationOptions options);
