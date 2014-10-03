@@ -130,18 +130,33 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             stepsProgress.beginSubtask("Assembling...");
             CompositeProgressListener assembleTracesProgress = new CompositeProgressListener(stepsProgress, 3);
             assembleTracesProgress.beginSubtask();
-            SequenceAlignmentDocument contig = assembleTraces(trimmedTraces, CAP3Options, barcodeName, assembleTracesProgress);
+            List<SequenceAlignmentDocument> contigs = assembleTraces(
+                    trimmedTraces, CAP3Options, barcodeName, assembleTracesProgress);
             assembleTracesProgress.beginSubtask();
-            callback.addAssembly(contig, assembleTracesProgress);
+            if(!contigs.isEmpty()) {
+                CompositeProgressListener progressForAddingAssembly = new CompositeProgressListener(assembleTracesProgress, contigs.size());
+                for (SequenceAlignmentDocument contig : contigs) {
+                    progressForAddingAssembly.beginSubtask();
+                    callback.addAssembly(contig, progressForAddingAssembly);
+                }
+            }
             assembleTracesProgress.beginSubtask();
-            NucleotideSequenceDocument consensus = getConsensus(contig);
-            callback.addConsensus(consensus, assembleTracesProgress);
+            List<NucleotideSequenceDocument> consensusSequences = new ArrayList<NucleotideSequenceDocument>();
+            if(!contigs.isEmpty()) {
+                CompositeProgressListener progressForEachContig = new CompositeProgressListener(assembleTracesProgress, contigs.size());
+                for (SequenceAlignmentDocument contig : contigs) {
+                    progressForEachContig.beginSubtask();
+                    NucleotideSequenceDocument consensus = getConsensus(contig);
+                    callback.addConsensus(consensus, progressForEachContig);
+                    consensusSequences.add(consensus);
+                }
+            }
 
             stepsProgress.beginSubtask("Validating Barcode Sequences...");
             CompositeProgressListener validateBarcodeProgress = new CompositeProgressListener(stepsProgress, 2);
             validateBarcodeProgress.beginSubtask();
             List<ValidationRun> barcodeValidationResults = runValidationTasks(barcodeValidationOptions, validateBarcodeProgress,
-                    BarcodeValidation.getBarcodeValidations(), createBarcodeValidationRunnerForInput(barcode, consensus)
+                    BarcodeValidation.getBarcodeValidations(), createBarcodeValidationRunnerForInput(barcode, consensusSequences)
             );
             validateBarcodeProgress.beginSubtask();
             addValidationResultsToCallback(callback, barcodeValidationResults, validateBarcodeProgress);
@@ -164,12 +179,18 @@ public class BarcodeValidatorOperation extends DocumentOperation {
     }
 
     public ValidationRunner<BarcodeValidation> createBarcodeValidationRunnerForInput(
-            final NucleotideSequenceDocument barcode, final NucleotideSequenceDocument consensus) {
+            final NucleotideSequenceDocument barcode, final List<NucleotideSequenceDocument> consensus) {
         return new ValidationRunner<BarcodeValidation>() {
             @Override
             ValidationResult run(BarcodeValidation validation, ValidationOptions options) throws DocumentOperationException {
+                if(consensus.isEmpty()) {
+                    return new ValidationResult(false, "Assembly failed.");
+                } else if(consensus.size() > 1) {
+                    return new ValidationResult(false, "Assembly produced more than one contig.");
+                }
+
                 if (validation instanceof BarcodeCompareValidation) {
-                    return ((BarcodeCompareValidation) validation).validate(barcode, consensus, options);
+                    return ((BarcodeCompareValidation) validation).validate(barcode, consensus.get(0), options);
                 } else if(validation instanceof SingleBarcodeValidaton) {
                     throw new DocumentOperationException("Single barcode validation not implemented yet");
                 } else {
@@ -252,23 +273,25 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         }
     }
 
-    private SequenceAlignmentDocument assembleTraces(List<NucleotideGraphSequenceDocument> traces,
+    private List<SequenceAlignmentDocument> assembleTraces(List<NucleotideGraphSequenceDocument> traces,
                                                      CAP3Options options,
                                                      String contigName,
                                                      ProgressListener progressListener) throws DocumentOperationException {
+
         CompositeProgressListener assemblyProgress = new CompositeProgressListener(progressListener, 2);
 
         assemblyProgress.beginSubtask();
-        SequenceAlignmentDocument contig = assembleTraces(traces, options);
+        List<SequenceAlignmentDocument> contigs = CAP3Runner.assemble(traces, options.getExecutablePath(), options.getMinOverlapLength(), options.getMinOverlapIdentity());
 
         assemblyProgress.beginSubtask();
-        DocumentUtilities.getAnnotatedPluginDocumentThatContains(contig).setName(contigName);
-
-        if (contig.canSetSequenceNames()) {
-            contig.setSequenceName(0, contigName + " Consensus Sequence", true);
+        for (SequenceAlignmentDocument contig : contigs) {
+            DocumentUtilities.getAnnotatedPluginDocumentThatContains(contig).setName(contigName);
+            if (contig.canSetSequenceNames()) {
+                contig.setSequenceName(0, contigName + " Consensus Sequence", true);
+            }
         }
 
-        return contig;
+        return contigs;
     }
 
     private NucleotideSequenceDocument getConsensus(SequenceAlignmentDocument contig) throws DocumentOperationException {
@@ -286,32 +309,6 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         return (NucleotideSequenceDocument)consensus;
     }
 
-    /**
-     * Assembles contig.
-     *
-     * @param traces Traces.
-     * @param options
-     * @return Contig. Contig returned is always associated with an {@link AnnotatedPluginDocument}.
-     * @throws DocumentOperationException
-     */
-    private SequenceAlignmentDocument assembleTraces(List<NucleotideGraphSequenceDocument> traces, CAP3Options options)
-            throws DocumentOperationException  {
-        List<SequenceAlignmentDocument> result =
-                CAP3Runner.assemble(traces, options.getExecutablePath(), options.getMinOverlapLength(), options.getMinOverlapIdentity());
-
-        int resultSize = result.size();
-
-        if (resultSize != 1) {
-            throw new DocumentOperationException (
-                    "Unexpected number of contigs assembled:" +
-                    "Expected: 1," +
-                    "actual: " + resultSize + ".\n\n" +
-                    "Please contact support@geneious.com with your input files and options."
-            );
-        }
-
-        return result.get(0);
-    }
 
     /**
      * Sets the sub folder for the {@link com.biomatters.geneious.publicapi.plugin.DocumentOperation.OperationCallback}
