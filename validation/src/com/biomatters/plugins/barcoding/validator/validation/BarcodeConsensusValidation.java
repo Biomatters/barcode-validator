@@ -56,7 +56,9 @@ public class BarcodeConsensusValidation extends BarcodeCompareValidation {
             float simi = simi1 > simi2 ? simi1 : simi2;
 
             ValidationResult validationResult;
-            if (simi < matches) {
+            if (simi == -1) {
+                validationResult = new ValidationResult(false, "Failed to align " + originalSequence.getName() + " and " + generatedSequence.getName());
+            } else if (simi < matches) {
                 validationResult = new ValidationResult(false, "Similarity was too low.  Required " + matches + "% but was " + simi + "%");
             } else {
                 validationResult = new ValidationResult(true, null);
