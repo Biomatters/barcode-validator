@@ -38,7 +38,7 @@ public class TrimmingTest extends Assert {
         assertEquals(SequenceCharSequence.valueOf("AGCTA"), getTrimmedCharSequence(sequence, trimmage));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testOverTrimSequence() {
         SequenceCharSequence sequence = SequenceCharSequence.valueOf("TAGCTAGC");
         Trimmage trimmage = new Trimmage(4, 5);

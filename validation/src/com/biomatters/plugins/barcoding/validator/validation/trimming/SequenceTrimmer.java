@@ -42,10 +42,8 @@ public class SequenceTrimmer {
      * @return Trimmed sequence.
      */
     static NucleotideGraphSequenceDocument trimNucleotideGraphSequenceDocument(NucleotideGraphSequenceDocument document, Trimmage trimmage) {
-        int from = Math.max(0, trimmage.trimAtStart - 1);
-        int to = Math.max(0, document.getSequenceLength() - trimmage.trimAtEnd);
-
-        SequenceExtractionUtilities.ExtractionOptions options = new SequenceExtractionUtilities.ExtractionOptions(from, to);
+        SequenceExtractionUtilities.ExtractionOptions options = new SequenceExtractionUtilities.ExtractionOptions(
+                trimmage.getNonTrimmedInterval(document.getSequenceLength()));
 
         return (NucleotideGraphSequenceDocument)SequenceExtractionUtilities.extract(document, options);
     }
