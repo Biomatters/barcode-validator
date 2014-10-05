@@ -18,10 +18,11 @@ public class SequenceTrimmer {
     }
 
     /**
-     * Trims NucleotideGraphSequenceDocuments by removing regions off sequence ends.
+     * Trims NucleotideGraphSequenceDocuments by quality scores using the modified Mott algorithm.  This is the same
+     * algorithm used in PHRED and is also one of the trimming algorithms available in Geneious.
      *
-     * @param documents Supplied NucleotideGraphSequenceDocuments.
-     * @param errorProbabilityLimit Error probability limit.
+     * @param documents {@link NucleotideGraphSequenceDocument}s to trim.
+     * @param errorProbabilityLimit Error probability limit for the modified mott algorithm.
      * @return Trimmed NucleotideGraphSequenceDocuments.
      */
     public static List<NucleotideGraphSequenceDocument> trimSequences(List<NucleotideGraphSequenceDocument> documents, double errorProbabilityLimit) {
@@ -37,9 +38,9 @@ public class SequenceTrimmer {
     /**
      * Trims NucleotideGraphSequenceDocument by removing regions off sequence ends.
      *
-     * @param document Supplied NucleotideGraphSequenceDocument.
-     * @param trimmage Region lengths.
-     * @return Trimmed sequence.
+     * @param document Supplied {@link NucleotideGraphSequenceDocument} to trim
+     * @param trimmage Region lengths to trim
+     * @return Trimmed {@link com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument}
      */
     static NucleotideGraphSequenceDocument trimNucleotideGraphSequenceDocument(NucleotideGraphSequenceDocument document, Trimmage trimmage) {
         SequenceExtractionUtilities.ExtractionOptions options = new SequenceExtractionUtilities.ExtractionOptions(
