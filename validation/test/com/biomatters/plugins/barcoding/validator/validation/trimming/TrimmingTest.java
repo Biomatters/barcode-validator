@@ -1,8 +1,15 @@
 package com.biomatters.plugins.barcoding.validator.validation.trimming;
 
+import com.biomatters.geneious.publicapi.documents.sequence.DefaultNucleotideGraph;
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceCharSequence;
+import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
+import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
+import com.biomatters.geneious.publicapi.utilities.CharSequenceUtilities;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.Date;
 
 
 /**
@@ -11,11 +18,16 @@ import org.junit.Test;
  */
 public class TrimmingTest extends Assert {
     @Test
-    public void testRedundantTrimSequence() {
+    public void testRedundantTrimSequence() throws DocumentOperationException {
         SequenceCharSequence sequence = SequenceCharSequence.valueOf("TAGCTAGC");
         Trimmage trimmage = new Trimmage(0, 0);
+        assertEquals(sequence, getTrimmedCharSequence(sequence, trimmage));
+    }
 
-        assertEquals(sequence, SequenceTrimmer.trimCharacterSequence(sequence, trimmage));
+    private SequenceCharSequence getTrimmedCharSequence(SequenceCharSequence sequence, Trimmage trimmage) {
+        DefaultNucleotideGraphSequence toTrim = new DefaultNucleotideGraphSequence("toTrim", "", sequence, new Date(),
+                DefaultNucleotideGraph.createNucleotideGraph(new int[sequence.length()], 0, 0));
+        return SequenceTrimmer.trimNucleotideGraphSequenceDocument(toTrim, trimmage).getCharSequence();
     }
 
     @Test
@@ -23,15 +35,23 @@ public class TrimmingTest extends Assert {
         SequenceCharSequence sequence = SequenceCharSequence.valueOf("TAGCTAGC");
         Trimmage trimmage = new Trimmage(1, 2);
 
-        assertEquals(SequenceCharSequence.valueOf("AGCTA"), SequenceTrimmer.trimCharacterSequence(sequence, trimmage));
+        assertEquals(SequenceCharSequence.valueOf("AGCTA"), getTrimmedCharSequence(sequence, trimmage));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testOverTrimSequence() {
         SequenceCharSequence sequence = SequenceCharSequence.valueOf("TAGCTAGC");
         Trimmage trimmage = new Trimmage(4, 5);
 
-        assertEquals(SequenceCharSequence.valueOf(""), SequenceTrimmer.trimCharacterSequence(sequence, trimmage));
+        assertEquals(SequenceCharSequence.valueOf(""), getTrimmedCharSequence(sequence, trimmage));
+    }
+
+    private int[] getTrimmedQualityArray(int[] quality, Trimmage trimmage) {
+        DefaultNucleotideGraphSequence toTrim = new DefaultNucleotideGraphSequence("toTrim", "",
+                CharSequenceUtilities.repeatedCharSequence("A", quality.length), new Date(),
+                DefaultNucleotideGraph.createNucleotideGraph(quality, 0, 0));
+        NucleotideGraphSequenceDocument trimmed = SequenceTrimmer.trimNucleotideGraphSequenceDocument(toTrim, trimmage);
+        return DefaultNucleotideGraph.getSequenceQualities(trimmed);
     }
 
     @Test
@@ -39,7 +59,7 @@ public class TrimmingTest extends Assert {
         int[] qualities = { 0, 1, 2, 3, 4, 5, 6, 7};
         Trimmage trimmage = new Trimmage(0, 0);
 
-        assertArrayEquals(qualities, SequenceTrimmer.trimQualities(qualities, trimmage));
+        assertArrayEquals(qualities, getTrimmedQualityArray(qualities, trimmage));
     }
 
     @Test
@@ -47,7 +67,7 @@ public class TrimmingTest extends Assert {
         int[] qualities = { 0, 1, 2, 3, 4, 5, 6, 7};
         Trimmage trimmage = new Trimmage(1, 2);
 
-        assertArrayEquals(new int[] { 1, 2, 3, 4, 5 }, SequenceTrimmer.trimQualities(qualities, trimmage));
+        assertArrayEquals(new int[] { 1, 2, 3, 4, 5 }, getTrimmedQualityArray(qualities, trimmage));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -55,7 +75,7 @@ public class TrimmingTest extends Assert {
         int[] qualities = { 0, 1, 2, 3, 4, 5, 6, 7};
         Trimmage trimmage = new Trimmage(4, 5);
 
-        SequenceTrimmer.trimQualities(qualities, trimmage);
+        getTrimmedQualityArray(qualities, trimmage);
     }
 
     @Test
@@ -63,7 +83,7 @@ public class TrimmingTest extends Assert {
         int[] positions = { 0, 1, 2, 3, 4, 5, 6, 7};
         Trimmage trimmage = new Trimmage(0, 0);
 
-        assertArrayEquals(positions, SequenceTrimmer.trimChromatogramPositionsForResidues(positions, trimmage));
+        assertArrayEquals(positions, getTrimmedQualityArray(positions, trimmage));
     }
 
     @Test
@@ -71,7 +91,7 @@ public class TrimmingTest extends Assert {
         int[] positions = { 0, 1, 2, 3, 4, 5, 6, 7};
         Trimmage trimmage = new Trimmage(1, 2);
 
-        assertArrayEquals(new int[] { 1, 2, 3, 4, 5 }, SequenceTrimmer.trimChromatogramPositionsForResidues(positions, trimmage));
+        assertArrayEquals(new int[] { 1, 2, 3, 4, 5 }, getTrimmedQualityArray(positions, trimmage));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -79,6 +99,6 @@ public class TrimmingTest extends Assert {
         int[] positions = { 0, 1, 2, 3, 4, 5, 6, 7};
         Trimmage trimmage = new Trimmage(4, 5);
 
-        SequenceTrimmer.trimChromatogramPositionsForResidues(positions, trimmage);
+        getTrimmedQualityArray(positions, trimmage);
     }
 }
