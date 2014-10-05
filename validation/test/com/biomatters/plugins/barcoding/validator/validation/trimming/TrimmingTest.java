@@ -74,8 +74,8 @@ public class TrimmingTest extends Assert {
                                       int[] originalChromatogramPositions,
                                       int[] trimmedChromatogramPositions,
                                       Trimmage trimmage) {
-        assertChromatograms(originalChromatograms);
-        assertChromatograms(trimmedChromatograms);
+        assertChromatogramLengthsAreCorrect(originalChromatograms);
+        assertChromatogramLengthsAreCorrect(trimmedChromatograms);
 
         for (int i = 0; i < trimmedChromatogramPositions.length; i++) {
             for (int j = 0; j < CHROMATOGRAM_NUCLEOTIDE_STATE_RANGE_SIZE; j++) {
@@ -88,7 +88,7 @@ public class TrimmingTest extends Assert {
 
     }
 
-    private void assertChromatograms(int[][] chromatograms) {
+    private void assertChromatogramLengthsAreCorrect(int[][] chromatograms) {
         assertEquals(CHROMATOGRAM_NUCLEOTIDE_STATE_RANGE_SIZE, chromatograms.length);
 
         for (int i = 0; i < CHROMATOGRAM_NUCLEOTIDE_STATE_RANGE_SIZE - 1; i++) {

@@ -34,9 +34,6 @@ public class SequenceTrimmer {
     }
 
     /**
-     * Trims NucleotideGraphSequenceDocument by quality score using the modified Mott algorithm.  This is the same
-     * algorithm used in PHRED and is also one of the trimming algorithms available in Geneious.
-     *
      * @param document {@link NucleotideGraphSequenceDocument} to trim
      * @param trimmage Region lengths to trim
      * @return Trimmed {@link com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument}
