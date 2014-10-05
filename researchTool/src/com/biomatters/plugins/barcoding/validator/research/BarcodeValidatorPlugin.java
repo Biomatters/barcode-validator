@@ -39,7 +39,7 @@ public class BarcodeValidatorPlugin extends GeneiousPlugin {
 
     @Override
     public String getMinimumApiVersion() {
-        return "4.71";
+        return "4.710";
     }
 
     @Override
