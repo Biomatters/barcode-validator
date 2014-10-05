@@ -45,6 +45,7 @@ public class SequenceTrimmer {
     static NucleotideGraphSequenceDocument trimNucleotideGraphSequenceDocument(NucleotideGraphSequenceDocument document, Trimmage trimmage) {
         SequenceExtractionUtilities.ExtractionOptions options = new SequenceExtractionUtilities.ExtractionOptions(
                 trimmage.getNonTrimmedInterval(document.getSequenceLength()));
+        options.setOverrideName(document.getName() + " trimmed");
 
         return (NucleotideGraphSequenceDocument)SequenceExtractionUtilities.extract(document, options);
     }
