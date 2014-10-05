@@ -16,14 +16,16 @@ import java.util.Date;
  *         Created on 10/09/14 7:08 AM
  */
 public class TrimmingTest extends Assert {
+    private final static int CHROMATOGRAM_NUCLEOTIDE_STATE_RANGE_SIZE = 4;
+
     private CharSequence sequence = "ACGTACGTACGTACGTACGT";
     private int[][] chromatograms = {
-            { 70, 40, 40, 40, 70, 40, 40, 40, 70, 40, 40, 40, 70, 40, 40, 40, 70, 40, 40, 40 },
-            { 50, 70, 50, 50, 50, 70, 50, 50, 50, 70, 50, 50, 50, 70, 50, 50, 50, 70, 50, 50 },
-            { 60, 60, 70, 60, 60, 60, 70, 60, 60, 60, 70, 60, 60, 60, 70, 60, 60, 60, 70, 60 },
-            { 40, 50, 60, 70, 40, 50, 60, 70, 40, 50, 60, 70, 40, 50, 60, 70, 40, 50, 60, 70 }
+            { 0, 70, 0, 0, 40, 40, 40, 70, 0, 40, 40, 40, 70, 40, 40, 40, 70, 40, 40, 40, 70, 40, 40, 0, 0, 40 },
+            { 0, 50, 0, 0, 70, 50, 50, 50, 0, 70, 50, 50, 50, 70, 50, 50, 50, 70, 50, 50, 50, 70, 50, 0, 0, 50 },
+            { 0, 60, 0, 0, 60, 70, 60, 60, 0, 60, 70, 60, 60, 60, 70, 60, 60, 60, 70, 60, 60, 60, 70, 0, 0, 60 },
+            { 0, 40, 0, 0, 50, 60, 70, 40, 0, 50, 60, 70, 40, 50, 60, 70, 40, 50, 60, 70, 40, 50, 60, 0, 0, 70 }
     };
-    private int[] chromatogramPositions = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
+    private int[] chromatogramPositions = { 1, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24, 25 };
     private int[] qualities = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
 
     private NucleotideGraph graph = DefaultNucleotideGraph.createNucleotideGraph(chromatograms, chromatogramPositions, qualities, sequence.length(), chromatograms[0].length);
@@ -32,7 +34,7 @@ public class TrimmingTest extends Assert {
 
     @Test
     public void testTrim() throws DocumentOperationException {
-        testTrim(document, 5, 5);
+        testTrim(document, 1, 2);
     }
 
     @Test
@@ -61,20 +63,36 @@ public class TrimmingTest extends Assert {
 
         /* Check sequence. */
         assertEquals(originalSequence.substring(fromBeginning, originalSequence.length() - fromEnd), trimmedSequence);
-        /* Check chromatograms. */
-        assertArrayEquals(
-                new int[][] {
-                        Arrays.copyOfRange(originalChromatograms[0], fromBeginning, originalChromatograms[0].length - fromEnd),
-                        Arrays.copyOfRange(originalChromatograms[1], fromBeginning, originalChromatograms[1].length - fromEnd),
-                        Arrays.copyOfRange(originalChromatograms[2], fromBeginning, originalChromatograms[2].length - fromEnd),
-                        Arrays.copyOfRange(originalChromatograms[3], fromBeginning, originalChromatograms[3].length - fromEnd)
-
-                },
-                trimmedChromatograms
-        );
-        /* Check chromatogram positions. */
-        assertArrayEquals(Arrays.copyOfRange(originalChromatogramPositions, 0, originalChromatogramPositions.length - fromBeginning - fromEnd), trimmedChromatogramPositions);
+        /* Check chromatograms and chromatogram positions. */
+        compareChromatograms(originalChromatograms, trimmedChromatograms, originalChromatogramPositions, trimmedChromatogramPositions, trimmage);
         /* Check qualities. */
         assertArrayEquals(Arrays.copyOfRange(originalQualities, fromBeginning, originalQualities.length - fromEnd), trimmedQualities);
+    }
+
+    private void compareChromatograms(int[][] originalChromatograms,
+                                      int[][] trimmedChromatograms,
+                                      int[] originalChromatogramPositions,
+                                      int[] trimmedChromatogramPositions,
+                                      Trimmage trimmage) {
+        assertChromatograms(originalChromatograms);
+        assertChromatograms(trimmedChromatograms);
+
+        for (int i = 0; i < trimmedChromatogramPositions.length; i++) {
+            for (int j = 0; j < CHROMATOGRAM_NUCLEOTIDE_STATE_RANGE_SIZE; j++) {
+                assertEquals(
+                        trimmedChromatograms[j][trimmedChromatogramPositions[i]],
+                        originalChromatograms[j][originalChromatogramPositions[i + trimmage.trimAtStart]]
+                );
+            }
+        }
+
+    }
+
+    private void assertChromatograms(int[][] chromatograms) {
+        assertEquals(CHROMATOGRAM_NUCLEOTIDE_STATE_RANGE_SIZE, chromatograms.length);
+
+        for (int i = 0; i < CHROMATOGRAM_NUCLEOTIDE_STATE_RANGE_SIZE - 1; i++) {
+            assertEquals(chromatograms[i].length, chromatograms[i + 1].length);
+        }
     }
 }
