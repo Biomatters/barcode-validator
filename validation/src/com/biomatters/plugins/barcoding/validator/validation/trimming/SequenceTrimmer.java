@@ -23,26 +23,25 @@ public class SequenceTrimmer {
      *
      * @param documents {@link NucleotideGraphSequenceDocument}s to trim.
      * @param errorProbabilityLimit Error probability limit for the modified mott algorithm.
-     * @return Trimmed NucleotideGraphSequenceDocuments.
+     * @return Trimmed {@link com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument}s.
      */
     public static List<NucleotideGraphSequenceDocument> trimSequences(List<NucleotideGraphSequenceDocument> documents, double errorProbabilityLimit) {
         List<NucleotideGraphSequenceDocument> trimmedSequences = new ArrayList<NucleotideGraphSequenceDocument>();
         for (NucleotideGraphSequenceDocument sequence : documents) {
-            trimmedSequences.add(
-                    trimNucleotideGraphSequenceDocument(sequence, ErrorProbabilityTrimmer.getTrimmage(sequence, TrimmableEnds.Both, errorProbabilityLimit))
-            );
+            trimmedSequences.add(trimSequence(sequence, ErrorProbabilityTrimmer.getTrimmage(sequence, TrimmableEnds.Both, errorProbabilityLimit)));
         }
         return trimmedSequences;
     }
 
     /**
-     * Trims NucleotideGraphSequenceDocument by removing regions off sequence ends.
+     * Trims NucleotideGraphSequenceDocument by quality score using the modified Mott algorithm.  This is the same
+     * algorithm used in PHRED and is also one of the trimming algorithms available in Geneious.
      *
-     * @param document Supplied {@link NucleotideGraphSequenceDocument} to trim
+     * @param document {@link NucleotideGraphSequenceDocument} to trim
      * @param trimmage Region lengths to trim
      * @return Trimmed {@link com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument}
      */
-    static NucleotideGraphSequenceDocument trimNucleotideGraphSequenceDocument(NucleotideGraphSequenceDocument document, Trimmage trimmage) {
+    static NucleotideGraphSequenceDocument trimSequence(NucleotideGraphSequenceDocument document, Trimmage trimmage) {
         SequenceExtractionUtilities.ExtractionOptions options = new SequenceExtractionUtilities.ExtractionOptions(
                 trimmage.getNonTrimmedInterval(document.getSequenceLength()));
         options.setOverrideName(document.getName() + " trimmed");
