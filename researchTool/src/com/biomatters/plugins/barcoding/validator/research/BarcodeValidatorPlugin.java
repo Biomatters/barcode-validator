@@ -10,7 +10,7 @@ import com.biomatters.plugins.barcoding.validator.research.report.ValidationRepo
  *         Created on 20/08/14 3:06 PM
  */
 public class BarcodeValidatorPlugin extends GeneiousPlugin {
-    private static final String PLUGIN_VERSION = "0.0.0";
+    private static final String PLUGIN_VERSION = "0.1.0";
 
     @Override
     public String getName() {
@@ -39,7 +39,7 @@ public class BarcodeValidatorPlugin extends GeneiousPlugin {
 
     @Override
     public String getMinimumApiVersion() {
-        return "4.71";
+        return "4.710";
     }
 
     @Override

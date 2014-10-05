@@ -48,7 +48,7 @@ public class SlidingWindowValidationOptions extends ValidationOptions {
     }
 
     private void addWindowSizeOption() {
-        addIntegerOption(WINDOW_SIZE_OPTION_NAME, "Window size: ", 1, 1, Integer.MAX_VALUE).setUnits("bp");
+        addIntegerOption(WINDOW_SIZE_OPTION_NAME, "Window size: ", 300, 1, Integer.MAX_VALUE).setUnits("bp");
     }
 
     private void addStepSizeOption() {
