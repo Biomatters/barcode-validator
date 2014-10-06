@@ -5,6 +5,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDoc
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.utilities.Execution;
 import com.biomatters.geneious.publicapi.utilities.FileUtilities;
+import com.biomatters.geneious.publicapi.utilities.SystemUtilities;
 import com.biomatters.plugins.barcoding.validator.validation.utilities.ImportUtilities;
 import jebl.util.ProgressListener;
 
@@ -13,7 +14,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Functionality for utilizing CAP3. Non-instantiable.
@@ -112,7 +115,7 @@ public class CAP3Runner {
                 false
         );
         exec.setWorkingDirectory(fastafilePath.substring(0, fastafilePath.lastIndexOf(File.separator)));
-        int exitCode = exec.execute();
+        int exitCode = exec.execute(getEnvironmentToRunCap3());
 
         if (exitCode != 0) {
             throw new DocumentOperationException("CAP3 failed with exit code " + exitCode + ":\n\n" + listener.getStderrOutput());
@@ -158,5 +161,20 @@ public class CAP3Runner {
         }
 
         return fastaOutput.toString();
+    }
+
+    private static Map<String, String> getEnvironmentToRunCap3() throws DocumentOperationException {
+        if(SystemUtilities.isWindows()) {
+            String dllFileName = "cygwin1.dll";
+            File cygwinDll = FileUtilities.getResourceForClass(CAP3Runner.class, dllFileName);
+            if(cygwinDll == null) {
+                throw new DocumentOperationException(dllFileName + " missing from plugin.  Try reinstalling.");
+            }
+            String pathVariableName = "Path";
+            return Collections.singletonMap(pathVariableName,
+                    System.getProperty(pathVariableName) + ";" + cygwinDll.getAbsolutePath());
+        } else {
+            return Collections.emptyMap();
+        }
     }
 }

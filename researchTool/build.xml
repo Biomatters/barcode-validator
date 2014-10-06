@@ -27,10 +27,13 @@
     <property name="test" location="test"/>
     <property name="test.classes" location="test.classes"/>
     <property name="GeneiousFiles" location="GeneiousFiles"/>
-    <property name="validation.src" location="../validation/src"/>
-    <property name="validation.classes" location="validation.classes"/>
-    <property name="validation.build" location="validation.build"/>
-    <property name="validation.test" location="../validation/test"/>
+
+    <property name="validation.dir" location="../validation"/>
+    <property name="validation.src" location="${validation.dir}/src"/>
+    <property name="validation.classes" location="${validation.dir}/classes"/>
+    <property name="validation.build" location="${validation.dir}/build"/>
+    <property name="validation.test" location="${validation.dir}/test"/>
+    <property name="validation.resources" location="${validation.dir}/resources"/>
 
     <!-- setup reference to the Ivy Ant tasks library -->
     <path id="ivy.lib.path">
@@ -59,6 +62,7 @@
         <mkdir dir="${build}/${plugin-name}"/>
         <copy todir="${build}/${plugin-name}">
             <fileset dir="resources"/>
+            <fileset dir="${validation.resources}"/>
         </copy>
         <jar jarfile="${build}/${plugin-name}/${plugin-name}.jar">
             <fileset dir="${classes}"/>
