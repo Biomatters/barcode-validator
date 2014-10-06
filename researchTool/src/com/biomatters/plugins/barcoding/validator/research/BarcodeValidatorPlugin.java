@@ -1,15 +1,16 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.plugin.DocumentOperation;
+import com.biomatters.geneious.publicapi.plugin.DocumentViewerFactory;
 import com.biomatters.geneious.publicapi.plugin.GeneiousPlugin;
+import com.biomatters.plugins.barcoding.validator.research.report.ValidationReportViewerFactory;
 
 /**
  * @author Gen Li
  *         Created on 20/08/14 3:06 PM
  */
 public class BarcodeValidatorPlugin extends GeneiousPlugin {
-
-    private static final String PLUGIN_VERSION = "0.0.0";
+    private static final String PLUGIN_VERSION = "0.1.0";
 
     @Override
     public String getName() {
@@ -18,12 +19,12 @@ public class BarcodeValidatorPlugin extends GeneiousPlugin {
 
     @Override
     public String getDescription() {
-        return "Description";
+        return "Runs batch validation on sets of traces and barcode sequences against user specified parameters.";
     }
 
     @Override
     public String getHelp() {
-        return "Help";
+        return null;
     }
 
     @Override
@@ -38,7 +39,7 @@ public class BarcodeValidatorPlugin extends GeneiousPlugin {
 
     @Override
     public String getMinimumApiVersion() {
-        return "4.71";
+        return "4.710";
     }
 
     @Override
@@ -48,6 +49,13 @@ public class BarcodeValidatorPlugin extends GeneiousPlugin {
 
     @Override
     public DocumentOperation[] getDocumentOperations() {
-        return new DocumentOperation[]{new BarcodeValidatorOperation()};
+        return new DocumentOperation[] { new BarcodeValidatorOperation() };
+    }
+
+    @Override
+    public DocumentViewerFactory[] getDocumentViewerFactories() {
+        return new DocumentViewerFactory[] {
+                new ValidationReportViewerFactory()
+        };
     }
 }
