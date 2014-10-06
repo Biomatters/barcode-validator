@@ -172,7 +172,7 @@ public class CAP3Runner {
             }
             String pathVariableName = "Path";
             return Collections.singletonMap(pathVariableName,
-                    System.getProperty(pathVariableName) + ";" + cygwinDll.getAbsolutePath());
+                    System.getProperty(pathVariableName) + ";" + cygwinDll.getParent());
         } else {
             return Collections.emptyMap();
         }
