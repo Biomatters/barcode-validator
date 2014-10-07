@@ -10,6 +10,7 @@ import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.biomatters.plugins.barcoding.validator.output.RecordOfValidationResult;
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
 import com.biomatters.plugins.barcoding.validator.output.ValidationReportDocument;
+import com.biomatters.plugins.barcoding.validator.validation.BarcodeConsensusValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.SlidingWindowValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.google.common.base.Predicate;
@@ -170,8 +171,10 @@ public class ValidationReportViewer extends DocumentViewer {
         List<URN> ret = new ArrayList<URN>();
         if (options instanceof SlidingWindowValidationOptions)
             ret.addAll(record.getTraceDocumentUrns());
-        else
+        else if (options instanceof BarcodeConsensusValidationOptions)
             ret.add(record.getBarcodeSequenceUrn());
+        else
+            throw new IllegalArgumentException("Can not recognize validation options : " + options.getClass());
 
         return ret;
     }
