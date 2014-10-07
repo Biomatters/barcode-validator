@@ -22,6 +22,9 @@ import org.jdom.Element;
  *         Created on 29/09/14 3:53 PM
  */
 public abstract class ValidationOptions extends Options {
+    public static final String TRACE_VALIDATION_GROUP = "Trace Validation";
+    public static final String BARCODE_VALIDATION_GROUP = "Barcode Validation";
+
     public ValidationOptions(Element element) throws XMLSerializationException {
         super(element);
     }
@@ -43,4 +46,9 @@ public abstract class ValidationOptions extends Options {
      * @return A description of the option.
      */
     public abstract String getDescription();
+
+    /**
+     * @return A group of the option.
+     */
+    public abstract String getGroup();
 }

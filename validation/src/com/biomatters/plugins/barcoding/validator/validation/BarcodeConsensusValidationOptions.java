@@ -47,6 +47,11 @@ public class BarcodeConsensusValidationOptions extends ValidationOptions {
         return DESCRIPTION;
     }
 
+    @Override
+    public String getGroup() {
+        return BARCODE_VALIDATION_GROUP;
+    }
+
     public float getMatches() {
         String selected = getValueAsString(MATCHES);
         return Float.parseFloat(selected);

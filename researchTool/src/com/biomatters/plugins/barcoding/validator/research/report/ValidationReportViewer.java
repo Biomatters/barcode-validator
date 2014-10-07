@@ -10,15 +10,17 @@ import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.biomatters.plugins.barcoding.validator.output.RecordOfValidationResult;
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
 import com.biomatters.plugins.barcoding.validator.output.ValidationReportDocument;
+import com.biomatters.plugins.barcoding.validator.validation.SlidingWindowValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.LinkedHashMultimap;
 
 import javax.annotation.Nullable;
 import javax.swing.*;
-import java.util.*;
 import java.awt.*;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -118,31 +120,41 @@ public class ValidationReportViewer extends DocumentViewer {
     }
 
     private static String getResultsTableForReport(List<ValidationOutputRecord> records) {
-        final ArrayListMultimap<String, BarcodeAndStatus> typeToResultsList =
-                ArrayListMultimap.create();
+        final ArrayListMultimap<String, BarcodeAndStatus> typeToResultsList = ArrayListMultimap.create();
+        LinkedHashMultimap<String, String> typeGroupMap = LinkedHashMultimap.create();
         for (ValidationOutputRecord record : records) {
             for (RecordOfValidationResult resultsForBarcode : record.getValidationResults()) {
                 ValidationOptions options = resultsForBarcode.getOptions();
-                typeToResultsList.put(options.getLabel(), new BarcodeAndStatus(record.getBarcodeSequenceUrn(), resultsForBarcode.isPassed()));
+                typeToResultsList.put(options.getLabel(), new BarcodeAndStatus(getDocumentUrn(record, options), resultsForBarcode.isPassed()));
+                typeGroupMap.put(options.getGroup(), options.getLabel());
             }
         }
         if(typeToResultsList.isEmpty()) {
             return "<font color=\"red\"><strong>WARNING</strong></font>:There were no validation tasks run.";
         }
 
-        List<String> typeListSorted = new ArrayList<String>(typeToResultsList.keySet());
-        Collections.sort(typeListSorted);
+        List<String> typeListSorted = new ArrayList<String>();
+        List<String> groupListSorted = new ArrayList<String>(typeGroupMap.keySet());
+        Collections.sort(groupListSorted);
 
         StringBuilder builder = new StringBuilder("<h2>Results</h3><table border=\"1\">");
+        builder.append("<tr><td></td>");
+        for (String group : groupListSorted) {
+            Set<String> types = typeGroupMap.get(group);
+            builder.append("<td colspan=\"").append(types.size()).append("\">").append(group).append("</td>");
+            typeListSorted.addAll(types);
+        }
+
         builder.append("<tr><td>Set Name</td>");
+
         for (String label : typeListSorted) {
             List<BarcodeAndStatus> resultsForType = typeToResultsList.get(label);
             Collection<BarcodeAndStatus> passed = getResultsForStatus(resultsForType, true);
             Collection<BarcodeAndStatus> failed = getResultsForStatus(resultsForType, false);
 
             builder.append("<td>").append(label).append(" (").append(
-                    getStatusLinkForBarcodes(passed, "Passed")).append("/").append(
-                    getStatusLinkForBarcodes(failed, "Failed")).append(")</td>");
+                    getStatusLinks(passed, "Passed")).append("/").append(
+                    getStatusLinks(failed, "Failed")).append(")</td>");
         }
         builder.append("</tr>");
 
@@ -154,12 +166,22 @@ public class ValidationReportViewer extends DocumentViewer {
         return builder.toString();
     }
 
+    private static List<URN> getDocumentUrn(ValidationOutputRecord record, ValidationOptions options) {
+        List<URN> ret = new ArrayList<URN>();
+        if (options instanceof SlidingWindowValidationOptions)
+            ret.addAll(record.getTraceDocumentUrns());
+        else
+            ret.add(record.getBarcodeSequenceUrn());
+
+        return ret;
+    }
+
     private static class BarcodeAndStatus {
-        private URN barcodeUrn;
+        private List<URN> docsUrn;
         private boolean passed;
 
-        private BarcodeAndStatus(URN barcodeUrn, boolean passed) {
-            this.barcodeUrn = barcodeUrn;
+        private BarcodeAndStatus(List<URN> docsUrn, boolean passed) {
+            this.docsUrn = docsUrn;
             this.passed = passed;
         }
     }
@@ -206,13 +228,13 @@ public class ValidationReportViewer extends DocumentViewer {
         return "<a href=\"" + StringUtilities.join(",", urnStrings) + "\">" + label + "</a>";
     }
 
-    private static String getStatusLinkForBarcodes(Collection<BarcodeAndStatus> passed, String status) {
+    private static String getStatusLinks(Collection<BarcodeAndStatus> passed, String status) {
         if(passed.isEmpty()) {
             return "0 " + status;
         }
         List<URN> urns = new ArrayList<URN>();
         for (BarcodeAndStatus barcodeAndStatus : passed) {
-            urns.add(barcodeAndStatus.barcodeUrn);
+            urns.addAll(barcodeAndStatus.docsUrn);
         }
         return getLinkForSelectingDocuments(passed.size() + " " + status, urns);
     }

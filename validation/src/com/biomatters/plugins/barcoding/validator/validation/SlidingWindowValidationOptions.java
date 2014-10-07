@@ -86,4 +86,9 @@ public class SlidingWindowValidationOptions extends ValidationOptions {
     public String getDescription() {
         return DESCRIPTION;
     }
+
+    @Override
+    public String getGroup() {
+        return TRACE_VALIDATION_GROUP;
+    }
 }
