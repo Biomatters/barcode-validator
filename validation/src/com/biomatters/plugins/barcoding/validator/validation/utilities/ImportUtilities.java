@@ -225,7 +225,7 @@ public class ImportUtilities {
     private static String buildDocumentUnexpectedTypeMessage(List<Class> expectedTypes, AnnotatedPluginDocument document) {
         StringBuilder messageBuilder = new StringBuilder();
 
-        messageBuilder.append("Imported document '").append(document.getName()).append(" is of an unexpected type, ")
+        messageBuilder.append("Imported document '").append(document.getName()).append("' is of an unexpected type, ")
                       .append("expected types: ");
 
         for (Class validDocumentType : expectedTypes) {

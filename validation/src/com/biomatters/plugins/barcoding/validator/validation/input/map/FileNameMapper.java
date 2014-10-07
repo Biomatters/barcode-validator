@@ -77,7 +77,7 @@ public class FileNameMapper extends BarcodesToTracesMapper {
             result.put(barcode, new ArrayList<NucleotideGraphSequenceDocument>());
         }
 
-        /* Map barcodes to traces. */
+        /* Map. */
         for (Map.Entry<NucleotideGraphSequenceDocument, String> traceToNamePart : tracesToNameParts.entrySet()) {
             String namePart = traceToNamePart.getValue();
             NucleotideSequenceDocument barcode = null;

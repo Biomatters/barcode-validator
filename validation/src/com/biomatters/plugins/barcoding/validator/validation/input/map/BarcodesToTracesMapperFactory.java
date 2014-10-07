@@ -9,21 +9,21 @@ public class BarcodesToTracesMapperFactory {
     }
 
     public static BarcodesToTracesMapper getBarcodesToTracesMapper(BarcodesToTracesMapperOptions options) {
-//        if (BoldListMapperOptions.class.isAssignableFrom(options.getClass())) {
-//            BoldListMapperOptions boldListMapperOptions = (BoldListMapperOptions)options;
-//        }
-//        if (GenbankXmlMapperOptions.class.isAssignableFrom(options.getClass())) {
-//            GenbankXmlMapperOptions genbankXmlMapperOptions = (GenbankXmlMapperOptions)options;
-//        }
-        if (FileNameMapperOptions.class.isAssignableFrom(options.getClass())) {
+        if (BoldListMapperOptions.class.isAssignableFrom(options.getClass())) {
+            BoldListMapperOptions boldListMapperOptions = (BoldListMapperOptions)options;
+
+            return new BoldListMapper(boldListMapperOptions.getBoldListFilePath());
+        } else if (GenbankXmlMapperOptions.class.isAssignableFrom(options.getClass())) {
+            throw new IllegalArgumentException("GenbankXmlMapper is not yet implement.");
+        } else if (FileNameMapperOptions.class.isAssignableFrom(options.getClass())) {
             FileNameMapperOptions fileNameMapperOptions = (FileNameMapperOptions)options;
 
             return new FileNameMapper(fileNameMapperOptions.getTraceSeparator(),
                                       fileNameMapperOptions.getTraceNamePartNumber(),
                                       fileNameMapperOptions.getSequenceSeparator(),
                                       fileNameMapperOptions.getSequenceNamePartNumber());
+        } else {
+            throw new IllegalArgumentException("Unrecognized mapper name: " + options.getClass().getSimpleName());
         }
-
-        throw new IllegalArgumentException("Unrecognized mapper name: " + options.getClass().getSimpleName());
     }
 }
