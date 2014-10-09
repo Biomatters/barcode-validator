@@ -8,6 +8,7 @@ import com.biomatters.geneious.publicapi.documents.MalformedURNException;
 import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 import java.util.ArrayList;
@@ -67,9 +68,15 @@ public class DocumentOpeningHyperlinkListener extends DefaultHyperlinkListener {
                 }
 
                 private void processOption() {
-                    String optionLable = urlString.substring(OPTION_PREFIX.length());
-                    ValidationOptions options = optionsMap.get(optionLable);
-                    Dialogs.showMessageDialog(options.toString(), optionLable + " options : ");
+                    final String optionLable = urlString.substring(OPTION_PREFIX.length());
+                    final ValidationOptions options = optionsMap.get(optionLable);
+
+                    SwingUtilities.invokeLater(new Runnable() {
+                        public void run() {
+                            options.setEnabled(false);
+                            Dialogs.showOptionsDialog(options, optionLable, false);
+                        }
+                    });
                 }
 
                 private void processURN() {
@@ -107,6 +114,7 @@ public class DocumentOpeningHyperlinkListener extends DefaultHyperlinkListener {
                     if (!DocumentUtilities.selectDocuments(urns)) {
                         String title = "Document" + (plural?"s":"") +  " not found";
                         String message = "The document" + (plural ? "s" : "") + " could not be found";
+                        Dialogs.showMessageDialog(message, title, null, Dialogs.DialogIcon.INFORMATION);
                     }
                 }
             }.start();

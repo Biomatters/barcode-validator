@@ -56,11 +56,4 @@ public class BarcodeConsensusValidationOptions extends ValidationOptions {
         String selected = getValueAsString(MATCHES);
         return Float.parseFloat(selected);
     }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Matches : \t").append(getMatches()).append("%\n");
-        return sb.toString();
-    }
 }

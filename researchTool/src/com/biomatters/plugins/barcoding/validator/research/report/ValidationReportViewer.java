@@ -67,7 +67,7 @@ public class ValidationReportViewer extends DocumentViewer {
         return scroll;
     }
 
-    private Map<String, ValidationOptions> getOptionMap(ValidationReportDocument reportDocument) {
+    private static Map<String, ValidationOptions> getOptionMap(ValidationReportDocument reportDocument) {
         Map<String, ValidationOptions> ret = new HashMap<String, ValidationOptions>();
         if (reportDocument == null || reportDocument.getRecords() == null)
             return ret;
@@ -169,8 +169,8 @@ public class ValidationReportViewer extends DocumentViewer {
 
             builder.append("<td>").append(label).append(" (").append(
                     getStatusLinks(passed, "Passed")).append("/").append(
-                    getStatusLinks(failed, "Failed)"))
-                    .append("<a href=\"").append(DocumentOpeningHyperlinkListener.OPTION_PREFIX).append(label).append("\">  [Show options]</a>").append("</td>");
+                    getStatusLinks(failed, "Failed"))
+                    .append(")<br/><a href=\"").append(DocumentOpeningHyperlinkListener.OPTION_PREFIX).append(label).append("\">[Show options]</a>").append("</td>");
         }
         builder.append("</tr>");
 
