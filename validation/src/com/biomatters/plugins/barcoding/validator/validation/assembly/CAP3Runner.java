@@ -46,6 +46,10 @@ public class CAP3Runner {
                                                            String executablePath,
                                                            int minOverlapLength,
                                                            int minOverlapIdentity) throws DocumentOperationException {
+        if(sequences.size() < 2) {  // There must be at least two traces to produce an assembly
+            return Collections.emptyList();
+        }
+
         try {
             String resultFilePath = runCap3Assembler(createFastaFile(sequences), executablePath, minOverlapLength, minOverlapIdentity);
             if(assemblyFailed(sequences, resultFilePath)) {
