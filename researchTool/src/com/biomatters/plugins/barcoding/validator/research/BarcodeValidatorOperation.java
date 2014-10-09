@@ -7,6 +7,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSeque
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
+import com.biomatters.geneious.publicapi.implementations.SequenceExtractionUtilities;
 import com.biomatters.geneious.publicapi.plugin.*;
 import com.biomatters.plugins.barcoding.validator.output.ValidationDocumentOperationCallback;
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
@@ -295,7 +296,9 @@ public class BarcodeValidatorOperation extends DocumentOperation {
     }
 
     private NucleotideSequenceDocument getConsensus(SequenceAlignmentDocument contig) throws DocumentOperationException {
-        SequenceDocument consensus = contig.getSequence(contig.getContigReferenceSequenceIndex());
+        SequenceDocument consensus = SequenceExtractionUtilities.removeGaps(
+                contig.getSequence(contig.getContigReferenceSequenceIndex())
+        );
 
         if (!(consensus instanceof NucleotideSequenceDocument)) {
             throw new DocumentOperationException(
