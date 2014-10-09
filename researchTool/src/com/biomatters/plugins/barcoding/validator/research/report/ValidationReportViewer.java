@@ -10,8 +10,6 @@ import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.biomatters.plugins.barcoding.validator.output.RecordOfValidationResult;
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
 import com.biomatters.plugins.barcoding.validator.output.ValidationReportDocument;
-import com.biomatters.plugins.barcoding.validator.validation.BarcodeConsensusValidationOptions;
-import com.biomatters.plugins.barcoding.validator.validation.SlidingWindowValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ArrayListMultimap;
@@ -143,7 +141,7 @@ public class ValidationReportViewer extends DocumentViewer {
             for (RecordOfValidationResult resultsForBarcode : record.getValidationResults()) {
                 ValidationOptions options = resultsForBarcode.getOptions();
                 typeToResultsList.put(options.getLabel(), new BarcodeAndStatus(getDocumentUrn(record, options), resultsForBarcode.isPassed()));
-                typeGroupMap.put(options.getGroup(), options.getLabel());
+                typeGroupMap.put(options.getGroup().getLabel(), options.getLabel());
             }
         }
         if(typeToResultsList.isEmpty()) {
@@ -185,15 +183,14 @@ public class ValidationReportViewer extends DocumentViewer {
     }
 
     private static List<URN> getDocumentUrn(ValidationOutputRecord record, ValidationOptions options) {
-        List<URN> ret = new ArrayList<URN>();
-        if (options instanceof SlidingWindowValidationOptions)
-            ret.addAll(record.getTraceDocumentUrns());
-        else if (options instanceof BarcodeConsensusValidationOptions)
-            ret.add(record.getBarcodeSequenceUrn());
-        else
-            throw new IllegalArgumentException("Can not recognize validation options : " + options.getClass());
-
-        return ret;
+        switch(options.getGroup()) {
+            case TRACE_VALIDATION_GROUP:
+                return Collections.unmodifiableList(record.getTraceDocumentUrns());
+            case BARCODE_VALIDATION_GROUP:
+                return Collections.singletonList(record.getBarcodeSequenceUrn());
+            default:
+                throw new IllegalArgumentException("Can not recognize validation options : " + options.getClass());
+        }
     }
 
     private static class BarcodeAndStatus {

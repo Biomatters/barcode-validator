@@ -88,8 +88,8 @@ public class SlidingWindowValidationOptions extends ValidationOptions {
     }
 
     @Override
-    public String getGroup() {
-        return TRACE_VALIDATION_GROUP;
+    public ValidationGroup getGroup() {
+        return ValidationGroup.TRACE_VALIDATION_GROUP;
     }
 
     @Override
