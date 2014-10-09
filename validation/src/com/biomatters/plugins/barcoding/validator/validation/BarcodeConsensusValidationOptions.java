@@ -48,8 +48,8 @@ public class BarcodeConsensusValidationOptions extends ValidationOptions {
     }
 
     @Override
-    public String getGroup() {
-        return BARCODE_VALIDATION_GROUP;
+    public ValidationGroup getGroup() {
+        return ValidationGroup.BARCODE_VALIDATION_GROUP;
     }
 
     public float getMatches() {
