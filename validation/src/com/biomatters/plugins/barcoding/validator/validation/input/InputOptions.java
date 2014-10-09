@@ -72,7 +72,7 @@ public class InputOptions extends Options {
     }
 
     private void addMethodSelectionOptions() {
-        addChildOptions(MATCH_USING_BOLD_OPTION_NAME, "tracelist.txt (BOLD)", "", new BoldListMapperOptions(InputOptions.class));
+        addChildOptions(MATCH_USING_BOLD_OPTION_NAME, "TRACE_FILE_INFO.txt (BOLD)", "", new BoldListMapperOptions(InputOptions.class));
         addChildOptions(MATCH_USING_GENBANK_OPTION_NAME, "XML File (Genbank)", "", new GenbankXmlMapperOptions(InputOptions.class));
         addChildOptions(MATCH_USING_FILE_NAME_OPTION_NAME, "part of names", "", new FileNameMapperOptions(InputOptions.class));
 

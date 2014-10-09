@@ -14,7 +14,7 @@ public class BarcodesToTracesMapperFactory {
 
             return new BoldListMapper(boldListMapperOptions.getBoldListFilePath());
         } else if (GenbankXmlMapperOptions.class.isAssignableFrom(options.getClass())) {
-            throw new IllegalArgumentException("GenbankXmlMapper is not yet implement.");
+            throw new IllegalArgumentException("GenbankXmlMapper is not yet implemented.");
         } else if (FileNameMapperOptions.class.isAssignableFrom(options.getClass())) {
             FileNameMapperOptions fileNameMapperOptions = (FileNameMapperOptions)options;
 
