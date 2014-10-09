@@ -156,7 +156,9 @@ public class BoldListMapper extends BarcodesToTracesMapper {
             line = reader.readLine();
         }
 
-        validateBoldFileDimensions(result);
+        if (!validateBoldFileDimensions(result)) {
+            throw new BoldListMapperException("Invalid bold file.");
+        }
 
         return result;
     }
