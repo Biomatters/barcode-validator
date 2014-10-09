@@ -48,7 +48,7 @@ public class ValidationReportViewer extends DocumentViewer {
         textPane.setContentType("text/html");
         textPane.setEditable(false);
 
-        final DocumentOpeningHyperlinkListener hyperlinkListener = new DocumentOpeningHyperlinkListener("ReportDocumentFactory");
+        final DocumentOpeningHyperlinkListener hyperlinkListener = new DocumentOpeningHyperlinkListener("ReportDocumentFactory", getOptionMap(reportDocument));
         textPane.addHyperlinkListener(hyperlinkListener);
         textPane.setText(generateHtml(reportDocument));
         final JScrollPane scroll = new JScrollPane(textPane) {
@@ -67,6 +67,22 @@ public class ValidationReportViewer extends DocumentViewer {
             }
         });
         return scroll;
+    }
+
+    private Map<String, ValidationOptions> getOptionMap(ValidationReportDocument reportDocument) {
+        Map<String, ValidationOptions> ret = new HashMap<String, ValidationOptions>();
+        if (reportDocument == null || reportDocument.getRecords() == null)
+            return ret;
+
+        List<ValidationOutputRecord> records = reportDocument.getRecords();
+        for (ValidationOutputRecord record : records) {
+            for (RecordOfValidationResult result : record.getValidationResults()) {
+                ValidationOptions options = result.getOptions();
+                ret.put(options.getLabel(), options);
+            }
+        }
+
+        return ret;
     }
 
     private static String generateHtml(ValidationReportDocument reportDocument) {
@@ -155,7 +171,8 @@ public class ValidationReportViewer extends DocumentViewer {
 
             builder.append("<td>").append(label).append(" (").append(
                     getStatusLinks(passed, "Passed")).append("/").append(
-                    getStatusLinks(failed, "Failed")).append(")</td>");
+                    getStatusLinks(failed, "Failed)"))
+                    .append("<a href=\"").append(DocumentOpeningHyperlinkListener.OPTION_PREFIX).append(label).append("\">  [Show options]</a>").append("</td>");
         }
         builder.append("</tr>");
 

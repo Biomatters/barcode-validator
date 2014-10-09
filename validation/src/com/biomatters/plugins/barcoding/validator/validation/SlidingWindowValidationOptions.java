@@ -91,4 +91,15 @@ public class SlidingWindowValidationOptions extends ValidationOptions {
     public String getGroup() {
         return TRACE_VALIDATION_GROUP;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(WINDOW_SIZE_OPTION_NAME).append(" : \t").append(getWindowSize()).append("\n");
+        sb.append(STEP_SIZE_OPTION_NAME).append(" : \t").append(getStepSize()).append("\n");
+        sb.append(MINIMUM_QUALITY_OPTION_NAME).append(" : \t").append(getMinimumQuality()).append("\n");
+        sb.append(MINIMUM_RATIO_SATISFIED_OPTION_NAME).append(" : \t").append(getMinimumRatioSatisfied()).append("%\n");
+
+        return sb.toString();
+    }
 }
