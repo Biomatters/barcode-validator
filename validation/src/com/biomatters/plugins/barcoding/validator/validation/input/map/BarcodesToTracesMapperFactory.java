@@ -9,10 +9,10 @@ public class BarcodesToTracesMapperFactory {
     }
 
     public static BarcodesToTracesMapper getBarcodesToTracesMapper(BarcodesToTracesMapperOptions options) {
-        if (BoldListMapperOptions.class.isAssignableFrom(options.getClass())) {
-            BoldListMapperOptions boldListMapperOptions = (BoldListMapperOptions)options;
+        if (BOLDTraceListMapperOptions.class.isAssignableFrom(options.getClass())) {
+            BOLDTraceListMapperOptions BOLDTraceListMapperOptions = (BOLDTraceListMapperOptions)options;
 
-            return new BoldListMapper(boldListMapperOptions.getBoldListFilePath());
+            return new BOLDTraceListMapper(BOLDTraceListMapperOptions.getBoldListFilePath());
         } else if (GenbankXmlMapperOptions.class.isAssignableFrom(options.getClass())) {
             throw new IllegalArgumentException("GenbankXmlMapper is not yet implemented.");
         } else if (FileNameMapperOptions.class.isAssignableFrom(options.getClass())) {
