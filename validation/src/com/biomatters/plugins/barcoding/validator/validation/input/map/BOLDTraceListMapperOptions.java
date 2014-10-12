@@ -10,7 +10,7 @@ public class BOLDTraceListMapperOptions extends BarcodesToTracesMapperOptions {
     public BOLDTraceListMapperOptions(Class cls) {
         super(cls);
 
-        addFileSelectionOption(BOLD_LIST_FILE_SELECTION_OPTION_NAME, "Trace list: ", "");
+        addFileSelectionOption(BOLD_LIST_FILE_SELECTION_OPTION_NAME, "Trace List: ", "");
     }
 
     public String getBoldListFilePath() {

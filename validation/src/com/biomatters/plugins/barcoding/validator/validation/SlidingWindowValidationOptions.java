@@ -48,19 +48,19 @@ public class SlidingWindowValidationOptions extends ValidationOptions {
     }
 
     private void addWindowSizeOption() {
-        addIntegerOption(WINDOW_SIZE_OPTION_NAME, "Window size: ", 300, 1, Integer.MAX_VALUE).setUnits("bp");
+        addIntegerOption(WINDOW_SIZE_OPTION_NAME, "Window Size: ", 300, 1, Integer.MAX_VALUE).setUnits("bp");
     }
 
     private void addStepSizeOption() {
-        addIntegerOption(STEP_SIZE_OPTION_NAME, "Step size: ", 1, 1, Integer.MAX_VALUE).setUnits("bp");
+        addIntegerOption(STEP_SIZE_OPTION_NAME, "Step Size: ", 1, 1, Integer.MAX_VALUE).setUnits("bp");
     }
 
     private void addMinimumQualityOption() {
-        addIntegerOption(MINIMUM_QUALITY_OPTION_NAME, "Minimum quality:", 40, 1, Integer.MAX_VALUE);
+        addIntegerOption(MINIMUM_QUALITY_OPTION_NAME, "Minimum Quality:", 40, 1, Integer.MAX_VALUE);
     }
 
     private void addMinimumRatioSatisfiedOption() {
-        addDoubleOption(MINIMUM_RATIO_SATISFIED_OPTION_NAME, "Minimum ratio satisfied:", 80.0, 0.0, 100.0).setUnits("%");
+        addDoubleOption(MINIMUM_RATIO_SATISFIED_OPTION_NAME, "Minimum Ratio Satisfied:", 80.0, 0.0, 100.0).setUnits("%");
     }
 
     /**

@@ -18,7 +18,7 @@ public class ErrorProbabilityOptions extends Options {
 
     public ErrorProbabilityOptions() {
         String errorMethodDescription = "Trim bases up until the point where trimming further bases will only improve the error rate by less than the limit.";
-        limit = addDoubleOption("errorLimit", "Error probability limit:", 0.05, 0.0, Double.MAX_VALUE);
+        limit = addDoubleOption("errorLimit", "Error Probability Limit:", 0.05, 0.0, Double.MAX_VALUE);
         limit.setUnits("(decrease to trim more)");
         limitLabel = addLabel("");
         limitLabel.setRestoreDefaultApplies(false);

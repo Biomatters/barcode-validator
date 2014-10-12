@@ -46,17 +46,17 @@ public class CAP3Options extends Options {
     }
 
     private void addMinOverlapLengthOption() {
-        addIntegerOption(MIN_OVERLAP_LENGTH_OPTION_NAME, "Min overlap length:", 40, 16, 1000);
+        addIntegerOption(MIN_OVERLAP_LENGTH_OPTION_NAME, "Min Overlap Length:", 40, 16, 1000);
     }
 
     private void addMinOverlapIdentityOption() {
-        addIntegerOption(MIN_OVERLAP_IDENTITY_OPTION_NAME, "Min overlap identity:", 90, 66, 1000);
+        addIntegerOption(MIN_OVERLAP_IDENTITY_OPTION_NAME, "Min Overlap Identity:", 90, 66, 1000);
     }
 
     private void addExecutableOption() {
         beginAlignHorizontally(null, false);
 
-        addFileSelectionOption(EXECUTABLE_OPTION_NAME, "CAP3 executable:", getDefaultCap3ExecutableName()).setSelectionType(JFileChooser.FILES_ONLY);
+        addFileSelectionOption(EXECUTABLE_OPTION_NAME, "CAP3 Executable:", getDefaultCap3ExecutableName()).setSelectionType(JFileChooser.FILES_ONLY);
 
         ButtonOption button = addButtonOption("help", "", "", IconUtilities.getIcons("help16.png").getIcon16(), ButtonOption.RIGHT);
         button.addActionListener(new ActionListener() {
