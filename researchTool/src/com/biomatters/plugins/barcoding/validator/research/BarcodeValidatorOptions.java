@@ -89,11 +89,11 @@ public class BarcodeValidatorOptions extends Options {
     }
 
     private void addTraceValidationOptions() {
-        addValidationOptions(TraceValidation.getTraceValidations(), TRACE_VALIDATION_OPTIONS_NAME, "Trace validation");
+        addValidationOptions(TraceValidation.getTraceValidations(), TRACE_VALIDATION_OPTIONS_NAME, "Trace Validation");
     }
 
     private void addBarcodeValidationOptions() {
-        addValidationOptions(BarcodeCompareValidation.getBarcodeValidations(), BARCODE_VALIDATION_OPTIONS_NAME, "Barcode validation");
+        addValidationOptions(BarcodeCompareValidation.getBarcodeValidations(), BARCODE_VALIDATION_OPTIONS_NAME, "Barcode Validation");
     }
 
     private void addAssemblyOptions() {
