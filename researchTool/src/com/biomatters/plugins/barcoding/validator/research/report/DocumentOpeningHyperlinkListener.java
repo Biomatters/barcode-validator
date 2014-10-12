@@ -74,7 +74,8 @@ public class DocumentOpeningHyperlinkListener extends DefaultHyperlinkListener {
                     SwingUtilities.invokeLater(new Runnable() {
                         public void run() {
                             options.setEnabled(false);
-                            Dialogs.showOptionsDialog(options, optionLable, false);
+                            Dialogs.DialogOptions dialogOptions = new Dialogs.DialogOptions(Dialogs.OK_ONLY, "Options");
+                            Dialogs.showMoreOptionsDialog(dialogOptions, options.getPanel(), options.getAdvancedPanel());
                         }
                     });
                 }
