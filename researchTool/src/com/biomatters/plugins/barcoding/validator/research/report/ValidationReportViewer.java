@@ -221,6 +221,7 @@ public class ValidationReportViewer extends DocumentViewer {
     }
 
     private static String getInputLink(ValidationOutputRecord record, int indexInTable) {
+        StringBuilder sb = new StringBuilder();
         AnnotatedPluginDocument document = DocumentUtilities.getDocumentByURN(record.getBarcodeSequenceUrn());
         String label;
         if(document == null) {
@@ -234,7 +235,23 @@ public class ValidationReportViewer extends DocumentViewer {
             inputUrns.add(urn);
         }
 
-        return getLinkForSelectingDocuments(label, inputUrns);
+        sb.append(getLinkForSelectingDocuments(label, inputUrns));
+
+        List<URN> trimmedDocumentUrns = record.getTrimmedDocumentUrns();
+        if (trimmedDocumentUrns != null && trimmedDocumentUrns.size() > 0) {
+            int size = trimmedDocumentUrns.size();
+            sb.append("\t").append(getLinkForSelectingDocuments("[" + size + (size > 1 ? " Traces]" : " Trace]"), trimmedDocumentUrns));
+        }
+
+        List<URN> allLinks = new ArrayList<URN>();
+        allLinks.addAll(inputUrns);
+
+        if (trimmedDocumentUrns != null) {
+            allLinks.addAll(trimmedDocumentUrns);
+        }
+        sb.append("\t").append(getLinkForSelectingDocuments("[All]", allLinks));
+
+        return sb.toString();
     }
 
     private static String getLinkForSelectingDocuments(String label, List<URN> documentUrns) {

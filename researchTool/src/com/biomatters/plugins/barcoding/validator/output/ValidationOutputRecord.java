@@ -127,6 +127,10 @@ public class ValidationOutputRecord implements XMLSerializable {
         return Collections.unmodifiableList(traceDocumentUrns);
     }
 
+    public List<URN> getTrimmedDocumentUrns() {
+        return Collections.unmodifiableList(trimmedDocumentUrns);
+    }
+
     public List<RecordOfValidationResult> getValidationResults() {
         return validationRecords;
     }
