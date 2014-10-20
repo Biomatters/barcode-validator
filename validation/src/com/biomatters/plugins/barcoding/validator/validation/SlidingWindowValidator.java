@@ -1,7 +1,12 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotation;
+import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocumentWithEditableAnnotations;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Sliding window based algorithm for validating sequence qualities. Non-instantiable.
@@ -10,6 +15,9 @@ import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
  *         Created on 22/09/14 9:43 AM
  */
 public class SlidingWindowValidator {
+    public static final String FAILE_REGION_NAME = "Validation Failed Region";
+    public static final String FAILE_REGION = "Failed region";
+
     private SlidingWindowValidator() {
     }
 
@@ -38,18 +46,32 @@ public class SlidingWindowValidator {
                                                  "step size: " + stepSize + ", window size: " + winSize + ".");
         }
 
+        boolean ret = true;
+        SequenceAnnotation annotation = new SequenceAnnotation(FAILE_REGION_NAME, FAILE_REGION);
         /* Validate sequences. */
         try {
             for (int i = 0; i <= sequence.getSequenceLength() - winSize; i += stepSize) {
                 if (!validateQualities(getQualityWindow(sequence, i, winSize), minQuality, minRatioSatisfied)) {
-                    return false;
+                    annotation.addInterval(i, i + winSize - 1);
+                    ret = false;
                 }
             }
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not validate sequence: " + e.getMessage(), e);
         }
 
-        return true;
+        if (ret == false && sequence instanceof SequenceDocumentWithEditableAnnotations) {
+            annotation.setQualifier("validation settings", "");
+            annotation.setQualifier("window size", "" + winSize);
+            annotation.setQualifier("step size", "" + stepSize);
+            annotation.setQualifier("min Quality", "" + minQuality);
+            annotation.setQualifier("min ratio satisfied", "" + minRatioSatisfied);
+            List<SequenceAnnotation> annotations = new ArrayList<SequenceAnnotation>();
+            annotations.add(annotation);
+            ((SequenceDocumentWithEditableAnnotations) sequence).setAnnotations(annotations);
+        }
+
+        return ret;
     }
 
     private static int[] getQualityWindow(NucleotideGraphSequenceDocument sequence, int startPos, int winSize)
