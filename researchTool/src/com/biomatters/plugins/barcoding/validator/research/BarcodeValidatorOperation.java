@@ -114,10 +114,11 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             callback.setInputs(barcode, traces, stepsProgress);
             setSubFolder(operationCallback, barcodeName);
 
+            stepsProgress.beginSubtask("Trimming...");
             List<NucleotideGraphSequenceDocument> trimmedTraces = SequenceTrimmer.trimSequences(traces, trimmingOptions.getErrorProbabilityLimit());
 
             stepsProgress.beginSubtask("Validating Traces...");
-            CompositeProgressListener traceValidationProgress = new CompositeProgressListener(stepsProgress, 2);
+            CompositeProgressListener traceValidationProgress = new CompositeProgressListener(stepsProgress, 3);
             traceValidationProgress.beginSubtask();
 
             List<ValidationRun> traceValidationResults = runValidationTasks(traceValidationOptions, traceValidationProgress,
@@ -127,8 +128,8 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             traceValidationProgress.beginSubtask();
             addValidationResultsToCallback(callback, traceValidationResults, traceValidationProgress);
 
-            stepsProgress.beginSubtask("Adding Trimmed Traces...");
-            callback.addTrimmedTraces(trimmedTraces, stepsProgress);
+            traceValidationProgress.beginSubtask();
+            callback.addTrimmedTraces(trimmedTraces, traceValidationProgress);
 
             stepsProgress.beginSubtask("Assembling...");
             CompositeProgressListener assembleTracesProgress = new CompositeProgressListener(stepsProgress, 3);
