@@ -16,7 +16,7 @@ import java.util.List;
  *         Created on 22/09/14 9:43 AM
  */
 public class SlidingWindowValidator {
-    public static final String FAILED_REGION_NAME = "Low Quality Region";
+    public static final String FAILED_REGION_NAME = "Insufficient Quality";
     public static final String FAILED_REGION_TYPE = "Validation Failure";
 
     private SlidingWindowValidator() {
