@@ -2,6 +2,7 @@ package com.biomatters.plugins.barcoding.validator.validation;
 
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotation;
+import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationInterval;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocumentWithEditableAnnotations;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 
@@ -15,8 +16,8 @@ import java.util.List;
  *         Created on 22/09/14 9:43 AM
  */
 public class SlidingWindowValidator {
-    public static final String FAILE_REGION_NAME = "Validation Failed Region";
-    public static final String FAILE_REGION = "Failed region";
+    public static final String FAILED_REGION_NAME = "Low Quality Region";
+    public static final String FAILED_REGION_TYPE = "Validation Failure";
 
     private SlidingWindowValidator() {
     }
@@ -47,7 +48,7 @@ public class SlidingWindowValidator {
         }
 
         boolean ret = true;
-        SequenceAnnotation annotation = new SequenceAnnotation(FAILE_REGION_NAME, FAILE_REGION);
+        SequenceAnnotation annotation = new SequenceAnnotation(FAILED_REGION_NAME, FAILED_REGION_TYPE);
         /* Validate sequences. */
         try {
             for (int i = 0; i <= sequence.getSequenceLength() - winSize; i += stepSize) {
@@ -60,14 +61,15 @@ public class SlidingWindowValidator {
             throw new DocumentOperationException("Could not validate sequence: " + e.getMessage(), e);
         }
 
-        if (ret == false && sequence instanceof SequenceDocumentWithEditableAnnotations) {
-            annotation.setQualifier("validation settings", "");
-            annotation.setQualifier("window size", "" + winSize);
-            annotation.setQualifier("step size", "" + stepSize);
-            annotation.setQualifier("min Quality", "" + minQuality);
-            annotation.setQualifier("min ratio satisfied", "" + minRatioSatisfied);
+        if (!ret && sequence instanceof SequenceDocumentWithEditableAnnotations) {
+            annotation.setQualifier("Validation Settings",
+                    "Window Size=" + winSize +
+                    ", Step Size=" + stepSize+
+                    ", Min Quality=" + minQuality +
+                    ", Min Ratio=" + minRatioSatisfied + "%");
             List<SequenceAnnotation> annotations = new ArrayList<SequenceAnnotation>();
             annotations.add(annotation);
+            annotation.setIntervals(SequenceAnnotationInterval.merge(annotation.getIntervals(), false));
             ((SequenceDocumentWithEditableAnnotations) sequence).setAnnotations(annotations);
         }
 
