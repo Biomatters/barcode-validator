@@ -128,13 +128,14 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             addValidationResultsToCallback(callback, traceValidationResults, traceValidationProgress);
 
             stepsProgress.beginSubtask("Adding Trimmed Traces...");
-            callback.addTrimmedTraces(trimmedTraces, stepsProgress);
+            List<AnnotatedPluginDocument> retAnnotatedPluginDocuments = callback.addTrimmedTraces(trimmedTraces, stepsProgress);
 
             stepsProgress.beginSubtask("Assembling...");
             CompositeProgressListener assembleTracesProgress = new CompositeProgressListener(stepsProgress, 3);
             assembleTracesProgress.beginSubtask();
             List<SequenceAlignmentDocument> contigs = assembleTraces(
-                    trimmedTraces, CAP3Options, barcodeName, assembleTracesProgress);
+                    retAnnotatedPluginDocuments, CAP3Options, barcodeName, assembleTracesProgress);
+
             assembleTracesProgress.beginSubtask();
             if(!contigs.isEmpty()) {
                 CompositeProgressListener progressForAddingAssembly = new CompositeProgressListener(assembleTracesProgress, contigs.size());
@@ -276,7 +277,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         }
     }
 
-    private List<SequenceAlignmentDocument> assembleTraces(List<NucleotideGraphSequenceDocument> traces,
+    private List<SequenceAlignmentDocument> assembleTraces(List<AnnotatedPluginDocument> traces,
                                                      CAP3Options options,
                                                      String contigName,
                                                      ProgressListener progressListener) throws DocumentOperationException {
@@ -291,6 +292,11 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             DocumentUtilities.getAnnotatedPluginDocumentThatContains(contig).setName(contigName);
             if (contig.canSetSequenceNames()) {
                 contig.setSequenceName(0, contigName + " Consensus Sequence", true);
+            }
+
+            for (int i = 0; i < traces.size(); i++) {
+//                ((DefaultAlignmentDocument) contig).setReferencedDocument(i, traces.get(i));
+//                contig.setReferencedDocument(i, traces.get(i).get);
             }
         }
 

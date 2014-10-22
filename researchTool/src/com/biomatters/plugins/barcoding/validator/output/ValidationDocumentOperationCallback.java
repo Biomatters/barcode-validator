@@ -1,5 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.output;
 
+import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.PluginDocument;
 import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
@@ -41,6 +42,14 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
         return operationCallback.addDocument(pluginDocument, !selectResultDocs, progressListener).getURN();
     }
 
+    private URN saveDocument(PluginDocument pluginDocument, ProgressListener progressListener, List<AnnotatedPluginDocument> retDocs) throws DocumentOperationException {
+        AnnotatedPluginDocument annotatedPluginDocument = operationCallback.addDocument(pluginDocument, !selectResultDocs, progressListener);
+        if (retDocs != null) {
+            retDocs.add(annotatedPluginDocument);
+        }
+        return annotatedPluginDocument.getURN();
+    }
+
     @Override
     public void setInputs(NucleotideSequenceDocument barcodeSequence, List<NucleotideGraphSequenceDocument> traces, ProgressListener progressListener) throws DocumentOperationException {
         CompositeProgressListener compositeProgress = new CompositeProgressListener(progressListener, (barcodeSequence == null ? 0 : 1) + traces.size());
@@ -55,14 +64,15 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
     }
 
     @Override
-    public void addTrimmedTraces(List<NucleotideGraphSequenceDocument> traces, ProgressListener progressListener) throws DocumentOperationException {
+    public List<AnnotatedPluginDocument> addTrimmedTraces(List<NucleotideGraphSequenceDocument> traces, ProgressListener progressListener) throws DocumentOperationException {
         CompositeProgressListener savingProgress = new CompositeProgressListener(progressListener, traces.size());
+        List<AnnotatedPluginDocument> ret = new ArrayList<AnnotatedPluginDocument>();
         for (NucleotideGraphSequenceDocument trimmedTrace : traces) {
             savingProgress.beginSubtask();
-            outputRecord.trimmedDocumentUrns.add(saveDocument(trimmedTrace, savingProgress));
-
+            outputRecord.trimmedDocumentUrns.add(saveDocument(trimmedTrace, savingProgress, ret));
         }
 
+        return ret;
     }
 
     @Override

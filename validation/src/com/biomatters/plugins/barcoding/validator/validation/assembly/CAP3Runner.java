@@ -1,7 +1,9 @@
 package com.biomatters.plugins.barcoding.validator.validation.assembly;
 
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
+import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
+import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
+import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.utilities.Execution;
 import com.biomatters.geneious.publicapi.utilities.FileUtilities;
@@ -42,7 +44,7 @@ public class CAP3Runner {
      * @return Contigs.
      * @throws DocumentOperationException
      */
-    public static List<SequenceAlignmentDocument> assemble(List<NucleotideGraphSequenceDocument> sequences,
+    public static List<SequenceAlignmentDocument> assemble(List<AnnotatedPluginDocument> sequences,
                                                            String executablePath,
                                                            int minOverlapLength,
                                                            int minOverlapIdentity) throws DocumentOperationException {
@@ -55,7 +57,15 @@ public class CAP3Runner {
             if(assemblyFailed(sequences, resultFilePath)) {
                 return Collections.emptyList();
             }
-            return ImportUtilities.importContigs(resultFilePath);
+
+            List<SequenceAlignmentDocument> alignments = ImportUtilities.importContigs(resultFilePath);
+            for (SequenceAlignmentDocument align : alignments) {
+                for (int i = 0; i < sequences.size(); i++) {
+                    align.setReferencedDocument(i + 1, DocumentUtilities.getAnnotatedPluginDocumentThatContains(sequences.get(i).getDocument()));
+                    System.out.println(align.getReferencedDocument(i + 1));
+                }
+            }
+            return alignments;
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not assemble contigs: " + e.getMessage(), e);
         } catch (InterruptedException e) {
@@ -75,12 +85,12 @@ public class CAP3Runner {
      * @param resultFilePath The result file from CAP3
      * @return true iff the assembly process failed
      */
-    private static boolean assemblyFailed(List<NucleotideGraphSequenceDocument> sequences, String resultFilePath) {
+    private static boolean assemblyFailed(List<AnnotatedPluginDocument> sequences, String resultFilePath) {
         File resultFile = new File(resultFilePath);
         // The result file would use at least a byte per character in the sequence name.  If it doesn't it probably
         // does not contain an assembly
         long sizeOfDocs = 0;
-        for (NucleotideGraphSequenceDocument sequence : sequences) {
+        for (AnnotatedPluginDocument sequence : sequences) {
             sizeOfDocs += sequence.getName().length();
         }
         return !resultFile.exists() || resultFile.length() < sizeOfDocs;
@@ -133,7 +143,7 @@ public class CAP3Runner {
      * @param sequences Sequences.
      * @return Fasta file path.
      */
-    private static String createFastaFile(List<NucleotideGraphSequenceDocument> sequences) throws IOException {
+    private static String createFastaFile(List<AnnotatedPluginDocument> sequences) throws IOException {
         File fastaFile = FileUtilities.createTempFile("temp", ".fasta", false);
 
         BufferedWriter writer = new BufferedWriter(new FileWriter(fastaFile));
@@ -149,13 +159,18 @@ public class CAP3Runner {
      * @param sequences Sequences.
      * @return Fasta output.
      */
-    private static String toFastaFormat(List<NucleotideGraphSequenceDocument> sequences) {
+    private static String toFastaFormat(List<AnnotatedPluginDocument> sequences) {
         StringBuilder fastaOutput = new StringBuilder();
 
         /* Generate fasta output. */
-        for (NucleotideGraphSequenceDocument sequence : sequences) {
-            fastaOutput.append(">").append(sequence.getName()).append(" ").append(sequence.getDescription()).append("\n")
-                       .append(sequence.getSequenceString().toUpperCase()).append("\n");
+        try {
+            for (AnnotatedPluginDocument sequence : sequences) {
+                DefaultNucleotideGraphSequence seq = (DefaultNucleotideGraphSequence)sequence.getDocument();
+                fastaOutput.append(">").append(sequence.getName()).append(" ").append(seq.getDescription()).append("\n")
+                           .append(seq.getSequenceString().toUpperCase()).append("\n");
+            }
+        } catch (DocumentOperationException e) {
+            e.printStackTrace();
         }
 
         /* Remove trailing new line. */
