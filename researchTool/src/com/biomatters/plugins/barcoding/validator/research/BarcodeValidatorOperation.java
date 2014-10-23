@@ -71,8 +71,8 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                                  OperationCallback operationCallback) throws DocumentOperationException {
         if (!(options instanceof BarcodeValidatorOptions)) {
             throw new DocumentOperationException("Wrong Options type, " +
-                                                 "expected: BarcodeValidatorOptions, " +
-                                                 "actual: " + options.getClass().getSimpleName() + ".");
+                    "expected: BarcodeValidatorOptions, " +
+                    "actual: " + options.getClass().getSimpleName() + ".");
         }
 
         BarcodeValidatorOptions barcodeValidatorOptions = (BarcodeValidatorOptions)options;
@@ -90,8 +90,8 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         composite.beginSubtask("Processing inputs");
         Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces
                 = Input.processInputs(inputSplitterOptions.getTraceFilePaths(),
-                                      inputSplitterOptions.getBarcodeFilePaths(),
-                                      inputSplitterOptions.getMethodOption());
+                inputSplitterOptions.getBarcodeFilePaths(),
+                inputSplitterOptions.getMethodOption());
 
         composite.beginSubtask();
         CompositeProgressListener validationProgress = new CompositeProgressListener(composite, suppliedBarcodesToSuppliedTraces.size());
@@ -114,11 +114,10 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             callback.setInputs(barcode, traces, stepsProgress);
             setSubFolder(operationCallback, barcodeName);
 
-            stepsProgress.beginSubtask("Trimming...");
             List<NucleotideGraphSequenceDocument> trimmedTraces = SequenceTrimmer.trimSequences(traces, trimmingOptions.getErrorProbabilityLimit());
 
             stepsProgress.beginSubtask("Validating Traces...");
-            CompositeProgressListener traceValidationProgress = new CompositeProgressListener(stepsProgress, 3);
+            CompositeProgressListener traceValidationProgress = new CompositeProgressListener(stepsProgress, 2);
             traceValidationProgress.beginSubtask();
 
             List<ValidationRun> traceValidationResults = runValidationTasks(traceValidationOptions, traceValidationProgress,
@@ -128,13 +127,8 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             traceValidationProgress.beginSubtask();
             addValidationResultsToCallback(callback, traceValidationResults, traceValidationProgress);
 
-<<<<<<< HEAD
-            traceValidationProgress.beginSubtask();
-            callback.addTrimmedTraces(trimmedTraces, traceValidationProgress);
-=======
             stepsProgress.beginSubtask("Adding Trimmed Traces...");
             List<AnnotatedPluginDocument> retAnnotatedPluginDocuments = callback.addTrimmedTraces(trimmedTraces, stepsProgress);
->>>>>>> 7b76f4a79b4a294e3fa1855da492cc821a3d9155
 
             stepsProgress.beginSubtask("Assembling...");
             CompositeProgressListener assembleTracesProgress = new CompositeProgressListener(stepsProgress, 3);
@@ -211,8 +205,8 @@ public class BarcodeValidatorOperation extends DocumentOperation {
     }
 
     private static void addValidationResultsToCallback(ValidationDocumentOperationCallback callback,
-                                               List<ValidationRun> runs,
-                                               ProgressListener progressListener) throws DocumentOperationException {
+                                                       List<ValidationRun> runs,
+                                                       ProgressListener progressListener) throws DocumentOperationException {
         CompositeProgressListener addTraceValidationResultsProgress = new CompositeProgressListener(progressListener, runs.size());
 
         for (ValidationRun run : runs) {
@@ -284,9 +278,9 @@ public class BarcodeValidatorOperation extends DocumentOperation {
     }
 
     private List<SequenceAlignmentDocument> assembleTraces(List<AnnotatedPluginDocument> traces,
-                                                     CAP3Options options,
-                                                     String contigName,
-                                                     ProgressListener progressListener) throws DocumentOperationException {
+                                                           CAP3Options options,
+                                                           String contigName,
+                                                           ProgressListener progressListener) throws DocumentOperationException {
 
         CompositeProgressListener assemblyProgress = new CompositeProgressListener(progressListener, 2);
 
@@ -298,11 +292,6 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             DocumentUtilities.getAnnotatedPluginDocumentThatContains(contig).setName(contigName);
             if (contig.canSetSequenceNames()) {
                 contig.setSequenceName(0, contigName + " Consensus Sequence", true);
-            }
-
-            for (int i = 0; i < traces.size(); i++) {
-//                ((DefaultAlignmentDocument) contig).setReferencedDocument(i, traces.get(i));
-//                contig.setReferencedDocument(i, traces.get(i).get);
             }
         }
 
@@ -317,9 +306,9 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         if (!(consensus instanceof NucleotideSequenceDocument)) {
             throw new DocumentOperationException(
                     "Assembly produced consensus of unexpected type.\n" +
-                    "Expected: " + NucleotideSequenceDocument.class.getSimpleName() + "\n" +
-                    "Actual: " + consensus.getClass().getSimpleName() + ".\n\n" +
-                    "Please contact support@geneious.com with your input files and options."
+                            "Expected: " + NucleotideSequenceDocument.class.getSimpleName() + "\n" +
+                            "Actual: " + consensus.getClass().getSimpleName() + ".\n\n" +
+                            "Please contact support@geneious.com with your input files and options."
             );
         }
 
