@@ -3,6 +3,7 @@ package com.biomatters.plugins.barcoding.validator.validation.assembly;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.utilities.Execution;
@@ -15,9 +16,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Functionality for utilizing CAP3. Non-instantiable.
@@ -52,17 +51,35 @@ public class CAP3Runner {
             return Collections.emptyList();
         }
 
+        Map<String, String> tmpNameMapping = new HashMap<String, String>();
+        Map<String, AnnotatedPluginDocument> nameSequenceMapping = new HashMap<String, AnnotatedPluginDocument>();
+        for (AnnotatedPluginDocument seq : sequences) {
+            String tmpName = UUID.randomUUID().toString();
+            tmpNameMapping.put(tmpName, seq.getName());
+            nameSequenceMapping.put(tmpName, seq);
+            seq.setName(tmpName);
+        }
+
         try {
+
             String resultFilePath = runCap3Assembler(createFastaFile(sequences), executablePath, minOverlapLength, minOverlapIdentity);
             if(assemblyFailed(sequences, resultFilePath)) {
                 return Collections.emptyList();
             }
 
             List<SequenceAlignmentDocument> alignments = ImportUtilities.importContigs(resultFilePath);
+
             for (SequenceAlignmentDocument align : alignments) {
-                for (int i = 0; i < sequences.size(); i++) {
-                    align.setReferencedDocument(i + 1, DocumentUtilities.getAnnotatedPluginDocumentThatContains(sequences.get(i).getDocument()));
-                    System.out.println(align.getReferencedDocument(i + 1));
+                List<SequenceDocument> sequences1 = align.getSequences();
+                for (int i = 0; i < sequences1.size(); i++) {
+                    String tmpName = sequences1.get(i).getName();
+
+                    AnnotatedPluginDocument annotatedPluginDocument = (AnnotatedPluginDocument) getStartFromMap(nameSequenceMapping, tmpName);
+                    if (annotatedPluginDocument != null) {
+                        String name = (String) getStartFromMap(tmpNameMapping, tmpName);
+                        annotatedPluginDocument.setName(name);
+                        align.setReferencedDocument(i, DocumentUtilities.getAnnotatedPluginDocumentThatContains(annotatedPluginDocument.getDocument()));
+                    }
                 }
             }
             return alignments;
@@ -74,6 +91,18 @@ public class CAP3Runner {
             throw new DocumentOperationException("Could not assemble contigs: " + e.getMessage(), e);
         }
     }
+
+    private static Object getStartFromMap(Map nameSequenceMapping, String tmpName) {
+        for (Object tmp : nameSequenceMapping.entrySet()) {
+            Map.Entry entry = (Map.Entry) tmp;
+            String key = (String) entry.getKey();
+            if (tmpName.startsWith(key)) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
 
     /**
      * Hack method that tries to detect if assembly failed using the result file.  This is required because:
