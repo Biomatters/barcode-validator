@@ -36,9 +36,9 @@ public class AssemblyTest extends Assert {
         final String theSequence = "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG";
         NucleotideGraphSequenceDocument document =
                 new DefaultNucleotideGraphSequence("testDoc", "Test Document", theSequence, new Date(), new DefaultNucleotideGraph(null, null, null, 80, 0));
-        List<NucleotideGraphSequenceDocument> documents = new ArrayList<NucleotideGraphSequenceDocument>();
-        documents.add(document);
-        documents.add(document);
+        List<AnnotatedPluginDocument> documents = new ArrayList<NucleotideGraphSequenceDocument>();
+        documents.add(DocumentUtilities.createAnnotatedPluginDocument(document));
+        documents.add(DocumentUtilities.createAnnotatedPluginDocument(document));
 
         List<SequenceAlignmentDocument> result = CAP3Runner.assemble(documents,
                                                                      CAP3Options.getDefaultCap3ExecutableName(),
