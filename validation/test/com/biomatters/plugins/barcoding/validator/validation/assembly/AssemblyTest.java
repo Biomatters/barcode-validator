@@ -1,6 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.validation.assembly;
 
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
+import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.sequence.DefaultNucleotideGraph;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
@@ -37,14 +38,14 @@ public class AssemblyTest extends Assert {
         final String theSequence = "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG";
         NucleotideGraphSequenceDocument document =
                 new DefaultNucleotideGraphSequence("testDoc", "Test Document", theSequence, new Date(), new DefaultNucleotideGraph(null, null, null, 80, 0));
-        List<AnnotatedPluginDocument> documents = new ArrayList<NucleotideGraphSequenceDocument>();
+        List<AnnotatedPluginDocument> documents = new ArrayList<AnnotatedPluginDocument>();
         documents.add(DocumentUtilities.createAnnotatedPluginDocument(document));
         documents.add(DocumentUtilities.createAnnotatedPluginDocument(document));
 
         List<SequenceAlignmentDocument> result = CAP3Runner.assemble(documents,
-                                                                     CAP3Options.getDefaultCap3ExecutableName(),
-                                                                     40,
-                                                                     90);
+                CAP3Options.getDefaultCap3ExecutableName(),
+                40,
+                90);
         assertEquals(1, result.size());
 
         List<SequenceDocument> sequences = result.get(0).getSequences();
