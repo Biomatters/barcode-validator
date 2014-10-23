@@ -38,16 +38,12 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
         this.outputRecord = new ValidationOutputRecord();
     }
 
-    private URN saveDocument(PluginDocument pluginDocument, ProgressListener progressListener) throws DocumentOperationException {
-        return operationCallback.addDocument(pluginDocument, !selectResultDocs, progressListener).getURN();
+    private URN saveDocumentAndGetUrn(PluginDocument pluginDocument, ProgressListener progressListener) throws DocumentOperationException {
+        return saveDocument(pluginDocument, progressListener).getURN();
     }
 
-    private URN saveDocument(PluginDocument pluginDocument, ProgressListener progressListener, List<AnnotatedPluginDocument> retDocs) throws DocumentOperationException {
-        AnnotatedPluginDocument annotatedPluginDocument = operationCallback.addDocument(pluginDocument, !selectResultDocs, progressListener);
-        if (retDocs != null) {
-            retDocs.add(annotatedPluginDocument);
-        }
-        return annotatedPluginDocument.getURN();
+    private AnnotatedPluginDocument saveDocument(PluginDocument pluginDocument, ProgressListener progressListener) throws DocumentOperationException {
+        return operationCallback.addDocument(pluginDocument, !selectResultDocs, progressListener);
     }
 
     @Override
@@ -55,34 +51,39 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
         CompositeProgressListener compositeProgress = new CompositeProgressListener(progressListener, (barcodeSequence == null ? 0 : 1) + traces.size());
         if(barcodeSequence != null) {
             compositeProgress.beginSubtask();
-            outputRecord.barcodeSequenceUrn = saveDocument(barcodeSequence, compositeProgress);
+            outputRecord.barcodeSequenceUrn = saveDocumentAndGetUrn(barcodeSequence, compositeProgress);
         }
         for (NucleotideGraphSequenceDocument trace : traces) {
             compositeProgress.beginSubtask();
-            outputRecord.traceDocumentUrns.add(saveDocument(trace, compositeProgress));
+            outputRecord.traceDocumentUrns.add(saveDocumentAndGetUrn(trace, compositeProgress));
         }
     }
 
     @Override
-    public List<AnnotatedPluginDocument> addTrimmedTraces(List<NucleotideGraphSequenceDocument> traces, ProgressListener progressListener) throws DocumentOperationException {
+    public List<NucleotideGraphSequenceDocument> addTrimmedTraces(List<NucleotideGraphSequenceDocument> traces, ProgressListener progressListener) throws DocumentOperationException {
+        List<NucleotideGraphSequenceDocument> results = new ArrayList<NucleotideGraphSequenceDocument>();
+
         CompositeProgressListener savingProgress = new CompositeProgressListener(progressListener, traces.size());
-        List<AnnotatedPluginDocument> ret = new ArrayList<AnnotatedPluginDocument>();
         for (NucleotideGraphSequenceDocument trimmedTrace : traces) {
             savingProgress.beginSubtask();
-            outputRecord.trimmedDocumentUrns.add(saveDocument(trimmedTrace, savingProgress, ret));
+            AnnotatedPluginDocument doc = saveDocument(trimmedTrace, savingProgress);
+            if(!NucleotideGraphSequenceDocument.class.isAssignableFrom(doc.getDocumentClass())) {
+                throw new IllegalStateException("Saving NucleotideGraphSequenceDocument to database created " + doc.getDocumentClass().getSimpleName());
+            }
+            results.add((NucleotideGraphSequenceDocument)doc.getDocument());
+            outputRecord.trimmedDocumentUrns.add(doc.getURN());
         }
-
-        return ret;
+        return results;
     }
 
     @Override
     public void addAssembly(SequenceAlignmentDocument contigAssembly, ProgressListener progressListener) throws DocumentOperationException {
-        outputRecord.assemblyUrn = saveDocument(contigAssembly, progressListener);
+        outputRecord.assemblyUrn = saveDocumentAndGetUrn(contigAssembly, progressListener);
     }
 
     @Override
     public void addConsensus(SequenceDocument consensusSequence, ProgressListener progressListener) throws DocumentOperationException {
-        outputRecord.consensusUrn = saveDocument(consensusSequence, progressListener);
+        outputRecord.consensusUrn = saveDocumentAndGetUrn(consensusSequence, progressListener);
     }
 
     @Override
@@ -93,7 +94,7 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
         List<URN> supplementaryDocUrns = new ArrayList<URN>();
         for (PluginDocument docToAdd : docsToAddToResults) {
             resultAddingProgress.beginSubtask();
-            supplementaryDocUrns.add(saveDocument(docToAdd, resultAddingProgress));
+            supplementaryDocUrns.add(saveDocumentAndGetUrn(docToAdd, resultAddingProgress));
         }
 
         outputRecord.validationRecords.add(

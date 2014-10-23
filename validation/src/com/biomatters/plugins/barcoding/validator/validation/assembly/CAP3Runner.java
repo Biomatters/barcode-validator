@@ -1,15 +1,16 @@
 package com.biomatters.plugins.barcoding.validator.validation.assembly;
 
-import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
-import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.utilities.Execution;
 import com.biomatters.geneious.publicapi.utilities.FileUtilities;
 import com.biomatters.geneious.publicapi.utilities.SystemUtilities;
 import com.biomatters.plugins.barcoding.validator.validation.utilities.ImportUtilities;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import jebl.util.ProgressListener;
 
 import java.io.BufferedWriter;
@@ -43,7 +44,7 @@ public class CAP3Runner {
      * @return Contigs.
      * @throws DocumentOperationException
      */
-    public static List<SequenceAlignmentDocument> assemble(List<AnnotatedPluginDocument> sequences,
+    public static List<SequenceAlignmentDocument> assemble(List<NucleotideGraphSequenceDocument> sequences,
                                                            String executablePath,
                                                            int minOverlapLength,
                                                            int minOverlapIdentity) throws DocumentOperationException {
@@ -51,18 +52,15 @@ public class CAP3Runner {
             return Collections.emptyList();
         }
 
-        Map<String, String> tmpNameMapping = new HashMap<String, String>();
-        Map<String, AnnotatedPluginDocument> nameSequenceMapping = new HashMap<String, AnnotatedPluginDocument>();
-        for (AnnotatedPluginDocument seq : sequences) {
+        BiMap<String, NucleotideGraphSequenceDocument> nameSequenceMapping = HashBiMap.create();
+        for (NucleotideGraphSequenceDocument seq : sequences) {
             String tmpName = UUID.randomUUID().toString();
-            tmpNameMapping.put(tmpName, seq.getName());
             nameSequenceMapping.put(tmpName, seq);
-            seq.setName(tmpName);
         }
 
         try {
 
-            String resultFilePath = runCap3Assembler(createFastaFile(sequences), executablePath, minOverlapLength, minOverlapIdentity);
+            String resultFilePath = runCap3Assembler(createFastaFile(sequences, nameSequenceMapping.inverse()), executablePath, minOverlapLength, minOverlapIdentity);
             if(assemblyFailed(sequences, resultFilePath)) {
                 return Collections.emptyList();
             }
@@ -74,11 +72,10 @@ public class CAP3Runner {
                 for (int i = 0; i < sequences1.size(); i++) {
                     String tmpName = sequences1.get(i).getName();
 
-                    AnnotatedPluginDocument annotatedPluginDocument = (AnnotatedPluginDocument) getStartFromMap(nameSequenceMapping, tmpName);
-                    if (annotatedPluginDocument != null) {
-                        String name = (String) getStartFromMap(tmpNameMapping, tmpName);
-                        annotatedPluginDocument.setName(name);
-                        align.setReferencedDocument(i, DocumentUtilities.getAnnotatedPluginDocumentThatContains(annotatedPluginDocument.getDocument()));
+                    NucleotideGraphSequenceDocument seqDoc = getStartFromMap(nameSequenceMapping, tmpName);
+                    if (seqDoc != null) {
+                        align.setSequenceName(i, seqDoc.getName(), false);
+                        align.setReferencedDocument(i, DocumentUtilities.getAnnotatedPluginDocumentThatContains(seqDoc));
                     }
                 }
             }
@@ -92,10 +89,9 @@ public class CAP3Runner {
         }
     }
 
-    private static Object getStartFromMap(Map nameSequenceMapping, String tmpName) {
-        for (Object tmp : nameSequenceMapping.entrySet()) {
-            Map.Entry entry = (Map.Entry) tmp;
-            String key = (String) entry.getKey();
+    private static NucleotideGraphSequenceDocument getStartFromMap(Map<String, NucleotideGraphSequenceDocument> nameSequenceMapping, String tmpName) {
+        for (Map.Entry<String, NucleotideGraphSequenceDocument> entry : nameSequenceMapping.entrySet()) {
+            String key = entry.getKey();
             if (tmpName.startsWith(key)) {
                 return entry.getValue();
             }
@@ -114,12 +110,12 @@ public class CAP3Runner {
      * @param resultFilePath The result file from CAP3
      * @return true iff the assembly process failed
      */
-    private static boolean assemblyFailed(List<AnnotatedPluginDocument> sequences, String resultFilePath) {
+    private static boolean assemblyFailed(List<NucleotideGraphSequenceDocument> sequences, String resultFilePath) {
         File resultFile = new File(resultFilePath);
         // The result file would use at least a byte per character in the sequence name.  If it doesn't it probably
         // does not contain an assembly
         long sizeOfDocs = 0;
-        for (AnnotatedPluginDocument sequence : sequences) {
+        for (NucleotideGraphSequenceDocument sequence : sequences) {
             sizeOfDocs += sequence.getName().length();
         }
         return !resultFile.exists() || resultFile.length() < sizeOfDocs;
@@ -172,11 +168,11 @@ public class CAP3Runner {
      * @param sequences Sequences.
      * @return Fasta file path.
      */
-    private static String createFastaFile(List<AnnotatedPluginDocument> sequences) throws IOException {
+    private static String createFastaFile(List<NucleotideGraphSequenceDocument> sequences, Map<NucleotideGraphSequenceDocument, String> renameMap) throws IOException {
         File fastaFile = FileUtilities.createTempFile("temp", ".fasta", false);
 
         BufferedWriter writer = new BufferedWriter(new FileWriter(fastaFile));
-        writer.write(toFastaFormat(sequences));
+        writer.write(toFastaFormat(sequences, renameMap));
         writer.close();
 
         return fastaFile.getAbsolutePath();
@@ -188,18 +184,17 @@ public class CAP3Runner {
      * @param sequences Sequences.
      * @return Fasta output.
      */
-    private static String toFastaFormat(List<AnnotatedPluginDocument> sequences) {
+    private static String toFastaFormat(List<NucleotideGraphSequenceDocument> sequences, Map<NucleotideGraphSequenceDocument, String> renameMap) {
         StringBuilder fastaOutput = new StringBuilder();
 
         /* Generate fasta output. */
-        try {
-            for (AnnotatedPluginDocument sequence : sequences) {
-                DefaultNucleotideGraphSequence seq = (DefaultNucleotideGraphSequence)sequence.getDocument();
-                fastaOutput.append(">").append(sequence.getName()).append(" ").append(seq.getDescription()).append("\n")
-                           .append(seq.getSequenceString().toUpperCase()).append("\n");
+        for (NucleotideGraphSequenceDocument seq : sequences) {
+            String name = renameMap.get(seq);
+            if(name == null) {
+                name = seq.getName();
             }
-        } catch (DocumentOperationException e) {
-            e.printStackTrace();
+            fastaOutput.append(">").append(name).append(" ").append(seq.getDescription()).append("\n")
+                       .append(seq.getSequenceString().toUpperCase()).append("\n");
         }
 
         /* Remove trailing new line. */
