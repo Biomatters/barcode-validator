@@ -9,6 +9,7 @@ import com.biomatters.geneious.publicapi.implementations.SequenceExtractionUtili
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Runner;
+import com.biomatters.plugins.barcoding.validator.validation.consensus.ConsensusUtilities;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.ErrorProbabilityOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.SequenceTrimmer;
 import jebl.util.CompositeProgressListener;
@@ -67,7 +68,7 @@ public class Pipeline {
             CompositeProgressListener progressForEachContig = new CompositeProgressListener(assembleTracesProgress, contigs.size());
             for (SequenceAlignmentDocument contig : contigs) {
                 progressForEachContig.beginSubtask();
-                NucleotideSequenceDocument consensus = getConsensus(contig);
+                NucleotideSequenceDocument consensus = ConsensusUtilities.getConsensus(contig);
                 callback.addConsensus(consensus, progressForEachContig);
                 consensusSequences.add(consensus);
             }
@@ -180,23 +181,6 @@ public class Pipeline {
         }
 
         return contigs;
-    }
-
-    private static NucleotideSequenceDocument getConsensus(SequenceAlignmentDocument contig) throws DocumentOperationException {
-        SequenceDocument consensus = SequenceExtractionUtilities.removeGaps(
-                contig.getSequence(contig.getContigReferenceSequenceIndex())
-        );
-
-        if (!(consensus instanceof NucleotideSequenceDocument)) {
-            throw new DocumentOperationException(
-                    "Assembly produced consensus of unexpected type.\n" +
-                    "Expected: " + NucleotideSequenceDocument.class.getSimpleName() + "\n" +
-                    "Actual: " + consensus.getClass().getSimpleName() + ".\n\n" +
-                    "Please contact support@geneious.com with your input files and options."
-            );
-        }
-
-        return (NucleotideSequenceDocument)consensus;
     }
 
     private static abstract class ValidationRunner<T extends Validation> {

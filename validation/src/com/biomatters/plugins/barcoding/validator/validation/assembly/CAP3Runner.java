@@ -68,6 +68,7 @@ public class CAP3Runner {
             List<SequenceAlignmentDocument> alignments = ImportUtilities.importContigs(resultFilePath);
 
             for (SequenceAlignmentDocument align : alignments) {
+                align.removeSequence(0);  // Get rid of the CAP3 consensus.  The validator will generate it's own.
                 List<SequenceDocument> sequences1 = align.getSequences();
                 for (int i = 0; i < sequences1.size(); i++) {
                     String tmpName = sequences1.get(i).getName();
