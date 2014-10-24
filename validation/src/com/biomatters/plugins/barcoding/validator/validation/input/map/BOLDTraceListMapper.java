@@ -112,7 +112,7 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
         Map<String, NucleotideSequenceDocument> result = new HashMap<String, NucleotideSequenceDocument>();
 
         for (NucleotideSequenceDocument barcode : barcodes) {
-            result.put(barcode.getDescription().split(BOLD_BARCODE_DESCRIPTION_SEPARATOR)[0], barcode);
+            result.put(barcode.getName().split(BOLD_BARCODE_DESCRIPTION_SEPARATOR)[0], barcode);
         }
 
         return result;
