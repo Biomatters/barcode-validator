@@ -9,6 +9,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDoc
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.SequenceExtractionUtilities;
 import com.biomatters.geneious.publicapi.plugin.*;
+import com.biomatters.plugins.barcoding.validator.output.ValidationCallback;
 import com.biomatters.plugins.barcoding.validator.output.ValidationDocumentOperationCallback;
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
 import com.biomatters.plugins.barcoding.validator.output.ValidationReportDocument;
@@ -97,9 +98,6 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         CompositeProgressListener validationProgress = new CompositeProgressListener(composite, suppliedBarcodesToSuppliedTraces.size());
         for (Map.Entry<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>>
                 suppliedBarcodeToSuppliedTrace : suppliedBarcodesToSuppliedTraces.entrySet()) {
-            // This block could be moved into the validation module so it can be called from the future web
-            // portal and distributed among different nodes as individual nodes (if we wanted to go that far).  Even now
-            // it would mean we could easily multi-thread the operation.  Maybe after 0.1.
 
             ValidationDocumentOperationCallback callback = new ValidationDocumentOperationCallback(operationCallback, false);
             NucleotideSequenceDocument barcode = suppliedBarcodeToSuppliedTrace.getKey();
@@ -107,62 +105,15 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             String barcodeName = barcode.getName();
 
             validationProgress.beginSubtask(barcodeName);
-            CompositeProgressListener stepsProgress = new CompositeProgressListener(validationProgress, 5);
 
-            stepsProgress.beginSubtask();
+            CompositeProgressListener pipelineProgress = new CompositeProgressListener(validationProgress, 0.2, 0.8);
+            pipelineProgress.beginSubtask();
             setSubFolder(operationCallback, null);
-            callback.setInputs(barcode, traces, stepsProgress);
+            callback.setInputs(barcode, traces, pipelineProgress);
             setSubFolder(operationCallback, barcodeName);
 
-            List<NucleotideGraphSequenceDocument> trimmedTraces = SequenceTrimmer.trimSequences(traces, trimmingOptions.getErrorProbabilityLimit());
-
-            stepsProgress.beginSubtask("Validating Traces...");
-            CompositeProgressListener traceValidationProgress = new CompositeProgressListener(stepsProgress, 2);
-            traceValidationProgress.beginSubtask();
-
-            List<ValidationRun> traceValidationResults = runValidationTasks(traceValidationOptions, traceValidationProgress,
-                    TraceValidation.getTraceValidations(), createTraceValiationRunnerForTraces(trimmedTraces)
-            );
-
-            traceValidationProgress.beginSubtask();
-            addValidationResultsToCallback(callback, traceValidationResults, traceValidationProgress);
-
-            stepsProgress.beginSubtask("Adding Trimmed Traces...");
-            trimmedTraces = callback.addTrimmedTraces(trimmedTraces, stepsProgress);
-
-            stepsProgress.beginSubtask("Assembling...");
-            CompositeProgressListener assembleTracesProgress = new CompositeProgressListener(stepsProgress, 3);
-            assembleTracesProgress.beginSubtask();
-            List<SequenceAlignmentDocument> contigs = assembleTraces(
-                    trimmedTraces, CAP3Options, barcodeName, assembleTracesProgress);
-            assembleTracesProgress.beginSubtask();
-            if(!contigs.isEmpty()) {
-                CompositeProgressListener progressForAddingAssembly = new CompositeProgressListener(assembleTracesProgress, contigs.size());
-                for (SequenceAlignmentDocument contig : contigs) {
-                    progressForAddingAssembly.beginSubtask();
-                    callback.addAssembly(contig, progressForAddingAssembly);
-                }
-            }
-            assembleTracesProgress.beginSubtask();
-            List<NucleotideSequenceDocument> consensusSequences = new ArrayList<NucleotideSequenceDocument>();
-            if(!contigs.isEmpty()) {
-                CompositeProgressListener progressForEachContig = new CompositeProgressListener(assembleTracesProgress, contigs.size());
-                for (SequenceAlignmentDocument contig : contigs) {
-                    progressForEachContig.beginSubtask();
-                    NucleotideSequenceDocument consensus = getConsensus(contig);
-                    callback.addConsensus(consensus, progressForEachContig);
-                    consensusSequences.add(consensus);
-                }
-            }
-
-            stepsProgress.beginSubtask("Validating Barcode Sequences...");
-            CompositeProgressListener validateBarcodeProgress = new CompositeProgressListener(stepsProgress, 2);
-            validateBarcodeProgress.beginSubtask();
-            List<ValidationRun> barcodeValidationResults = runValidationTasks(barcodeValidationOptions, validateBarcodeProgress,
-                    BarcodeValidation.getBarcodeValidations(), createBarcodeValidationRunnerForInput(barcode, consensusSequences)
-            );
-            validateBarcodeProgress.beginSubtask();
-            addValidationResultsToCallback(callback, barcodeValidationResults, validateBarcodeProgress);
+            pipelineProgress.beginSubtask();
+            runValidationPipeline(barcode, traces, trimmingOptions, CAP3Options, traceValidationOptions, barcodeValidationOptions, callback, pipelineProgress);
             outputs.add(callback.getRecord());
         }
 
@@ -172,7 +123,64 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         composite.setComplete();
     }
 
-    public ValidationRunner<TraceValidation> createTraceValiationRunnerForTraces(final List<NucleotideGraphSequenceDocument> trimmedTraces) {
+    private static void runValidationPipeline(NucleotideSequenceDocument barcode, List<NucleotideGraphSequenceDocument> traces,
+                                      ErrorProbabilityOptions trimmingOptions, CAP3Options CAP3Options,
+                                      Map<String, ValidationOptions> traceValidationOptions,
+                                      Map<String, ValidationOptions> barcodeValidationOptions,
+                                      ValidationCallback callback, ProgressListener progressListener) throws DocumentOperationException {
+        CompositeProgressListener stepsProgress = new CompositeProgressListener(progressListener, 4);
+        List<NucleotideGraphSequenceDocument> trimmedTraces = SequenceTrimmer.trimSequences(traces, trimmingOptions.getErrorProbabilityLimit());
+
+        stepsProgress.beginSubtask("Validating Traces...");
+        CompositeProgressListener traceValidationProgress = new CompositeProgressListener(stepsProgress, 2);
+        traceValidationProgress.beginSubtask();
+
+        List<ValidationRun> traceValidationResults = runValidationTasks(traceValidationOptions, traceValidationProgress,
+                TraceValidation.getTraceValidations(), createTraceValiationRunnerForTraces(trimmedTraces)
+        );
+
+        traceValidationProgress.beginSubtask();
+        addValidationResultsToCallback(callback, traceValidationResults, traceValidationProgress);
+
+        stepsProgress.beginSubtask("Adding Trimmed Traces...");
+        trimmedTraces = callback.addTrimmedTraces(trimmedTraces, stepsProgress);
+
+        stepsProgress.beginSubtask("Assembling...");
+        CompositeProgressListener assembleTracesProgress = new CompositeProgressListener(stepsProgress, 3);
+        assembleTracesProgress.beginSubtask();
+        List<SequenceAlignmentDocument> contigs = assembleTraces(
+                trimmedTraces, CAP3Options, barcode.getName(), assembleTracesProgress);
+        assembleTracesProgress.beginSubtask();
+        if(!contigs.isEmpty()) {
+            CompositeProgressListener progressForAddingAssembly = new CompositeProgressListener(assembleTracesProgress, contigs.size());
+            for (SequenceAlignmentDocument contig : contigs) {
+                progressForAddingAssembly.beginSubtask();
+                callback.addAssembly(contig, progressForAddingAssembly);
+            }
+        }
+        assembleTracesProgress.beginSubtask();
+        List<NucleotideSequenceDocument> consensusSequences = new ArrayList<NucleotideSequenceDocument>();
+        if(!contigs.isEmpty()) {
+            CompositeProgressListener progressForEachContig = new CompositeProgressListener(assembleTracesProgress, contigs.size());
+            for (SequenceAlignmentDocument contig : contigs) {
+                progressForEachContig.beginSubtask();
+                NucleotideSequenceDocument consensus = getConsensus(contig);
+                callback.addConsensus(consensus, progressForEachContig);
+                consensusSequences.add(consensus);
+            }
+        }
+
+        stepsProgress.beginSubtask("Validating Barcode Sequences...");
+        CompositeProgressListener validateBarcodeProgress = new CompositeProgressListener(stepsProgress, 2);
+        validateBarcodeProgress.beginSubtask();
+        List<ValidationRun> barcodeValidationResults = runValidationTasks(barcodeValidationOptions, validateBarcodeProgress,
+                BarcodeValidation.getBarcodeValidations(), createBarcodeValidationRunnerForInput(barcode, consensusSequences)
+        );
+        validateBarcodeProgress.beginSubtask();
+        addValidationResultsToCallback(callback, barcodeValidationResults, validateBarcodeProgress);
+    }
+
+    private static ValidationRunner<TraceValidation> createTraceValiationRunnerForTraces(final List<NucleotideGraphSequenceDocument> trimmedTraces) {
         return new ValidationRunner<TraceValidation>() {
             @Override
             ValidationResult run(TraceValidation validation, ValidationOptions options) throws DocumentOperationException {
@@ -181,7 +189,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         };
     }
 
-    public ValidationRunner<BarcodeValidation> createBarcodeValidationRunnerForInput(
+    private static ValidationRunner<BarcodeValidation> createBarcodeValidationRunnerForInput(
             final NucleotideSequenceDocument barcode, final List<NucleotideSequenceDocument> consensus) {
         return new ValidationRunner<BarcodeValidation>() {
             @Override
@@ -203,7 +211,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         };
     }
 
-    private static void addValidationResultsToCallback(ValidationDocumentOperationCallback callback,
+    private static void addValidationResultsToCallback(ValidationCallback callback,
                                                List<ValidationRun> runs,
                                                ProgressListener progressListener) throws DocumentOperationException {
         CompositeProgressListener addTraceValidationResultsProgress = new CompositeProgressListener(progressListener, runs.size());
@@ -227,7 +235,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
      *
      * @throws DocumentOperationException if a problem occurs during validation
      */
-    private <T extends Validation> List<ValidationRun> runValidationTasks(
+    private static <T extends Validation> List<ValidationRun> runValidationTasks(
             Map<String, ValidationOptions> options,
             ProgressListener progressListener,
             List<T> validationTasks,
@@ -276,7 +284,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         }
     }
 
-    private List<SequenceAlignmentDocument> assembleTraces(List<NucleotideGraphSequenceDocument> traces,
+    private static List<SequenceAlignmentDocument> assembleTraces(List<NucleotideGraphSequenceDocument> traces,
                                                      CAP3Options options,
                                                      String contigName,
                                                      ProgressListener progressListener) throws DocumentOperationException {
@@ -297,7 +305,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         return contigs;
     }
 
-    private NucleotideSequenceDocument getConsensus(SequenceAlignmentDocument contig) throws DocumentOperationException {
+    private static NucleotideSequenceDocument getConsensus(SequenceAlignmentDocument contig) throws DocumentOperationException {
         SequenceDocument consensus = SequenceExtractionUtilities.removeGaps(
                 contig.getSequence(contig.getContigReferenceSequenceIndex())
         );
