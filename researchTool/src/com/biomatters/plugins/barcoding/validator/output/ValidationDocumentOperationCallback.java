@@ -9,6 +9,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDoc
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperation;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
+import com.biomatters.plugins.barcoding.validator.validation.ValidationCallback;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationResult;
 import jebl.util.CompositeProgressListener;
@@ -18,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A {@link com.biomatters.plugins.barcoding.validator.output.ValidationCallback} that adds results to
+ * A {@link com.biomatters.plugins.barcoding.validator.validation.ValidationCallback} that adds results to
  * {@link com.biomatters.geneious.publicapi.plugin.DocumentOperation.OperationCallback}.  Can be used to produce a
  * {@link com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord}
  *
