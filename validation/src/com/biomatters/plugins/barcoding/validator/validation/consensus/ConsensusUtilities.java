@@ -92,7 +92,9 @@ public class ConsensusUtilities {
                 int qualityValue = ((NucleotideGraphSequenceDocument) sequence).getSequenceQuality(indexInAssembly);
                 NucleotideState state = Nucleotides.getState(sequence.getCharSequence().charAt(indexInAssembly));
                 if(!state.isGap()) {
-                    stateToQuality.put(state, qualityValue);
+                    for (State canonicalState : state.getCanonicalStates()) {
+                        stateToQuality.put((NucleotideState)canonicalState, qualityValue);
+                    }
                 }
             } else {
                 throw new DocumentOperationException("Alignment is missing quality values for " + sequence.getName() + " (index = " + j + ")");
@@ -109,17 +111,21 @@ public class ConsensusUtilities {
         return stateToTotalQuality;
     }
 
+    /**
+     *
+     * @param states The canonical states.  Must be one of {@link jebl.evolution.sequences.Nucleotides#getCanonicalStates()}.
+     * @return a {@link jebl.evolution.sequences.State} representing the supplied canonical states.
+     */
     private static State getStateForStates(Set<NucleotideState> states) {
         if(states.size() == 1) {
             return states.iterator().next();
         } else {
-
             for (State possible : Nucleotides.getStates()) {
                 if(possible.getCanonicalStates().containsAll(states)) {
                     return possible;
                 }
             }
         }
-        throw new IllegalStateException("Didn't find valid nucleotide state to represent (" + StringUtilities.join(",", states) + ")"); // todo
+        throw new IllegalStateException("Didn't find valid nucleotide state to represent (" + StringUtilities.join(",", states) + ")");
     }
 }

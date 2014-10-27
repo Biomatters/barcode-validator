@@ -63,7 +63,11 @@ public class ConsensusUtilitiesTest extends Assert {
     public void handlesAmbiguities() throws DocumentOperationException {
         DefaultNucleotideGraphSequence seq1 = getTestSequenceWithConsistentQuality("R", 100);
         DefaultNucleotideGraphSequence seq2 = getTestSequenceWithConsistentQuality("A", 50);
-        testConsensusFromSequences("R", seq1, seq2);
+        testConsensusFromSequences("A", seq1, seq2);
+
+        seq1 = getTestSequence("TACTRD", new int[]{11, 44, 44,1,41,33});
+        seq2 = getTestSequence("GTGAMB", new int[]{55, 20, 50,1,41,33});
+        testConsensusFromSequences("GAGWAK", seq1, seq2);
     }
 
     @Test
