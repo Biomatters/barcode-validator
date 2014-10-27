@@ -5,6 +5,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSeque
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
+import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -21,12 +22,12 @@ import java.util.*;
 public class ConsensusUtilities {
 
     /**
-     * Generates a consensus from a contig assembly
+     * Generates a consensus from a contig assembly using the quality values of the aligned sequences.
      *
-     * @param contigAssembly The assembly to get the consensus of
-     * @return The consensus
+     * @param contigAssembly The assembly to get the consensus of.  MUST have quality values for sequences.
+     * @return The consensus.
      */
-    public static NucleotideGraphSequenceDocument getConsensus(SequenceAlignmentDocument contigAssembly) {
+    public static NucleotideGraphSequenceDocument getConsensus(SequenceAlignmentDocument contigAssembly) throws DocumentOperationException {
 
         int totalLength = contigAssembly.getSequence(0).getSequenceLength();
 
@@ -54,7 +55,7 @@ public class ConsensusUtilities {
         }
     }
 
-    public static ConsensusPosition getBaseForPosition(SequenceAlignmentDocument contigAssembly, int index) {
+    public static ConsensusPosition getBaseForPosition(SequenceAlignmentDocument contigAssembly, int index) throws DocumentOperationException {
         Map<NucleotideState, Integer> stateToTotalQuality = getStateToTotalQualityMapForPosition(contigAssembly, index);
 
         Set<NucleotideState> stateWithMax = new HashSet<NucleotideState>();
@@ -82,7 +83,7 @@ public class ConsensusUtilities {
         return new ConsensusPosition(getStateForStates(stateWithMax).toString(), quality);
     }
 
-    public static Map<NucleotideState, Integer> getStateToTotalQualityMapForPosition(SequenceAlignmentDocument contigAssembly, int indexInAssembly) {
+    public static Map<NucleotideState, Integer> getStateToTotalQualityMapForPosition(SequenceAlignmentDocument contigAssembly, int indexInAssembly) throws DocumentOperationException {
         int numSeqs = contigAssembly.getNumberOfSequences();
         Multimap<NucleotideState, Integer> stateToQuality = ArrayListMultimap.create();
         for (int j = 0; j < numSeqs; j++) {
@@ -91,6 +92,8 @@ public class ConsensusUtilities {
                 int qualityValue = ((NucleotideGraphSequenceDocument) sequence).getSequenceQuality(indexInAssembly);
                 NucleotideState state = Nucleotides.getState(sequence.getCharSequence().charAt(indexInAssembly));
                 stateToQuality.put(state, qualityValue);
+            } else {
+                throw new DocumentOperationException("Alignment is missing quality values for " + sequence.getName() + " (index = " + j + ")");
             }
         }
         Map<NucleotideState, Integer> stateToTotalQuality = new HashMap<NucleotideState, Integer>();
