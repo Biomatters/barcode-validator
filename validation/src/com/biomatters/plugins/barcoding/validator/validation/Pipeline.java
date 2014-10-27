@@ -1,11 +1,8 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
-import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
-import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
-import com.biomatters.geneious.publicapi.implementations.SequenceExtractionUtilities;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Runner;
@@ -167,20 +164,7 @@ public class Pipeline {
                                                      String contigName,
                                                      ProgressListener progressListener) throws DocumentOperationException {
 
-        CompositeProgressListener assemblyProgress = new CompositeProgressListener(progressListener, 2);
-
-        assemblyProgress.beginSubtask();
-        List<SequenceAlignmentDocument> contigs = CAP3Runner.assemble(traces, options.getExecutablePath(), options.getMinOverlapLength(), options.getMinOverlapIdentity());
-
-        assemblyProgress.beginSubtask();
-        for (SequenceAlignmentDocument contig : contigs) {
-            DocumentUtilities.getAnnotatedPluginDocumentThatContains(contig).setName(contigName);
-            if (contig.canSetSequenceNames()) {
-                contig.setSequenceName(0, contigName + " Consensus Sequence", true);
-            }
-        }
-
-        return contigs;
+        return CAP3Runner.assemble(traces, options.getExecutablePath(), options.getMinOverlapLength(), options.getMinOverlapIdentity(), contigName, progressListener);
     }
 
     private static abstract class ValidationRunner<T extends Validation> {

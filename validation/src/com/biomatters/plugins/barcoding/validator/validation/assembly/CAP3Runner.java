@@ -1,9 +1,11 @@
 package com.biomatters.plugins.barcoding.validator.validation.assembly;
 
+import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
+import com.biomatters.geneious.publicapi.implementations.DefaultAlignmentDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.utilities.Execution;
 import com.biomatters.geneious.publicapi.utilities.FileUtilities;
@@ -41,13 +43,16 @@ public class CAP3Runner {
      * @param executablePath CAP3 executable path.
      * @param minOverlapLength Minimum overlap length.
      * @param minOverlapIdentity Minimum overlap identity.
+     * @param contigName The name to use for the resulting assembly
+     * @param progressListener To report progress to and for cancelling the assembly
      * @return Contigs.
      * @throws DocumentOperationException
      */
     public static List<SequenceAlignmentDocument> assemble(List<NucleotideGraphSequenceDocument> sequences,
                                                            String executablePath,
                                                            int minOverlapLength,
-                                                           int minOverlapIdentity) throws DocumentOperationException {
+                                                           int minOverlapIdentity, String contigName,
+                                                           ProgressListener progressListener) throws DocumentOperationException {
         if(sequences.size() < 2) {  // There must be at least two traces to produce an assembly
             return Collections.emptyList();
         }
@@ -55,32 +60,51 @@ public class CAP3Runner {
         BiMap<String, NucleotideGraphSequenceDocument> nameSequenceMapping = HashBiMap.create();
         for (NucleotideGraphSequenceDocument seq : sequences) {
             String tmpName = UUID.randomUUID().toString();
+            if(nameSequenceMapping.containsValue(seq)) {
+                throw new DocumentOperationException("Cannot assemble sequence to itself.  Input list contains multiple copies of " + seq.getName() +".");
+            }
             nameSequenceMapping.put(tmpName, seq);
         }
 
         try {
 
-            String resultFilePath = runCap3Assembler(createFastaFile(sequences, nameSequenceMapping.inverse()), executablePath, minOverlapLength, minOverlapIdentity);
+            String resultFilePath = runCap3Assembler(createFastaFile(sequences, nameSequenceMapping.inverse()), executablePath, minOverlapLength, minOverlapIdentity, progressListener);
             if(assemblyFailed(sequences, resultFilePath)) {
                 return Collections.emptyList();
             }
 
             List<SequenceAlignmentDocument> alignments = ImportUtilities.importContigs(resultFilePath);
 
+            List<SequenceAlignmentDocument> results = new ArrayList<SequenceAlignmentDocument>();
             for (SequenceAlignmentDocument align : alignments) {
-                align.removeSequence(0);  // Get rid of the CAP3 consensus.  The validator will generate it's own.
-                List<SequenceDocument> sequences1 = align.getSequences();
-                for (int i = 0; i < sequences1.size(); i++) {
-                    String tmpName = sequences1.get(i).getName();
+                int expectedSequences = align.getNumberOfSequences() - 1;
+                List<CharSequence> alignedCharSequences = new ArrayList<CharSequence>(expectedSequences);
+                List<SequenceDocument> unalignedSeqDocs = new ArrayList<SequenceDocument>(expectedSequences);
+                List<SequenceAlignmentDocument.ReferencedSequence> referencedSequences = new ArrayList<SequenceAlignmentDocument.ReferencedSequence>(expectedSequences);
 
-                    NucleotideGraphSequenceDocument seqDoc = getStartFromMap(nameSequenceMapping, tmpName);
-                    if (seqDoc != null) {
-                        align.setSequenceName(i, seqDoc.getName(), false);
-                        align.setReferencedDocument(i, DocumentUtilities.getAnnotatedPluginDocumentThatContains(seqDoc));
+                for (SequenceDocument alignedSeq : align.getSequences()) {
+                    NucleotideGraphSequenceDocument originalDoc = getStartFromMap(nameSequenceMapping, alignedSeq.getName());
+                    if (originalDoc != null) {
+                        AnnotatedPluginDocument apd = DocumentUtilities.getAnnotatedPluginDocumentThatContains(originalDoc);
+                        alignedCharSequences.add(alignedSeq.getCharSequence());
+                        unalignedSeqDocs.add(originalDoc);
+                        if(apd != null) {
+                            referencedSequences.add(new SequenceAlignmentDocument.ReferencedSequence(apd));
+                        } else {
+                            referencedSequences.add(null);
+                        }
                     }
                 }
+                    DefaultAlignmentDocument assembly = new DefaultAlignmentDocument(
+                            unalignedSeqDocs.toArray(new SequenceDocument[expectedSequences]),
+                            referencedSequences,
+                            alignedCharSequences.toArray(new CharSequence[expectedSequences]),
+                            null, null, contigName == null ? "Assembly" : contigName,
+                            ProgressListener.EMPTY);
+                    assembly.setContig(true);
+                    results.add(assembly);
             }
-            return alignments;
+            return results;
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not assemble contigs: " + e.getMessage(), e);
         } catch (InterruptedException e) {
@@ -129,12 +153,13 @@ public class CAP3Runner {
      * @param executablePath CAP3 executable path.
      * @param minOverlapLength Minimum overlap length.
      * @param minOverlapIdentity Minimum overlap identity.
+     * @param progressListener to provide to the {@link com.biomatters.geneious.publicapi.utilities.Execution} for cancelling the external CAP3 process
      * @return {@value #CAP3_ASSEMBLER_RESULT_FILE_EXTENSION} output file path.
      * @throws DocumentOperationException
      * @throws InterruptedException
      * @throws IOException
      */
-    private static String runCap3Assembler(String fastafilePath, String executablePath, int minOverlapLength, int minOverlapIdentity)
+    private static String runCap3Assembler(String fastafilePath, String executablePath, int minOverlapLength, int minOverlapIdentity, ProgressListener progressListener)
             throws DocumentOperationException, InterruptedException, IOException {
         Cap3OutputListener listener = new Cap3OutputListener();
 
@@ -148,7 +173,7 @@ public class CAP3Runner {
                         MIN_OVERLAP_IDENTITY_COMMANDLINE_OPTION,
                         String.valueOf(minOverlapIdentity)
                 },
-                ProgressListener.EMPTY,
+                progressListener,
                 listener,
                 "",
                 false

@@ -7,6 +7,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.TestGeneious;
+import jebl.util.ProgressListener;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
@@ -34,23 +35,26 @@ public class AssemblyTest extends Assert {
         );
 
         final String theSequence = "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG";
-        NucleotideGraphSequenceDocument document =
+        NucleotideGraphSequenceDocument doc =
                 new DefaultNucleotideGraphSequence("testDoc", "Test Document", theSequence, new Date(), new DefaultNucleotideGraph(null, null, null, 80, 0));
+        NucleotideGraphSequenceDocument doc2 =
+                        new DefaultNucleotideGraphSequence("testDoc", "Test Document", theSequence, new Date(), new DefaultNucleotideGraph(null, null, null, 80, 0));
         List<NucleotideGraphSequenceDocument> documents = new ArrayList<NucleotideGraphSequenceDocument>();
-        documents.add(document);
-        documents.add(document);
+        documents.add(doc);
+        documents.add(doc2);
 
         List<SequenceAlignmentDocument> result = CAP3Runner.assemble(documents,
                                                                      CAP3Options.getDefaultCap3ExecutableName(),
                                                                      40,
-                                                                     90);
+                                                                     90, null, ProgressListener.EMPTY);
         assertEquals(1, result.size());
 
         List<SequenceDocument> sequences = result.get(0).getSequences();
-        assertEquals(3, sequences.size());
+        assertEquals(2, sequences.size());
 
-        for (int i = 1; i < sequences.size(); i++) {
-            String withNoGaps = sequences.get(i).getSequenceString().replace("-", "");
+        for (SequenceDocument seq : sequences) {
+            assertTrue(NucleotideGraphSequenceDocument.class.isAssignableFrom(seq.getClass()));
+            String withNoGaps = seq.getSequenceString().replace("-", "");
             assertEquals(theSequence, withNoGaps);
         }
     }
