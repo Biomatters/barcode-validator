@@ -55,7 +55,7 @@ public class ConsensusUtilities {
         }
     }
 
-    public static ConsensusPosition getBaseForPosition(SequenceAlignmentDocument contigAssembly, int index) throws DocumentOperationException {
+    private static ConsensusPosition getBaseForPosition(SequenceAlignmentDocument contigAssembly, int index) throws DocumentOperationException {
         Map<NucleotideState, Integer> stateToTotalQuality = getStateToTotalQualityMapForPosition(contigAssembly, index);
 
         Set<NucleotideState> stateWithMax = new HashSet<NucleotideState>();
@@ -83,7 +83,7 @@ public class ConsensusUtilities {
         return new ConsensusPosition(getStateForStates(stateWithMax).toString(), quality);
     }
 
-    public static Map<NucleotideState, Integer> getStateToTotalQualityMapForPosition(SequenceAlignmentDocument contigAssembly, int indexInAssembly) throws DocumentOperationException {
+    private static Map<NucleotideState, Integer> getStateToTotalQualityMapForPosition(SequenceAlignmentDocument contigAssembly, int indexInAssembly) throws DocumentOperationException {
         int numSeqs = contigAssembly.getNumberOfSequences();
         Multimap<NucleotideState, Integer> stateToQuality = ArrayListMultimap.create();
         for (int j = 0; j < numSeqs; j++) {
@@ -91,7 +91,9 @@ public class ConsensusUtilities {
             if (sequence instanceof NucleotideGraphSequenceDocument && ((NucleotideGraphSequenceDocument) sequence).hasSequenceQualities()) {
                 int qualityValue = ((NucleotideGraphSequenceDocument) sequence).getSequenceQuality(indexInAssembly);
                 NucleotideState state = Nucleotides.getState(sequence.getCharSequence().charAt(indexInAssembly));
-                stateToQuality.put(state, qualityValue);
+                if(!state.isGap()) {
+                    stateToQuality.put(state, qualityValue);
+                }
             } else {
                 throw new DocumentOperationException("Alignment is missing quality values for " + sequence.getName() + " (index = " + j + ")");
             }

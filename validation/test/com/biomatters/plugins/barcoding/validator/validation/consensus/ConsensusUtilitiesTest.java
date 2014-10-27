@@ -8,6 +8,7 @@ import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleot
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.utilities.CharSequenceUtilities;
 import jebl.evolution.sequences.Nucleotides;
+import jebl.evolution.sequences.State;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -51,6 +52,51 @@ public class ConsensusUtilitiesTest extends Assert {
                 highLowHigh, lowHighHigh);
     }
 
+    @Test
+    public void ignoresGaps() throws DocumentOperationException {
+        DefaultNucleotideGraphSequence seq1 = getTestSequenceWithConsistentQuality("AC-AC", 100);
+        DefaultNucleotideGraphSequence seq2 = getTestSequenceWithConsistentQuality("TTTTT", 50);
+        testConsensusFromSequences("ACTAC", seq1, seq2);
+    }
+
+    @Test
+    public void handlesAmbiguities() throws DocumentOperationException {
+        DefaultNucleotideGraphSequence seq1 = getTestSequenceWithConsistentQuality("R", 100);
+        DefaultNucleotideGraphSequence seq2 = getTestSequenceWithConsistentQuality("A", 50);
+        testConsensusFromSequences("R", seq1, seq2);
+    }
+
+    @Test
+    public void generatesAmbiguitiesWhenQualityEqual() throws DocumentOperationException {
+        DefaultNucleotideGraphSequence seq1 = getTestSequenceWithConsistentQuality("G", 100);
+        DefaultNucleotideGraphSequence seq2 = getTestSequenceWithConsistentQuality("A", 100);
+        testConsensusFromSequences("R", seq1, seq2);
+
+        List<State> states = Nucleotides.getStates();
+        // Inosine is special.  It is exactly the same as D.  So we'll skip it.
+        // Both gap (-) and unknown (?) map to Unknown (N)
+        Map<String, String> specialMappings = new HashMap<String, String>();
+        specialMappings.put("I", "D");
+        specialMappings.put("-", "N");
+        specialMappings.put("?", "N");
+
+        for (State state : states) {
+            String expected = state.toString();
+            if(specialMappings.containsKey(expected)) {
+                expected = specialMappings.get(expected);
+            }
+
+            Set<State> possibles = state.getCanonicalStates();
+            if(possibles.size() > 1) {
+                List<NucleotideGraphSequenceDocument> seqs = new ArrayList<NucleotideGraphSequenceDocument>();
+                for (State possible : possibles) {
+                    seqs.add(getTestSequenceWithConsistentQuality(possible.toString(), 100));
+                }
+                testConsensusFromSequences(expected, seqs.toArray(new NucleotideGraphSequenceDocument[seqs.size()]));
+            }
+        }
+    }
+
     private static String getRandomString(int length) {
         StringBuilder seqBuilder = new StringBuilder(length);
         for (int j = 0; j < length; j++) {
@@ -59,8 +105,8 @@ public class ConsensusUtilitiesTest extends Assert {
         return seqBuilder.toString();
     }
 
-    private static void testConsensusFromSequences(String expectedConsensus, NucleotideGraphSequenceDocument highQualitySeq, NucleotideGraphSequenceDocument lowQualitySeq) throws DocumentOperationException {
-        DefaultAlignmentDocument alignment = new DefaultAlignmentDocument("test", highQualitySeq, lowQualitySeq);
+    private static void testConsensusFromSequences(String expectedConsensus, NucleotideGraphSequenceDocument... sequences) throws DocumentOperationException {
+        DefaultAlignmentDocument alignment = new DefaultAlignmentDocument("test", sequences);
         NucleotideGraphSequenceDocument consensus = ConsensusUtilities.getConsensus(alignment);
         assertEquals(expectedConsensus, consensus.getSequenceString());
     }
