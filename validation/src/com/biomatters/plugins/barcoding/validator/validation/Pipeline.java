@@ -7,8 +7,8 @@ import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Runner;
 import com.biomatters.plugins.barcoding.validator.validation.consensus.ConsensusUtilities;
-import com.biomatters.plugins.barcoding.validator.validation.trimming.ErrorProbabilityOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.SequenceTrimmer;
+import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
 import jebl.util.CompositeProgressListener;
 import jebl.util.ProgressListener;
 
@@ -22,14 +22,14 @@ import java.util.Map;
  */
 public class Pipeline {
     public static void runValidationPipeline(NucleotideSequenceDocument barcode, List<NucleotideGraphSequenceDocument> traces,
-                                      ErrorProbabilityOptions trimmingOptions, CAP3Options CAP3Options,
+                                      TrimmingOptions trimmingOptions, CAP3Options CAP3Options,
                                       Map<String, ValidationOptions> traceValidationOptions,
                                       Map<String, ValidationOptions> barcodeValidationOptions,
                                       ValidationCallback callback, ProgressListener progressListener) throws DocumentOperationException {
         CompositeProgressListener stepsProgress = new CompositeProgressListener(progressListener, 4);
 
         stepsProgress.beginSubtask("Trimming Traces");
-        List<NucleotideGraphSequenceDocument> trimmedTraces = SequenceTrimmer.trimSequences(traces, trimmingOptions.getErrorProbabilityLimit());
+        List<NucleotideGraphSequenceDocument> trimmedTraces = SequenceTrimmer.trimSequencesByQuality(traces, trimmingOptions.getQualityTrimmingOptions().getErrorProbabilityLimit());
 
 
         stepsProgress.beginSubtask("Validating Traces...");

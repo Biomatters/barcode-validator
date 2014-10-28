@@ -49,7 +49,7 @@ public class TrimmingTest extends Assert {
 
     private void testTrim(NucleotideGraphSequenceDocument document, int fromBeginning, int fromEnd) {
         Trimmage trimmage = new Trimmage(fromBeginning, fromEnd);
-        NucleotideGraphSequenceDocument trimmedDocument = SequenceTrimmer.trimSequence(document, trimmage);
+        NucleotideGraphSequenceDocument trimmedDocument = SequenceTrimmer.trimSequenceUsingTrimmage(document, trimmage);
 
         String originalSequence = document.getSequenceString();
         int[][] originalChromatograms = DefaultNucleotideGraph.getChromatogramValues(document);

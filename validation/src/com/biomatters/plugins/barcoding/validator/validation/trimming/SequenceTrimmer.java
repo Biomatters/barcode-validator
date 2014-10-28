@@ -2,6 +2,7 @@ package com.biomatters.plugins.barcoding.validator.validation.trimming;
 
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.SequenceExtractionUtilities;
+import com.biomatters.geneious.publicapi.implementations.sequence.OligoSequenceDocument;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,12 +26,20 @@ public class SequenceTrimmer {
      * @param errorProbabilityLimit Error probability limit for the modified mott algorithm.
      * @return Trimmed {@link com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument}s.
      */
-    public static List<NucleotideGraphSequenceDocument> trimSequences(List<NucleotideGraphSequenceDocument> documents, double errorProbabilityLimit) {
+    public static List<NucleotideGraphSequenceDocument> trimSequencesByQuality(List<NucleotideGraphSequenceDocument> documents, double errorProbabilityLimit) {
         List<NucleotideGraphSequenceDocument> trimmedSequences = new ArrayList<NucleotideGraphSequenceDocument>();
         for (NucleotideGraphSequenceDocument sequence : documents) {
-            trimmedSequences.add(trimSequence(sequence, ErrorProbabilityTrimmer.getTrimmage(sequence, TrimmableEnds.Both, errorProbabilityLimit)));
+            trimmedSequences.add(trimSequenceUsingTrimmage(sequence, ErrorProbabilityTrimmer.getTrimmage(sequence, TrimmableEnds.Both, errorProbabilityLimit)));
         }
         return trimmedSequences;
+    }
+
+    public static List<NucleotideGraphSequenceDocument> trimSequencesByPrimer(List<NucleotideGraphSequenceDocument> documents, List<OligoSequenceDocument> primers) {
+        return null;
+    }
+
+    public static NucleotideGraphSequenceDocument trimSequenceByPrimer(NucleotideGraphSequenceDocument document, OligoSequenceDocument primer) {
+        return null;
     }
 
     /**
@@ -38,7 +47,7 @@ public class SequenceTrimmer {
      * @param trimmage Region lengths to trim
      * @return Trimmed {@link com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument}
      */
-    static NucleotideGraphSequenceDocument trimSequence(NucleotideGraphSequenceDocument document, Trimmage trimmage) {
+    static NucleotideGraphSequenceDocument trimSequenceUsingTrimmage(NucleotideGraphSequenceDocument document, Trimmage trimmage) {
         SequenceExtractionUtilities.ExtractionOptions options = new SequenceExtractionUtilities.ExtractionOptions(
                 trimmage.getNonTrimmedInterval(document.getSequenceLength()));
         options.setOverrideName(document.getName() + " trimmed");

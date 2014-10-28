@@ -13,6 +13,8 @@ import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Option
 import com.biomatters.plugins.barcoding.validator.validation.input.Input;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.ErrorProbabilityOptions;
+import com.biomatters.plugins.barcoding.validator.validation.trimming.PrimerTrimmingOptions;
+import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
 import jebl.util.CompositeProgressListener;
 import jebl.util.ProgressListener;
 
@@ -75,7 +77,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
         /* Get options. */
         InputOptions inputSplitterOptions = barcodeValidatorOptions.getInputOptions();
-        ErrorProbabilityOptions trimmingOptions = barcodeValidatorOptions.getTrimmingOptions();
+        TrimmingOptions trimmingOptions = barcodeValidatorOptions.getTrimmingOptions();
         CAP3Options CAP3Options = barcodeValidatorOptions.getAssemblyOptions();
         Map<String, ValidationOptions> traceValidationOptions = barcodeValidatorOptions.getTraceValidationOptions();
         Map<String, ValidationOptions> barcodeValidationOptions = barcodeValidatorOptions.getBarcodeValidationOptions();

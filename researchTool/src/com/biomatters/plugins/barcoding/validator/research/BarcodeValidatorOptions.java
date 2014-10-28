@@ -8,6 +8,8 @@ import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.ErrorProbabilityOptions;
+import com.biomatters.plugins.barcoding.validator.validation.trimming.PrimerTrimmingOptions;
+import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,8 +41,8 @@ public class BarcodeValidatorOptions extends Options {
         return (InputOptions)getChildOptions().get(INPUT_OPTIONS_NAME);
     }
 
-    public ErrorProbabilityOptions getTrimmingOptions() {
-        return (ErrorProbabilityOptions)getChildOptions().get(TRIMMING_OPTIONS_NAME);
+    public TrimmingOptions getTrimmingOptions() {
+        return (TrimmingOptions)getChildOptions().get(TRIMMING_OPTIONS_NAME);
     }
 
     /**
@@ -70,7 +72,7 @@ public class BarcodeValidatorOptions extends Options {
     }
 
     private void addTrimmingOptions() {
-        addCollapsibleChildOptions(TRIMMING_OPTIONS_NAME, "Trimming", "", new ErrorProbabilityOptions(), false, true);
+        addCollapsibleChildOptions(TRIMMING_OPTIONS_NAME, "Trimming", "", new TrimmingOptions(BarcodeValidatorOptions.class), false, false);
     }
 
     private void addValidationOptions(List<? extends Validation> validations, String name, String label) {
@@ -82,7 +84,7 @@ public class BarcodeValidatorOptions extends Options {
         }
 
         if (!validations.isEmpty()) {
-            validationOptions.addChildOptionsPageChooser("chooser", "Validation steps: ", Collections.<String>emptyList(), PageChooserType.BUTTONS, true);
+            validationOptions.addChildOptionsPageChooser("validationChooser", "Validation steps: ", Collections.<String>emptyList(), PageChooserType.BUTTONS, true);
         }
 
         addCollapsibleChildOptions(name, label, "", validationOptions, false, true);
