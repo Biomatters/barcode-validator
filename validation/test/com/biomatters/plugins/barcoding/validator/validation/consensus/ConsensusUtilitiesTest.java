@@ -43,38 +43,39 @@ public class ConsensusUtilitiesTest extends Assert {
     public void usesHighestQualityValue() throws DocumentOperationException {
         DefaultNucleotideGraphSequence highQualitySeq = getTestSequenceWithConsistentQuality(getRandomString(50), 100);
         DefaultNucleotideGraphSequence lowQualitySeq = getTestSequenceWithConsistentQuality(getRandomString(50), 20);
-        testConsensusFromSequences(highQualitySeq.getSequenceString(), highQualitySeq, lowQualitySeq);
+        testConsensusFromSequences(highQualitySeq.getSequenceString(), null, highQualitySeq, lowQualitySeq);
 
         NucleotideGraphSequenceDocument highLowHigh = concatenate(highQualitySeq, lowQualitySeq, highQualitySeq);
         NucleotideGraphSequenceDocument lowHighHigh = concatenate(lowQualitySeq, highQualitySeq, highQualitySeq);
         testConsensusFromSequences(
                 CharSequenceUtilities.repeatedCharSequence(highQualitySeq.getCharSequence(), 3).toString(),
-                highLowHigh, lowHighHigh);
+                null, highLowHigh, lowHighHigh);
     }
 
     @Test
     public void ignoresGaps() throws DocumentOperationException {
         DefaultNucleotideGraphSequence seq1 = getTestSequenceWithConsistentQuality("AC-AC", 100);
         DefaultNucleotideGraphSequence seq2 = getTestSequenceWithConsistentQuality("TTTTT", 50);
-        testConsensusFromSequences("ACTAC", seq1, seq2);
+        testConsensusFromSequences("ACTAC", new int[]{50, 50, 50, 50, 50}, seq1, seq2);
     }
 
     @Test
     public void handlesAmbiguities() throws DocumentOperationException {
         DefaultNucleotideGraphSequence seq1 = getTestSequenceWithConsistentQuality("R", 100);
         DefaultNucleotideGraphSequence seq2 = getTestSequenceWithConsistentQuality("A", 50);
-        testConsensusFromSequences("A", seq1, seq2);
+        testConsensusFromSequences("A", new int[]{150}, seq1, seq2);
 
         seq1 = getTestSequence("TACTRD", new int[]{11, 44, 44,1,41,33});
         seq2 = getTestSequence("GTGAMB", new int[]{55, 20, 50,1,41,33});
-        testConsensusFromSequences("GAGWAK", seq1, seq2);
+        testConsensusFromSequences("GAGWAK", new int[]{44, 24, 6, 2, 82, 66}, seq1, seq2);
     }
 
     @Test
     public void generatesAmbiguitiesWhenQualityEqual() throws DocumentOperationException {
-        DefaultNucleotideGraphSequence seq1 = getTestSequenceWithConsistentQuality("G", 100);
-        DefaultNucleotideGraphSequence seq2 = getTestSequenceWithConsistentQuality("A", 100);
-        testConsensusFromSequences("R", seq1, seq2);
+        int qualityValue = 100;
+        DefaultNucleotideGraphSequence seq1 = getTestSequenceWithConsistentQuality("G", qualityValue);
+        DefaultNucleotideGraphSequence seq2 = getTestSequenceWithConsistentQuality("A", qualityValue);
+        testConsensusFromSequences("R", new int[]{qualityValue*2}, seq1, seq2);
 
         List<State> states = Nucleotides.getStates();
         // Inosine is special.  It is exactly the same as D.  So we'll skip it.
@@ -94,9 +95,9 @@ public class ConsensusUtilitiesTest extends Assert {
             if(possibles.size() > 1) {
                 List<NucleotideGraphSequenceDocument> seqs = new ArrayList<NucleotideGraphSequenceDocument>();
                 for (State possible : possibles) {
-                    seqs.add(getTestSequenceWithConsistentQuality(possible.toString(), 100));
+                    seqs.add(getTestSequenceWithConsistentQuality(possible.toString(), qualityValue));
                 }
-                testConsensusFromSequences(expected, seqs.toArray(new NucleotideGraphSequenceDocument[seqs.size()]));
+                testConsensusFromSequences(expected, new int[]{qualityValue*seqs.size()}, seqs.toArray(new NucleotideGraphSequenceDocument[seqs.size()]));
             }
         }
     }
@@ -109,10 +110,13 @@ public class ConsensusUtilitiesTest extends Assert {
         return seqBuilder.toString();
     }
 
-    private static void testConsensusFromSequences(String expectedConsensus, NucleotideGraphSequenceDocument... sequences) throws DocumentOperationException {
+    private static void testConsensusFromSequences(String expectedConsensus, int[] expectedQuality, NucleotideGraphSequenceDocument... sequences) throws DocumentOperationException {
         DefaultAlignmentDocument alignment = new DefaultAlignmentDocument("test", sequences);
         NucleotideGraphSequenceDocument consensus = ConsensusUtilities.getConsensus(alignment);
         assertEquals(expectedConsensus, consensus.getSequenceString());
+        if(expectedQuality != null) {
+            assertArrayEquals(expectedQuality, DefaultNucleotideGraph.getSequenceQualities(consensus));
+        }
     }
 
     private static NucleotideGraphSequenceDocument concatenate(NucleotideGraphSequenceDocument... seqs) {
@@ -132,10 +136,14 @@ public class ConsensusUtilitiesTest extends Assert {
     }
 
     private static void testSimpleConsensus(String testString) throws DocumentOperationException {
-        DefaultNucleotideGraphSequence seq1 = getTestSequenceWithConsistentQuality(testString, 50);
-        DefaultNucleotideGraphSequence seq2 = getTestSequenceWithConsistentQuality(testString, 50);
+        int qualityValue = 50;
+        DefaultNucleotideGraphSequence seq1 = getTestSequenceWithConsistentQuality(testString, qualityValue);
+        DefaultNucleotideGraphSequence seq2 = getTestSequenceWithConsistentQuality(testString, qualityValue);
 
-        testConsensusFromSequences(testString, seq1, seq2);
+        int[] qualities = new int[testString.length()];
+        Arrays.fill(qualities, qualityValue*2);
+
+        testConsensusFromSequences(testString, qualities, seq1, seq2);
     }
 
     private static DefaultNucleotideGraphSequence getTestSequenceWithConsistentQuality(String charSequence, int qualityValue) {

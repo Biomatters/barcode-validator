@@ -56,34 +56,62 @@ public class ConsensusUtilities {
     }
 
     private static ConsensusPosition getBaseForPosition(SequenceAlignmentDocument contigAssembly, int index) throws DocumentOperationException {
-        Map<NucleotideState, Integer> stateToTotalQuality = getStateToTotalQualityMapForPosition(contigAssembly, index);
+        Map<State, Integer> stateToTotalQuality = getStateToTotalQualityMapForPosition(contigAssembly, index);
+        Map<State, Integer> canonicalStatesToTotalQuality = getCanonicalStatesToTotalQuality(stateToTotalQuality);
 
-        Set<NucleotideState> stateWithMax = new HashSet<NucleotideState>();
+        Set<State> statesWithMax = new HashSet<State>();
         Integer max = 0;
-        for (Map.Entry<NucleotideState, Integer> entry : stateToTotalQuality.entrySet()) {
+        for (Map.Entry<State, Integer> entry : canonicalStatesToTotalQuality.entrySet()) {
             int total = entry.getValue();
             if (total > max) {
-                stateWithMax.clear();
+                statesWithMax.clear();
                 max = total;
-                stateWithMax.add(entry.getKey());
+                statesWithMax.add(entry.getKey());
             } else if (total == max) {
-                stateWithMax.add(entry.getKey());
+                statesWithMax.add(entry.getKey());
             }
         }
 
         int quality = 0;
-        for (Map.Entry<NucleotideState, Integer> entry : stateToTotalQuality.entrySet()) {
-            if(stateWithMax.contains(entry.getKey())) {
+        for (Map.Entry<State, Integer> entry : stateToTotalQuality.entrySet()) {
+            boolean contributes = false;
+            for (State state : entry.getKey().getCanonicalStates()) {
+                if(statesWithMax.contains(state)) {
+                    contributes = true;
+                }
+            }
+
+            if(contributes) {
                 quality += entry.getValue();
             } else {
                 quality -= entry.getValue();
             }
         }
 
-        return new ConsensusPosition(getStateForStates(stateWithMax).toString(), quality);
+        return new ConsensusPosition(getNucleotideStateForStates(statesWithMax).toString(), quality);
     }
 
-    private static Map<NucleotideState, Integer> getStateToTotalQualityMapForPosition(SequenceAlignmentDocument contigAssembly, int indexInAssembly) throws DocumentOperationException {
+    private static Map<State, Integer> getCanonicalStatesToTotalQuality(Map<State, Integer> stateToTotalQuality) {
+        Map<State, Integer> canonicalStatesToTotalQuality = new HashMap<State, Integer>();
+        for (State state : Nucleotides.getStates()) {
+            Integer qualityForState = stateToTotalQuality.get(state);
+            if(qualityForState == null) {
+                continue;
+            }
+            for (State _canonicalState : state.getCanonicalStates()) {
+                NucleotideState canonicalState = (NucleotideState) _canonicalState;
+                Integer current = canonicalStatesToTotalQuality.get(canonicalState);
+                if(current == null) {
+                    canonicalStatesToTotalQuality.put(canonicalState, qualityForState);
+                } else {
+                    canonicalStatesToTotalQuality.put(canonicalState, current + qualityForState);
+                }
+            }
+        }
+        return canonicalStatesToTotalQuality;
+    }
+
+    private static Map<State, Integer> getStateToTotalQualityMapForPosition(SequenceAlignmentDocument contigAssembly, int indexInAssembly) throws DocumentOperationException {
         int numSeqs = contigAssembly.getNumberOfSequences();
         Multimap<NucleotideState, Integer> stateToQuality = ArrayListMultimap.create();
         for (int j = 0; j < numSeqs; j++) {
@@ -92,15 +120,13 @@ public class ConsensusUtilities {
                 int qualityValue = ((NucleotideGraphSequenceDocument) sequence).getSequenceQuality(indexInAssembly);
                 NucleotideState state = Nucleotides.getState(sequence.getCharSequence().charAt(indexInAssembly));
                 if(!state.isGap()) {
-                    for (State canonicalState : state.getCanonicalStates()) {
-                        stateToQuality.put((NucleotideState)canonicalState, qualityValue);
-                    }
+                    stateToQuality.put(state, qualityValue);
                 }
             } else {
                 throw new DocumentOperationException("Alignment is missing quality values for " + sequence.getName() + " (index = " + j + ")");
             }
         }
-        Map<NucleotideState, Integer> stateToTotalQuality = new HashMap<NucleotideState, Integer>();
+        Map<State, Integer> stateToTotalQuality = new HashMap<State, Integer>();
         for (Map.Entry<NucleotideState, Collection<Integer>> entry : stateToQuality.asMap().entrySet()) {
             int total = 0;
             for (Integer toAdd : entry.getValue()) {
@@ -116,7 +142,7 @@ public class ConsensusUtilities {
      * @param states The canonical states.  Must be one of {@link jebl.evolution.sequences.Nucleotides#getCanonicalStates()}.
      * @return a {@link jebl.evolution.sequences.State} representing the supplied canonical states.
      */
-    private static State getStateForStates(Set<NucleotideState> states) {
+    private static State getNucleotideStateForStates(Set<State> states) {
         if(states.size() == 1) {
             return states.iterator().next();
         } else {
