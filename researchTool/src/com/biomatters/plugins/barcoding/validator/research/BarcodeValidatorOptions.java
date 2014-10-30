@@ -1,6 +1,8 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.plugin.Options;
+import com.biomatters.plugins.barcoding.validator.research.options.IntegerMultiValueOption;
+import com.biomatters.plugins.barcoding.validator.research.options.MultiValueOption;
 import com.biomatters.plugins.barcoding.validator.validation.BarcodeCompareValidation;
 import com.biomatters.plugins.barcoding.validator.validation.TraceValidation;
 import com.biomatters.plugins.barcoding.validator.validation.Validation;
@@ -35,6 +37,26 @@ public class BarcodeValidatorOptions extends Options {
         addTraceValidationOptions();
         addAssemblyOptions();
         addBarcodeValidationOptions();
+
+        addMinMax(this);
+    }
+
+    private static void addMinMax(Options options) {
+        for (Option option : options.getOptions()) {
+            MultiValueOption multiValueOption = null;
+            if(option instanceof IntegerOption) {
+                multiValueOption = new IntegerMultiValueOption((IntegerOption) option);
+            }
+
+            if(multiValueOption != null) {
+                option.setVisible(false);
+                options.addCustomOption(multiValueOption);
+            }
+        }
+
+        for (Options childOptions : options.getChildOptions().values()) {
+            addMinMax(childOptions);
+        }
     }
 
     public InputOptions getInputOptions() {
