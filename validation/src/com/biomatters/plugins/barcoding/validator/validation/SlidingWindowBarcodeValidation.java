@@ -7,13 +7,12 @@ import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
  * @author Gen Li
  *         Created on 29/09/14 3:03 PM
  */
-public class SlidingWindowBarcodeValidation extends SingleBarcodeValidaton {
+public class SlidingWindowBarcodeValidation  {  //remove "extends" to prevent BarcodeValidation load it, since it is not available now
     /**
      * @param barcodeSequence The user supplied barcode.
      * @param options options Options obtained from calling {@link #getOptions()}
      * @return a {@link com.biomatters.plugins.barcoding.validator.validation.ValidationResult}.
      */
-    @Override
     public ValidationResult validate(NucleotideGraphSequenceDocument barcodeSequence, ValidationOptions options) {
         if (!(options instanceof SlidingWindowValidationOptions)) {
             throw new IllegalArgumentException(
@@ -41,7 +40,6 @@ public class SlidingWindowBarcodeValidation extends SingleBarcodeValidaton {
     /**
      * @return Associated options.
      */
-    @Override
     public ValidationOptions getOptions() {
         return new SlidingWindowValidationOptions(SlidingWindowBarcodeValidation.class);
     }
