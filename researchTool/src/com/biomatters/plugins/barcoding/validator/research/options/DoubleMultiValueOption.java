@@ -35,7 +35,7 @@ public class DoubleMultiValueOption extends MultiValueOption<Double> {
     @Override
     List<Double> getForSteps(Double min, Double max, Double step) {
         List<Double> results = new ArrayList<Double>();
-        for (double i = min; i < max; i+=step) {
+        for (double i = min; i < max; i=Double.valueOf(String.format("%.2f", i+step))) {
             results.add(i);
         }
         results.add(max);

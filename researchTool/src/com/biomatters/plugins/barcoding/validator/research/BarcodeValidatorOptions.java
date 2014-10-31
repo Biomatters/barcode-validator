@@ -1,6 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.plugin.Options;
+import com.biomatters.plugins.barcoding.validator.research.options.DoubleMultiValueOption;
 import com.biomatters.plugins.barcoding.validator.research.options.IntegerMultiValueOption;
 import com.biomatters.plugins.barcoding.validator.research.options.MultiValueOption;
 import com.biomatters.plugins.barcoding.validator.validation.BarcodeCompareValidation;
@@ -9,8 +10,6 @@ import com.biomatters.plugins.barcoding.validator.validation.Validation;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
-import com.biomatters.plugins.barcoding.validator.validation.trimming.ErrorProbabilityOptions;
-import com.biomatters.plugins.barcoding.validator.validation.trimming.PrimerTrimmingOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
 
 import java.util.Collections;
@@ -46,6 +45,8 @@ public class BarcodeValidatorOptions extends Options {
             MultiValueOption multiValueOption = null;
             if(option instanceof IntegerOption) {
                 multiValueOption = new IntegerMultiValueOption((IntegerOption) option);
+            } else if(option instanceof DoubleOption) {
+                multiValueOption = new DoubleMultiValueOption((DoubleOption)option);
             }
 
             if(multiValueOption != null) {
