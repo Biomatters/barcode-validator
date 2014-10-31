@@ -87,13 +87,13 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
             }
 
             if (processId == null) {
-                throw new DocumentOperationException("No associated barcode was found for trace '" + traceName + "'.");
+                throw new DocumentOperationException("the trace " + traceName + " was not found in the TRACE_FILE_INFO.txt mapping file.");
             }
 
             NucleotideSequenceDocument barcode = processIdToBarcode.get(processId);
 
             if (processIdToBarcode.get(processId) == null) {
-                throw new DocumentOperationException("No associated barcode was found for trace '" + traceName + "'.");
+                throw new DocumentOperationException("the trace " + traceName + " was not found in the TRACE_FILE_INFO.txt mapping file.");
             }
 
             result.get(barcode).add(trace);
