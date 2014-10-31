@@ -56,7 +56,15 @@ public abstract class MultiValueOption<T extends Number> extends Options.Option<
 
     @Override
     protected void setValueOnComponent(MultiValueOption.Component component, List<T> list) {
-        component.textField.setText(StringUtilities.join(SEPARATOR, list));
+        List<String> stringList = new ArrayList<String>();
+        for (T item : list) {
+            if(item instanceof Double) {
+                stringList.add(String.format("%.2f", (Double)item));
+            } else {
+                stringList.add(item.toString());
+            }
+        }
+        component.textField.setText(StringUtilities.join(SEPARATOR, stringList));
     }
 
 
@@ -80,7 +88,7 @@ public abstract class MultiValueOption<T extends Number> extends Options.Option<
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     SetterOptions<T> options = new SetterOptions<T>(option);
-                    boolean change = Dialogs.showOptionsDialog(options, "Edit", false);
+                    boolean change = Dialogs.showOptionsDialog(options, "Edit", true);
                     if(change) {
                         option.setValue(options.getValues());
                     }
@@ -107,7 +115,7 @@ public abstract class MultiValueOption<T extends Number> extends Options.Option<
                     Options.Alignment.VERTICAL_ALIGN);
             stepSizeOptions = new StepSizeOptions<T>(option);
             addChildOptions("steps", "", null, stepSizeOptions);
-            methodOption.addDependent(STEPS, stepSizeOptions, false);
+            methodOption.addDependent(STEPS, stepSizeOptions, true);
 
             Options exactOptions = new Options(MultiValueOption.class);
             addChildOptions("exact", "", null, exactOptions);
