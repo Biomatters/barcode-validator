@@ -1,6 +1,9 @@
 package com.biomatters.plugins.barcoding.validator.research.options;
 
+import com.biomatters.geneious.publicapi.documents.XMLSerializationException;
+import com.biomatters.geneious.publicapi.documents.XMLSerializer;
 import com.biomatters.geneious.publicapi.plugin.Options;
+import org.jdom.Element;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -14,8 +17,23 @@ public class IntegerMultiValueOption extends MultiValueOption<Integer> {
 
     private Options.IntegerOption baseOption;
     public IntegerMultiValueOption(Options.IntegerOption option) {
-        super(option.getName()+"range", option.getLabel(), option.getDefaultValue());
+        super(option.getName()+SUFFIX, option.getLabel(), option.getDefaultValue());
         this.baseOption = option;
+    }
+
+    private static final String BASE_OPTION_KEY = "baseOption";
+
+    @Override
+    public Element toXML() {
+        Element root = super.toXML();
+        root.addContent(XMLSerializer.classToXML(BASE_OPTION_KEY, baseOption));
+        return root;
+    }
+
+    @SuppressWarnings("UnusedDeclaration")
+    public IntegerMultiValueOption(Element element) throws XMLSerializationException {
+        super(element);
+        baseOption = XMLSerializer.classFromXML(element.getChild(BASE_OPTION_KEY), Options.IntegerOption.class);
     }
 
     @Override

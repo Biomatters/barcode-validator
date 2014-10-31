@@ -3,8 +3,10 @@ package com.biomatters.plugins.barcoding.validator.research.options;
 import com.biomatters.geneious.publicapi.components.Dialogs;
 import com.biomatters.geneious.publicapi.components.GPanel;
 import com.biomatters.geneious.publicapi.components.GTextField;
+import com.biomatters.geneious.publicapi.documents.XMLSerializationException;
 import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.geneious.publicapi.utilities.StringUtilities;
+import org.jdom.Element;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,8 +25,14 @@ public abstract class MultiValueOption<T extends Number> extends Options.Option<
 
     private static final String SEPARATOR = ",";
 
+    public static final String SUFFIX = "_range";
+
     MultiValueOption(String name, String label, T... defaultValue) {
         super(name, label, Arrays.asList(defaultValue));
+    }
+
+    protected MultiValueOption(Element element) throws XMLSerializationException {
+        super(element);
     }
 
     /**
