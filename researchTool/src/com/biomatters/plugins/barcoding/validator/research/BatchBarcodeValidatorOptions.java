@@ -4,6 +4,8 @@ import com.biomatters.plugins.barcoding.validator.research.options.BatchOptions;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
 
 /**
+ * A {@link com.biomatters.plugins.barcoding.validator.research.options.BatchOptions} for the Barcode Validator Operation
+ *
  * @author Matthew Cheung
  *         Created on 31/10/14 2:57 PM
  */

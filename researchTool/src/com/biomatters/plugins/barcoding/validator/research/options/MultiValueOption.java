@@ -16,7 +16,8 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * An option that supports setting multiple values
+ * An option that supports setting multiple values.  Either by specifying them exactly using {@link com.biomatters.geneious.publicapi.plugin.Options.MultipleOptions}
+ * or by specifying a min, max and step size.
  *
  * @author Matthew Cheung
  *         Created on 31/10/14 9:39 AM
@@ -82,11 +83,11 @@ public abstract class MultiValueOption<T extends Number> extends Options.Option<
         return new MultiValueOption.Component<T>(this, getDefaultValue());
     }
 
-    public static class Component<T extends Number> extends GPanel {
+    static class Component<T extends Number> extends GPanel {
 
         private JTextField textField;
 
-        public Component(final MultiValueOption<T> option, List<T> defaultValue) {
+        private Component(final MultiValueOption<T> option, List<T> defaultValue) {
             super(new BorderLayout());
             textField = new GTextField(StringUtilities.join(SEPARATOR, defaultValue));
             textField.setMinimumSize(textField.getPreferredSize());
@@ -134,7 +135,7 @@ public abstract class MultiValueOption<T extends Number> extends Options.Option<
             methodOption.addDependent(EXACT, exactOptions, true);
         }
 
-        List<T> getValues() {
+        private List<T> getValues() {
             if(methodOption.getValue() == EXACT) {
                 List<T> result = new ArrayList<T>();
                 List<Options> values = exactValues.getValues();

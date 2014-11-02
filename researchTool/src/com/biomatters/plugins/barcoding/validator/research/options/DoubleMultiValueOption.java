@@ -7,6 +7,7 @@ import org.jdom.Element;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -61,6 +62,9 @@ public class DoubleMultiValueOption extends MultiValueOption<Double> {
 
     @Override
     List<Double> getForSteps(Double min, Double max, Double step) {
+        if(step <= 0) {
+            return Collections.singletonList(min);
+        }
         // Must do this because of precision issue with DoubleOption 0.15 is really 0.15000000002
         max = getDoubleRounded(max);
 

@@ -7,6 +7,7 @@ import org.jdom.Element;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -61,6 +62,9 @@ public class IntegerMultiValueOption extends MultiValueOption<Integer> {
 
     @Override
     List<Integer> getForSteps(Integer min, Integer max, Integer step) {
+        if(step <= 0) {
+            return Collections.singletonList(min);
+        }
         List<Integer> results = new ArrayList<Integer>();
         for (int i = min; i < max; i+=step) {
             results.add(i);

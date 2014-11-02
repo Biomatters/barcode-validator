@@ -27,19 +27,25 @@ import java.util.*;
  *         Created on 31/10/14 2:55 PM
  */
 public abstract class BatchOptions<T extends Options> extends Options {
+    static final String WRAPPED_OPTIONS_KEY = "child";
     private T options;
 
     public BatchOptions(T options) {
         super(options.getClass());
         this.options = options;
         addFirstOptions();
-        addChildOptions("child", "", null, options);
-        addMinMax(options);
+        addChildOptions(WRAPPED_OPTIONS_KEY, "", null, options);
+        addMinMaxOptionsAndHideOriginal(options);
     }
 
+    /**
+     * Add any Options that should appear before the wrapped Options in the user interface.
+     * <br/><br/>
+     * If there are none then this method should do nothing.
+     */
     protected abstract void addFirstOptions();
 
-    private static void addMinMax(Options options) {
+    private static void addMinMaxOptionsAndHideOriginal(Options options) {
         for (Options.Option option : options.getOptions()) {
             MultiValueOption multiValueOption = null;
             if(option instanceof Options.IntegerOption) {
@@ -55,10 +61,14 @@ public abstract class BatchOptions<T extends Options> extends Options {
         }
 
         for (Options childOptions : options.getChildOptions().values()) {
-            addMinMax(childOptions);
+            addMinMaxOptionsAndHideOriginal(childOptions);
         }
     }
 
+    /**
+     *
+     * @return The number of iterations for the iterator that will be returned from {@link #iterator()}
+     */
     public int getBatchSize() {
         return getBatchSize(this);
     }
