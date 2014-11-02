@@ -42,7 +42,9 @@ public abstract class MultiValueOption<T extends Number> extends Options.Option<
      */
     abstract T getSingleValueFromString(String valueString);
 
-    abstract Options.Option<T, ? extends JComponent> addOption(Options options, String name, String label);
+    abstract String singleValueToString(T singleValue);
+
+    abstract Options.Option<T, ? extends JComponent> addOption(Options options, String name, String label, boolean useMinMax);
 
     abstract List<T> getForSteps(T min, T max, T step);
 
@@ -60,19 +62,18 @@ public abstract class MultiValueOption<T extends Number> extends Options.Option<
         return list;
     }
 
-
+    @Override
+    public String getValueAsString(List<T> value) {
+        List<String> stringList = new ArrayList<String>();
+        for (T item : value) {
+            stringList.add(singleValueToString(item));
+        }
+        return StringUtilities.join(SEPARATOR, stringList);
+    }
 
     @Override
     protected void setValueOnComponent(MultiValueOption.Component component, List<T> list) {
-        List<String> stringList = new ArrayList<String>();
-        for (T item : list) {
-            if(item instanceof Double) {
-                stringList.add(String.format("%.2f", (Double)item));
-            } else {
-                stringList.add(item.toString());
-            }
-        }
-        component.textField.setText(StringUtilities.join(SEPARATOR, stringList));
+        component.textField.setText(getValueAsString(list));
     }
 
 
@@ -128,7 +129,7 @@ public abstract class MultiValueOption<T extends Number> extends Options.Option<
             Options exactOptions = new Options(MultiValueOption.class);
             addChildOptions("exact", "", null, exactOptions);
             Options template = new Options(MultiValueOption.class);
-            option.addOption(template, option.getName(), option.getLabel());
+            option.addOption(template, option.getName(), option.getLabel(), true);
             exactValues = exactOptions.addMultipleOptions("value", template, false);
             methodOption.addDependent(EXACT, exactOptions, true);
         }

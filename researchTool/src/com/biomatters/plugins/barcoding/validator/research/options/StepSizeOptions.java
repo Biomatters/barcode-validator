@@ -20,9 +20,9 @@ class StepSizeOptions<T extends Number> extends Options {
     StepSizeOptions(MultiValueOption<T> baseOption) {
         this.baseOption = baseOption;
         beginAlignHorizontally(baseOption.getLabel(), false);
-        minOption = baseOption.addOption(this, "min", "Min Value:");
-        maxOption = baseOption.addOption(this, "max", "Max Value:");
-        stepOption = baseOption.addOption(this, "step", "Step Size:");
+        minOption = baseOption.addOption(this, "min", "Min Value:", true);
+        maxOption = baseOption.addOption(this, "max", "Max Value:", true);
+        stepOption = baseOption.addOption(this, "step", "Step Size:", false);
         endAlignHorizontally();
     }
 

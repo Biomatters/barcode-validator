@@ -46,8 +46,17 @@ public class IntegerMultiValueOption extends MultiValueOption<Integer> {
     }
 
     @Override
-    Options.Option<Integer, ? extends JComponent> addOption(Options options, String name, String label) {
-        return options.addIntegerOption(name, label, baseOption.getDefaultValue(), baseOption.getMinimum(), baseOption.getMaximum());
+    String singleValueToString(Integer singleValue) {
+        return singleValue.toString();
+    }
+
+    @Override
+    Options.Option<Integer, ? extends JComponent> addOption(Options options, String name, String label, boolean useMinMax) {
+        if(useMinMax) {
+            return options.addIntegerOption(name, label, baseOption.getDefaultValue(), baseOption.getMinimum(), baseOption.getMaximum());
+        } else {
+            return options.addIntegerOption(name, label, 0);
+        }
     }
 
     @Override
