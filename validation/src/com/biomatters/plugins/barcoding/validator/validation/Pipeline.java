@@ -21,16 +21,18 @@ import java.util.Map;
  *         Created on 24/10/14 3:57 PM
  */
 public class Pipeline {
-    public static void runValidationPipeline(NucleotideSequenceDocument barcode, List<NucleotideGraphSequenceDocument> traces,
-                                      TrimmingOptions trimmingOptions, CAP3Options CAP3Options,
-                                      Map<String, ValidationOptions> traceValidationOptions,
-                                      Map<String, ValidationOptions> barcodeValidationOptions,
-                                      ValidationCallback callback, ProgressListener progressListener) throws DocumentOperationException {
+    public static void runValidationPipeline(NucleotideSequenceDocument barcode,
+                                             List<NucleotideGraphSequenceDocument> traces,
+                                             TrimmingOptions trimmingOptions,
+                                             CAP3Options CAP3Options,
+                                             Map<String, ValidationOptions> traceValidationOptions,
+                                             Map<String, ValidationOptions> barcodeValidationOptions,
+                                             ValidationCallback callback,
+                                             ProgressListener progressListener) throws DocumentOperationException {
         CompositeProgressListener stepsProgress = new CompositeProgressListener(progressListener, 4);
 
         stepsProgress.beginSubtask("Trimming Traces");
-        List<NucleotideGraphSequenceDocument> trimmedTraces = SequenceTrimmer.trimSequencesByQuality(traces, trimmingOptions.getQualityTrimmingOptions().getErrorProbabilityLimit());
-
+        List<NucleotideGraphSequenceDocument> trimmedTraces = trimTraces(traces, trimmingOptions, progressListener);
 
         stepsProgress.beginSubtask("Validating Traces...");
         CompositeProgressListener traceValidationProgress = new CompositeProgressListener(stepsProgress, 3);
@@ -90,8 +92,8 @@ public class Pipeline {
         };
     }
 
-    private static ValidationRunner<BarcodeValidation> createBarcodeValidationRunnerForInput(
-            final NucleotideSequenceDocument barcode, final List<NucleotideSequenceDocument> consensus) {
+    private static ValidationRunner<BarcodeValidation> createBarcodeValidationRunnerForInput(final NucleotideSequenceDocument barcode,
+                                                                                             final List<NucleotideSequenceDocument> consensus) {
         return new ValidationRunner<BarcodeValidation>() {
             @Override
             ValidationResult run(BarcodeValidation validation, ValidationOptions options) throws DocumentOperationException {
@@ -113,8 +115,8 @@ public class Pipeline {
     }
 
     private static void addValidationResultsToCallback(ValidationCallback callback,
-                                               List<ValidationRun> runs,
-                                               ProgressListener progressListener) throws DocumentOperationException {
+                                                       List<ValidationRun> runs,
+                                                       ProgressListener progressListener) throws DocumentOperationException {
         CompositeProgressListener addTraceValidationResultsProgress = new CompositeProgressListener(progressListener, runs.size());
 
         for (ValidationRun run : runs) {
@@ -136,12 +138,10 @@ public class Pipeline {
      *
      * @throws com.biomatters.geneious.publicapi.plugin.DocumentOperationException if a problem occurs during validation
      */
-    private static <T extends Validation> List<ValidationRun> runValidationTasks(
-            Map<String, ValidationOptions> options,
-            ProgressListener progressListener,
-            List<T> validationTasks,
-            ValidationRunner<T> runner)
-            throws DocumentOperationException {
+    private static <T extends Validation> List<ValidationRun> runValidationTasks(Map<String, ValidationOptions> options,
+                                                                                 ProgressListener progressListener,
+                                                                                 List<T> validationTasks,
+                                                                                 ValidationRunner<T> runner) throws DocumentOperationException {
         List<ValidationRun> result = new ArrayList<ValidationRun>();
         CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, validationTasks.size());
 
@@ -160,11 +160,30 @@ public class Pipeline {
     }
 
     private static List<SequenceAlignmentDocument> assembleTraces(List<NucleotideGraphSequenceDocument> traces,
-                                                     CAP3Options options,
-                                                     String contigName,
-                                                     ProgressListener progressListener) throws DocumentOperationException {
-
+                                                                  CAP3Options options,
+                                                                  String contigName,
+                                                                  ProgressListener progressListener) throws DocumentOperationException {
         return CAP3Runner.assemble(traces, options.getExecutablePath(), options.getMinOverlapLength(), options.getMinOverlapIdentity(), contigName, progressListener);
+    }
+
+    private static List<NucleotideGraphSequenceDocument> trimTraces(List<NucleotideGraphSequenceDocument> traces,
+                                                                    TrimmingOptions options,
+                                                                    ProgressListener progressListener) throws DocumentOperationException {
+        List<NucleotideGraphSequenceDocument> trimmedTraces = new ArrayList<NucleotideGraphSequenceDocument>();
+        CompositeProgressListener trimmingProgress = new CompositeProgressListener(progressListener, traces.size());
+
+        for (NucleotideGraphSequenceDocument trace : traces) {
+            trimmingProgress.beginSubtask("Trimming " + trace.getName());
+
+            trimmedTraces.add(SequenceTrimmer.trimSequenceByQualityAndPrimers(trace,
+                                                                              options.getQualityTrimmingOptions().getErrorProbabilityLimit(),
+                                                                              options.getPrimerTrimmingOptions().getPrimers(),
+                                                                              (float)options.getPrimerTrimmingOptions().getGapOptionPenalty(),
+                                                                              (float)options.getPrimerTrimmingOptions().getGapExtensionPenalty(),
+                                                                              options.getPrimerTrimmingOptions().getScores()));
+        }
+
+        return trimmedTraces;
     }
 
     private static abstract class ValidationRunner<T extends Validation> {
