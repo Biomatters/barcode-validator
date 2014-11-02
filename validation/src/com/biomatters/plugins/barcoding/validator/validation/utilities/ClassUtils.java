@@ -8,7 +8,7 @@ import java.util.Enumeration;
 import java.util.List;
 
 /**
- * TODO: Write some javadoc
+ * Util class used to find descendant class of specific superclass
  *
  * @author Frank Lee
  *         Created on 30/10/14 5:35 PM
@@ -17,7 +17,11 @@ import java.util.List;
 public class ClassUtils {
 
     public static List<Class> findClass(String packageName, Class[] superClass) {
-        List<Class> classes = null;
+        List<Class> classes = new ArrayList<Class>();
+        if (packageName == null || packageName.trim().length() == 0) {
+            return classes;
+        }
+
         try {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             String path = packageName.replace('.', '/');
@@ -27,7 +31,7 @@ public class ClassUtils {
                 URL resource = resources.nextElement();
                 dirs.add(new File(resource.getFile()));
             }
-            classes = new ArrayList<Class>();
+
             for (File directory : dirs) {
                 classes.addAll(findClasses(directory, packageName, superClass));
             }
@@ -38,8 +42,7 @@ public class ClassUtils {
     }
 
 
-    private static List<Class> findClasses(File directory, String packageName, Class[] superClass) throws
-            ClassNotFoundException {
+    private static List<Class> findClasses(File directory, String packageName, Class[] superClass) {
         List<Class> classes = new ArrayList<Class>();
         if (!directory.exists()) {
             return classes;
@@ -51,7 +54,12 @@ public class ClassUtils {
                 assert !file.getName().contains(".");
                 classes.addAll(findClasses(file, packageName + "." + file.getName(), superClass));
             } else if (file.getName().endsWith(".class")) {
-                Class cl = Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6));
+                Class cl = null;
+                try {
+                    cl = Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6));
+                } catch (Throwable e) {
+                    continue;
+                }
 
                 //do not return abstract class
                 if (Modifier.isAbstract(cl.getModifiers())) {
