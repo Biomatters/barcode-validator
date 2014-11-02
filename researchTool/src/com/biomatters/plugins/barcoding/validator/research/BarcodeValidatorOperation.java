@@ -2,6 +2,7 @@ package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.databaseservice.DatabaseServiceException;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
+import com.biomatters.geneious.publicapi.documents.PluginDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.*;
@@ -18,10 +19,7 @@ import jebl.util.ProgressListener;
 
 import javax.swing.*;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Gen Li
@@ -77,24 +75,65 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         InputOptions inputSplitterOptions = allOptions.getInputOptions();
 
         composite.beginSubtask("Processing inputs");
-        Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces
-                = Input.processInputs(inputSplitterOptions.getTraceFilePaths(),
-                                      inputSplitterOptions.getBarcodeFilePaths(),
-                                      inputSplitterOptions.getMethodOption());
+        Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces =
+                getBarcodesToTraces(composite, operationCallback, inputSplitterOptions);
 
         composite.beginSubtask();
-
         Iterator<BarcodeValidatorOptions> iterator = allOptions.iterator();
         CompositeProgressListener perIteration = new CompositeProgressListener(composite, allOptions.getBatchSize());
+        int i = 1;
         while(iterator.hasNext()) {
-            perIteration.beginSubtask();
-            runPipelineWithOptions(suppliedBarcodesToSuppliedTraces, operationCallback, iterator.next(), perIteration);
+            String setName = "Parameter Set " + i++;
+            perIteration.beginSubtask(setName);
+            runPipelineWithOptions(setName, suppliedBarcodesToSuppliedTraces, operationCallback, iterator.next(), perIteration);
         }
 
         composite.setComplete();
     }
 
-    private static void runPipelineWithOptions(Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces, OperationCallback operationCallback, BarcodeValidatorOptions barcodeValidatorOptions, ProgressListener progressListener) throws DocumentOperationException {
+    private Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> getBarcodesToTraces(ProgressListener progressListener, OperationCallback operationCallback, InputOptions inputSplitterOptions) throws DocumentOperationException {
+        Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces
+                = Input.processInputs(inputSplitterOptions.getTraceFilePaths(),
+                inputSplitterOptions.getBarcodeFilePaths(),
+                inputSplitterOptions.getMethodOption());
+
+        CompositeProgressListener progressPerEntry = new CompositeProgressListener(progressListener, suppliedBarcodesToSuppliedTraces.size());
+        Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> resultMap = new HashMap<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>>();
+        for (Map.Entry<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> entry : suppliedBarcodesToSuppliedTraces.entrySet()) {
+            progressPerEntry.beginSubtask();
+            NucleotideSequenceDocument barcodeSequence = entry.getKey();
+            List<NucleotideGraphSequenceDocument> traces = entry.getValue();
+            CompositeProgressListener compositeProgress = new CompositeProgressListener(progressPerEntry, (barcodeSequence == null ? 0 : 1) + traces.size());
+
+            NucleotideSequenceDocument savedBarcode = null;
+            if(barcodeSequence != null) {
+                compositeProgress.beginSubtask();
+                savedBarcode = saveDatabaseCopyAndReturnNew(NucleotideSequenceDocument.class, barcodeSequence, operationCallback, compositeProgress);
+            }
+            List<NucleotideGraphSequenceDocument> savedTraces = new ArrayList<NucleotideGraphSequenceDocument>();
+            for (NucleotideGraphSequenceDocument trace : traces) {
+                compositeProgress.beginSubtask();
+                NucleotideGraphSequenceDocument traceCopy = saveDatabaseCopyAndReturnNew(NucleotideGraphSequenceDocument.class, trace, operationCallback, compositeProgress);
+                savedTraces.add(traceCopy);
+            }
+
+            resultMap.put(savedBarcode, savedTraces);
+        }
+        return resultMap;
+    }
+
+    private static <T extends PluginDocument> T saveDatabaseCopyAndReturnNew(Class<T> docClass, T pluginDoc, OperationCallback operationCallback, ProgressListener progressListener) throws DocumentOperationException {
+        AnnotatedPluginDocument apd = operationCallback.addDocument(pluginDoc, true, progressListener);
+        PluginDocument copyInDatabase = apd.getDocument();
+        if(docClass.isAssignableFrom(copyInDatabase.getClass())) {
+            return docClass.cast(copyInDatabase);
+        } else {
+            throw new IllegalStateException("Saving document of type " + docClass.getSimpleName() + " returned " +
+                    copyInDatabase.getClass().getSimpleName());
+        }
+    }
+
+    private static void runPipelineWithOptions(String setName, Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces, OperationCallback operationCallback, BarcodeValidatorOptions barcodeValidatorOptions, ProgressListener progressListener) throws DocumentOperationException {
         TrimmingOptions trimmingOptions = barcodeValidatorOptions.getTrimmingOptions();
         CAP3Options CAP3Options = barcodeValidatorOptions.getAssemblyOptions();
         Map<String, ValidationOptions> traceValidationOptions = barcodeValidatorOptions.getTraceValidationOptions();
@@ -116,7 +155,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             pipelineProgress.beginSubtask();
             setSubFolder(operationCallback, null);
             callback.setInputs(barcode, traces, pipelineProgress);
-            setSubFolder(operationCallback, barcodeName);
+            setSubFolder(operationCallback, setName);
 
             pipelineProgress.beginSubtask();
             Pipeline.runValidationPipeline(barcode, traces, trimmingOptions, CAP3Options, traceValidationOptions, barcodeValidationOptions, callback, pipelineProgress);
@@ -124,7 +163,6 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         }
 
         validationProgress.beginSubtask();
-        setSubFolder(operationCallback, null);
         operationCallback.addDocument(new ValidationReportDocument("Validation Report", outputs, barcodeValidatorOptions), false, validationProgress);
     }
 
