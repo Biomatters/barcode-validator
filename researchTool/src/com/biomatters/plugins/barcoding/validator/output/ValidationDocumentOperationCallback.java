@@ -1,6 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.output;
 
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
+import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.PluginDocument;
 import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
@@ -52,11 +53,15 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
         CompositeProgressListener compositeProgress = new CompositeProgressListener(progressListener, (barcodeSequence == null ? 0 : 1) + traces.size());
         if(barcodeSequence != null) {
             compositeProgress.beginSubtask();
-            outputRecord.barcodeSequenceUrn = saveDocumentAndGetUrn(barcodeSequence, compositeProgress);
+            AnnotatedPluginDocument apd = DocumentUtilities.getAnnotatedPluginDocumentThatContains(barcodeSequence);
+            outputRecord.barcodeSequenceUrn = apd != null ? apd.getURN() :
+                    saveDocumentAndGetUrn(barcodeSequence, compositeProgress);
         }
         for (NucleotideGraphSequenceDocument trace : traces) {
             compositeProgress.beginSubtask();
-            outputRecord.traceDocumentUrns.add(saveDocumentAndGetUrn(trace, compositeProgress));
+            AnnotatedPluginDocument apd = DocumentUtilities.getAnnotatedPluginDocumentThatContains(trace);
+            outputRecord.traceDocumentUrns.add(apd != null ? apd.getURN() :
+                    saveDocumentAndGetUrn(trace, compositeProgress));
         }
     }
 

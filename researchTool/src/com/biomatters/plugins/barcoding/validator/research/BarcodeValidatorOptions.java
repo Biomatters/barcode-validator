@@ -1,44 +1,35 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.plugin.Options;
+import com.biomatters.plugins.barcoding.validator.research.options.DoubleMultiValueOption;
+import com.biomatters.plugins.barcoding.validator.research.options.IntegerMultiValueOption;
+import com.biomatters.plugins.barcoding.validator.research.options.MultiValueOption;
 import com.biomatters.plugins.barcoding.validator.validation.BarcodeCompareValidation;
 import com.biomatters.plugins.barcoding.validator.validation.TraceValidation;
 import com.biomatters.plugins.barcoding.validator.validation.Validation;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
-import com.biomatters.plugins.barcoding.validator.validation.trimming.ErrorProbabilityOptions;
-import com.biomatters.plugins.barcoding.validator.validation.trimming.PrimerTrimmingOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Gen Li
  *         Created on 3/09/14 2:42 PM
  */
 public class BarcodeValidatorOptions extends Options {
-    private static final String INPUT_OPTIONS_NAME              = "input";
     private static final String TRIMMING_OPTIONS_NAME           = "trimming";
     private static final String ASSEMBLY_OPTIONS_NAME           = "assembly";
     private static final String TRACE_VALIDATION_OPTIONS_NAME   = "traceValidation";
     private static final String BARCODE_VALIDATION_OPTIONS_NAME = "barcodeValidation";
 
-    public BarcodeValidatorOptions(Class cls) {
-        super(cls);
-
-        addInputOptions();
+    public BarcodeValidatorOptions() {
+        super(BarcodeValidatorOperation.class);
         addTrimmingOptions();
         addTraceValidationOptions();
         addAssemblyOptions();
         addBarcodeValidationOptions();
-    }
-
-    public InputOptions getInputOptions() {
-        return (InputOptions)getChildOptions().get(INPUT_OPTIONS_NAME);
     }
 
     public TrimmingOptions getTrimmingOptions() {
@@ -65,10 +56,6 @@ public class BarcodeValidatorOptions extends Options {
      */
     public Map<String, ValidationOptions> getBarcodeValidationOptions() {
         return getValidationOptions(BARCODE_VALIDATION_OPTIONS_NAME);
-    }
-
-    private void addInputOptions() {
-        addCollapsibleChildOptions(INPUT_OPTIONS_NAME, "Input", "", new InputOptions(BarcodeValidatorOptions.class), false, false);
     }
 
     private void addTrimmingOptions() {
