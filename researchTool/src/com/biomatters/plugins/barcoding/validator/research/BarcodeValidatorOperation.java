@@ -1,7 +1,10 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
+import com.biomatters.geneious.publicapi.databaseservice.DatabaseService;
 import com.biomatters.geneious.publicapi.databaseservice.DatabaseServiceException;
+import com.biomatters.geneious.publicapi.databaseservice.WritableDatabaseService;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
+import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.PluginDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
@@ -77,6 +80,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         composite.beginSubtask("Processing inputs");
         Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces =
                 getBarcodesToTraces(composite, operationCallback, inputSplitterOptions);
+        WritableDatabaseService resultsFolder = getResultsFolder(suppliedBarcodesToSuppliedTraces);
 
         composite.beginSubtask();
         Iterator<BarcodeValidatorOptions> iterator = allOptions.iterator();
@@ -85,10 +89,48 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         while(iterator.hasNext()) {
             String setName = "Parameter Set " + i++;
             perIteration.beginSubtask(setName);
-            runPipelineWithOptions(setName, suppliedBarcodesToSuppliedTraces, operationCallback, iterator.next(), perIteration);
+            runPipelineWithOptions(setName, SUB_SUB_FOLDER_SEPARATOR, suppliedBarcodesToSuppliedTraces, operationCallback, iterator.next(), perIteration);
+            // OperationCallback does not yet support sub sub folders.  So we need to do this manually afterwards.
+            moveSubSubFoldersToCorrectLocation(resultsFolder, setName);
         }
 
         composite.setComplete();
+    }
+
+
+    public static void moveSubSubFoldersToCorrectLocation(WritableDatabaseService resultsFolder, String setName) throws DocumentOperationException {
+        try {
+            String prefix = setName + SUB_SUB_FOLDER_SEPARATOR;
+            WritableDatabaseService subFolder = resultsFolder.getChildService(setName);
+            if(subFolder == null) {
+                throw new DocumentOperationException("Results folder for " + setName + " is missing.");
+            }
+            for (GeneiousService geneiousService : resultsFolder.getChildServices()) {
+                if(geneiousService instanceof WritableDatabaseService) {
+                    WritableDatabaseService database = (WritableDatabaseService) geneiousService;
+                    String oldName = database.getFolderName();
+                    if(oldName.startsWith(prefix)) {
+                        database.renameFolder(database.getFolderName().substring(oldName.indexOf(prefix)));
+                        database.moveTo(subFolder);
+                    }
+                }
+            }
+        } catch (DatabaseServiceException e) {
+            throw new DocumentOperationException("Failed to make changes to database: " + e.getMessage(), e);
+        }
+    }
+
+    private static WritableDatabaseService getResultsFolder(Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> validatorInput) throws DocumentOperationException {
+        NucleotideGraphSequenceDocument firstTrace = validatorInput.values().iterator().next().get(0);
+        AnnotatedPluginDocument apd = DocumentUtilities.getAnnotatedPluginDocumentThatContains(firstTrace);
+        if(apd == null) {
+            throw new DocumentOperationException("Cannot continue operation.  Input was not saved to a database.");
+        }
+        DatabaseService resultsFolder = apd.getDatabase();
+        if(!(resultsFolder instanceof WritableDatabaseService)) {
+            throw new DocumentOperationException("Cannot continue operation.  Results are being saved to a non writable database: " + resultsFolder.getClass());
+        }
+        return (WritableDatabaseService)resultsFolder;
     }
 
     private Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> getBarcodesToTraces(ProgressListener progressListener, OperationCallback operationCallback, InputOptions inputSplitterOptions) throws DocumentOperationException {
@@ -133,7 +175,8 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         }
     }
 
-    private static void runPipelineWithOptions(String setName, Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces, OperationCallback operationCallback, BarcodeValidatorOptions barcodeValidatorOptions, ProgressListener progressListener) throws DocumentOperationException {
+    private static final String SUB_SUB_FOLDER_SEPARATOR = "_";
+    private static void runPipelineWithOptions(String setName, String subSubFolderSeparator, Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces, OperationCallback operationCallback, BarcodeValidatorOptions barcodeValidatorOptions, ProgressListener progressListener) throws DocumentOperationException {
         TrimmingOptions trimmingOptions = barcodeValidatorOptions.getTrimmingOptions();
         CAP3Options CAP3Options = barcodeValidatorOptions.getAssemblyOptions();
         Map<String, ValidationOptions> traceValidationOptions = barcodeValidatorOptions.getTraceValidationOptions();
@@ -155,10 +198,11 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             pipelineProgress.beginSubtask();
             setSubFolder(operationCallback, null);
             callback.setInputs(barcode, traces, pipelineProgress);
-            setSubFolder(operationCallback, setName);
+            setSubFolder(operationCallback, setName + subSubFolderSeparator + barcodeName);
 
             pipelineProgress.beginSubtask();
             Pipeline.runValidationPipeline(barcode, traces, trimmingOptions, CAP3Options, traceValidationOptions, barcodeValidationOptions, callback, pipelineProgress);
+            setSubFolder(operationCallback, setName);
             outputs.add(callback.getRecord());
         }
 

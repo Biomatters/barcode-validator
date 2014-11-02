@@ -17,6 +17,11 @@ import java.util.*;
  * Use {@link #iterator()} to iterate over the combinations.  The iterator will always return the same {@link Options}
  * object but will iterate through the parameter combinations when {@link java.util.Iterator#next()} is called.
  * </p>
+ * <p>
+ * <strong>Note</strong>: This will only work with {@link Options} classes that use {@link Option}s that properly
+ * implement {@link Option#setValueFromString(String)} and {@link Option#getValueAsString(String)}.  An easy way
+ * to tell if this is the case is if they can have their values fully saved and restored through preferences.
+ * </p>
  *
  * @author Matthew Cheung
  *         Created on 31/10/14 2:55 PM
@@ -71,6 +76,15 @@ public abstract class BatchOptions<T extends Options> extends Options {
         return total;
     }
 
+    /**
+     * Creates an iterator that returns an {@link Options} containing each possible parameter set defined by these
+     * {@link com.biomatters.plugins.barcoding.validator.research.options.BatchOptions}.  Note that the {@link Options}
+     * object returned is always the same to save on initializing multiple copies.  Each time {@link java.util.Iterator#next()}
+     * is called the next parameter set is set on the {@link Options}.
+     *
+     * @return An iterator that will iterate over all possible parameter sets specified by this {@link com.biomatters.plugins.barcoding.validator.research.options.BatchOptions}
+     * @throws DocumentOperationException if there is a problem creating the {@link Options} object
+     */
     public Iterator<T> iterator() throws DocumentOperationException {
         List<Set<OptionToSet>> possibleValues = new ArrayList<Set<OptionToSet>>();
 
