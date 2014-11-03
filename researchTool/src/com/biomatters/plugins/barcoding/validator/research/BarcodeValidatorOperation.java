@@ -105,13 +105,22 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             if(subFolder == null) {
                 throw new DocumentOperationException("Results folder for " + setName + " is missing.");
             }
+
             for (GeneiousService geneiousService : resultsFolder.getChildServices()) {
                 if(geneiousService instanceof WritableDatabaseService) {
                     WritableDatabaseService database = (WritableDatabaseService) geneiousService;
                     String oldName = database.getFolderName();
                     if(oldName.startsWith(prefix)) {
-                        database.renameFolder(database.getFolderName().substring(oldName.indexOf(prefix)));
                         database.moveTo(subFolder);
+                    }
+                }
+            }
+            for (GeneiousService child : subFolder.getChildServices()) {
+                if(child instanceof WritableDatabaseService) {
+                    WritableDatabaseService database = (WritableDatabaseService) child;
+                    String oldName = database.getFolderName();
+                    if(oldName.startsWith(prefix)) {
+                        database.renameFolder(database.getFolderName().substring(prefix.length()));
                     }
                 }
             }
