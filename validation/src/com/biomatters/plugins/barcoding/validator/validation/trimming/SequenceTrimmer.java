@@ -56,7 +56,13 @@ public class SequenceTrimmer {
             trimmages.add(getTrimmageForPrimerTrimming(sequence, primer, gapOpenPenalty, gapExtensionPenalty, scores));
         }
 
-        return trimSequenceUsingTrimmage(sequence, max(trimmages));
+        Trimmage maxTrimmage = max(trimmages);
+
+        if (maxTrimmage.trimAtStart > sequence.getSequenceLength() - maxTrimmage.trimAtEnd + 1) {
+            maxTrimmage = new Trimmage(sequence.getSequenceLength(), 0);
+        }
+
+        return trimSequenceUsingTrimmage(sequence, maxTrimmage);
     }
 
     /**
@@ -72,7 +78,7 @@ public class SequenceTrimmer {
     }
 
     private static Trimmage max(Trimmage trimmageOne, Trimmage trimmageTwo) {
-        return new Trimmage(Math.max(trimmageOne.trimAtStart, trimmageTwo.trimAtStart), Math.max(trimmageTwo.trimAtEnd, trimmageTwo.trimAtEnd));
+        return new Trimmage(Math.max(trimmageOne.trimAtStart, trimmageTwo.trimAtStart), Math.max(trimmageOne.trimAtEnd, trimmageTwo.trimAtEnd));
     }
 
     private static Trimmage max(Collection<Trimmage> trimmages) {
@@ -110,6 +116,8 @@ public class SequenceTrimmer {
         SequenceAnnotationInterval rightTrimInterval = new SmithWaterman(new String[] { traceSequence.toString(), primerSequenceReversed.toString() },
                                                                          ProgressListener.EMPTY,
                                                                          new SmithWatermanLinearSpaceAffine(scoresWithAdditionalCharacters, gapOpenPenalty, gapExtensionPenalty)).getIntervals()[0];
+
+
 
         return new Trimmage(leftTrimInterval.getTo(), sequence.getSequenceLength() - rightTrimInterval.getFrom() + 1);
     }
