@@ -5,6 +5,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraph;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
+import com.biomatters.geneious.publicapi.utilities.SequenceUtilities;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -17,7 +18,6 @@ import java.util.Date;
  */
 public class TrimmingTest extends Assert {
     private final static int CHROMATOGRAM_NUCLEOTIDE_STATE_RANGE_SIZE = 4;
-
     private CharSequence sequence = "ACGTACGTACGTACGTACGT";
     private int[][] chromatograms = {
             { 0, 70, 0, 0, 40, 40, 40, 70, 0, 40, 40, 40, 70, 40, 40, 40, 70, 40, 40, 40, 70, 40, 40, 0, 0, 40 },
@@ -27,9 +27,7 @@ public class TrimmingTest extends Assert {
     };
     private int[] chromatogramPositions = { 1, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24, 25 };
     private int[] qualities = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
-
     private NucleotideGraph graph = DefaultNucleotideGraph.createNucleotideGraph(chromatograms, chromatogramPositions, qualities, sequence.length(), chromatograms[0].length);
-
     private NucleotideGraphSequenceDocument document = new DefaultNucleotideGraphSequence("document", "Test Document", sequence, new Date(), graph);
 
     @Test
@@ -85,7 +83,6 @@ public class TrimmingTest extends Assert {
                 );
             }
         }
-
     }
 
     private void assertChromatogramLengthsAreCorrect(int[][] chromatograms) {
