@@ -32,7 +32,7 @@ public class Pipeline {
         CompositeProgressListener stepsProgress = new CompositeProgressListener(progressListener, 4);
 
         stepsProgress.beginSubtask("Trimming Traces");
-        List<NucleotideGraphSequenceDocument> trimmedTraces = trimTraces(traces, trimmingOptions, stepsProgress);
+        List<NucleotideGraphSequenceDocument> trimmedTraces = trimTraces(traces, trimmingOptions, progressListener);
 
         stepsProgress.beginSubtask("Validating Traces...");
         CompositeProgressListener traceValidationProgress = new CompositeProgressListener(stepsProgress, 3);
@@ -176,11 +176,11 @@ public class Pipeline {
             trimmingProgress.beginSubtask("Trimming " + trace.getName());
 
             trimmedTraces.add(SequenceTrimmer.trimSequenceByQualityAndPrimers(trace,
-                                                                              options.getQualityTrimmingOptions().getErrorProbabilityLimit(),
-                                                                              options.getPrimerTrimmingOptions().getPrimers(),
-                                                                              (float)options.getPrimerTrimmingOptions().getGapOptionPenalty(),
-                                                                              (float)options.getPrimerTrimmingOptions().getGapExtensionPenalty(),
-                                                                              options.getPrimerTrimmingOptions().getScores()));
+                    options.getQualityTrimmingOptions().getErrorProbabilityLimit(),
+                    options.getPrimerTrimmingOptions().getPrimers(),
+                    (float)options.getPrimerTrimmingOptions().getGapOptionPenalty(),
+                    (float)options.getPrimerTrimmingOptions().getGapExtensionPenalty(),
+                    options.getPrimerTrimmingOptions().getScores()));
         }
 
         return trimmedTraces;
