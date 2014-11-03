@@ -2,6 +2,7 @@ package com.biomatters.plugins.barcoding.validator.validation.utilities;
 
 import java.io.File;
 import java.lang.reflect.Modifier;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -29,7 +30,12 @@ public class ClassUtils {
             List<File> dirs = new ArrayList<File>();
             while (resources.hasMoreElements()) {
                 URL resource = resources.nextElement();
-                dirs.add(new File(resource.toURI().getPath()));
+                URI uri = resource.toURI();
+                if (uri != null) {
+                    dirs.add(new File(uri.getPath()));
+                } else {
+                    dirs.add(new File(resource.getFile()));
+                }
             }
 
             for (File directory : dirs) {
