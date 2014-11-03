@@ -31,7 +31,7 @@ public class ClassUtils {
             while (resources.hasMoreElements()) {
                 URL resource = resources.nextElement();
                 URI uri = resource.toURI();
-                if (uri != null) {
+                if (uri != null && uri.getPath() != null) {
                     dirs.add(new File(uri.getPath()));
                 } else {
                     dirs.add(new File(resource.getFile()));
