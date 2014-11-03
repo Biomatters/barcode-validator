@@ -121,8 +121,11 @@ public class BarcodeValidatorOperation extends DocumentOperation {
     }
 
     private static WritableDatabaseService getResultsFolder(Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> validatorInput) throws DocumentOperationException {
-        NucleotideGraphSequenceDocument firstTrace = validatorInput.values().iterator().next().get(0);
-        AnnotatedPluginDocument apd = DocumentUtilities.getAnnotatedPluginDocumentThatContains(firstTrace);
+        NucleotideGraphSequenceDocument sampleTrace = getOneTraceFromInput(validatorInput);
+        if(sampleTrace == null) {
+            throw new DocumentOperationException("Cannot continue operation.  There were no trace documents.");
+        }
+        AnnotatedPluginDocument apd = DocumentUtilities.getAnnotatedPluginDocumentThatContains(sampleTrace);
         if(apd == null) {
             throw new DocumentOperationException("Cannot continue operation.  Input was not saved to a database.");
         }
@@ -131,6 +134,17 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             throw new DocumentOperationException("Cannot continue operation.  Results are being saved to a non writable database: " + resultsFolder.getClass());
         }
         return (WritableDatabaseService)resultsFolder;
+    }
+
+    private static NucleotideGraphSequenceDocument getOneTraceFromInput(Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> validatorInput) {
+        for (List<NucleotideGraphSequenceDocument> traces : validatorInput.values()) {
+            for (NucleotideGraphSequenceDocument trace : traces) {
+                if(trace != null) {
+                    return trace;
+                }
+            }
+        }
+        return null;
     }
 
     private Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> getBarcodesToTraces(ProgressListener progressListener, OperationCallback operationCallback, InputOptions inputSplitterOptions) throws DocumentOperationException {
