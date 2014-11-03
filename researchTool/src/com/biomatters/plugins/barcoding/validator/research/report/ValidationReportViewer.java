@@ -1,10 +1,9 @@
 package com.biomatters.plugins.barcoding.validator.research.report;
 
-import com.biomatters.geneious.publicapi.components.GTextPane;
+import com.biomatters.geneious.publicapi.components.Dialogs;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.URN;
-import com.biomatters.geneious.publicapi.plugin.DocumentViewer;
 import com.biomatters.geneious.publicapi.utilities.IconUtilities;
 import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.biomatters.plugins.barcoding.validator.output.RecordOfValidationResult;
@@ -18,7 +17,7 @@ import com.google.common.collect.LinkedHashMultimap;
 
 import javax.annotation.Nullable;
 import javax.swing.*;
-import java.awt.*;
+import javax.swing.event.HyperlinkListener;
 import java.util.*;
 import java.util.List;
 
@@ -34,37 +33,38 @@ import java.util.List;
  * @author Matthew Cheung
  *         Created on 2/10/14 10:04 AM
  */
-public class ValidationReportViewer extends DocumentViewer {
+public class ValidationReportViewer extends HtmlReportDocumentViewer {
     ValidationReportDocument reportDocument;
     public ValidationReportViewer(ValidationReportDocument reportDocument) {
         this.reportDocument = reportDocument;
     }
 
     @Override
-    public JComponent getComponent() {
-        final JTextPane textPane = new GTextPane();
-        textPane.setContentType("text/html");
-        textPane.setEditable(false);
+    public String getHtml() {
+        return generateHtml(reportDocument);
+    }
 
-        final DocumentOpeningHyperlinkListener hyperlinkListener = new DocumentOpeningHyperlinkListener("ReportDocumentFactory", getOptionMap(reportDocument));
-        textPane.addHyperlinkListener(hyperlinkListener);
-        textPane.setText(generateHtml(reportDocument));
-        final JScrollPane scroll = new JScrollPane(textPane) {
-            @Override
-            public Dimension getPreferredSize() {
-                // increase height by potential horizontal scroll bar height
-                return new Dimension(super.getPreferredSize().width,super.getPreferredSize().height+30);
-            }
-        };
-        scroll.getViewport().setOpaque(false);
-        scroll.setOpaque(false);
-        scroll.setBorder(null);
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                textPane.scrollRectToVisible(new Rectangle(0,0));
-            }
-        });
-        return scroll;
+    public static final String OPTION_PREFIX = "option:";
+    @Override
+    public HyperlinkListener getHyperlinkListener() {
+        final Map<String, ValidationOptions> optionsMap = getOptionMap(reportDocument);
+        return new DocumentOpeningHyperlinkListener("ReportDocumentFactory",
+                Collections.<String, DocumentOpeningHyperlinkListener.UrlProcessor>singletonMap(OPTION_PREFIX,
+                new DocumentOpeningHyperlinkListener.UrlProcessor() {
+                    @Override
+                    void process(String url) {
+                        final String optionLable = url.substring(OPTION_PREFIX.length());
+                        final ValidationOptions options = optionsMap.get(optionLable);
+
+                        SwingUtilities.invokeLater(new Runnable() {
+                            public void run() {
+                                options.setEnabled(false);
+                                Dialogs.DialogOptions dialogOptions = new Dialogs.DialogOptions(Dialogs.OK_ONLY, "Options");
+                                Dialogs.showMoreOptionsDialog(dialogOptions, options.getPanel(), options.getAdvancedPanel());
+                            }
+                        });
+                    }
+                }));
     }
 
     private static Map<String, ValidationOptions> getOptionMap(ValidationReportDocument reportDocument) {
@@ -170,7 +170,7 @@ public class ValidationReportViewer extends DocumentViewer {
             builder.append("<td>").append(label).append(" (").append(
                     getStatusLinks(passed, "Passed")).append("/").append(
                     getStatusLinks(failed, "Failed"))
-                    .append(")<br/><a href=\"").append(DocumentOpeningHyperlinkListener.OPTION_PREFIX).append(label).append("\">[Show options]</a>").append("</td>");
+                    .append(")<br/><a href=\"").append(OPTION_PREFIX).append(label).append("\">[Show options]</a>").append("</td>");
         }
         builder.append("</tr>");
 

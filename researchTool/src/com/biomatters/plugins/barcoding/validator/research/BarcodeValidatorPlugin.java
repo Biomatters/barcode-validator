@@ -3,6 +3,7 @@ package com.biomatters.plugins.barcoding.validator.research;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperation;
 import com.biomatters.geneious.publicapi.plugin.DocumentViewerFactory;
 import com.biomatters.geneious.publicapi.plugin.GeneiousPlugin;
+import com.biomatters.plugins.barcoding.validator.research.report.BatchValidationReportViewerFactory;
 import com.biomatters.plugins.barcoding.validator.research.report.ValidationReportViewerFactory;
 
 /**
@@ -55,7 +56,8 @@ public class BarcodeValidatorPlugin extends GeneiousPlugin {
     @Override
     public DocumentViewerFactory[] getDocumentViewerFactories() {
         return new DocumentViewerFactory[] {
-                new ValidationReportViewerFactory()
+                new ValidationReportViewerFactory(),
+                new BatchValidationReportViewerFactory()
         };
     }
 }

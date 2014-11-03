@@ -6,14 +6,11 @@ import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.MalformedURNException;
 import com.biomatters.geneious.publicapi.documents.URN;
-import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 
-import javax.swing.*;
+import javax.annotation.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -26,20 +23,26 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class DocumentOpeningHyperlinkListener extends DefaultHyperlinkListener {
     public static final String URN_PREFIX = "urn:";
-    public static final String OPTION_PREFIX = "option:";
 
     private final AtomicBoolean hyperlinkClickBeingProcessed = new AtomicBoolean(false);
     private final String owner;
-    private final Map<String, ValidationOptions> optionsMap;
+    private final Map<String, UrlProcessor> extraProcessors;
 
     /**
      * @param owner the name of the code that 'owns' this instance.
      *              Used eg as part of the name of the thread that parses the URNs and selects the documents, any RuntimeExceptions that thread may throw
      *                      and for storing the "document(s) may have been modified" don't show again dialog preference
+     * @param extraProcessors Extra {@link com.biomatters.plugins.barcoding.validator.research.report.DocumentOpeningHyperlinkListener.UrlProcessor}
+     *                        that can be used to add extra functionality to this listener.  Any URLs starting with the
+     *                        prefix (case insensitive) will be passed to the processor instead of the default implementation.
      */
-    public DocumentOpeningHyperlinkListener(String owner, Map<String, ValidationOptions> optionsMap) {
+    public DocumentOpeningHyperlinkListener(String owner, @Nullable Map<String, UrlProcessor> extraProcessors) {
         this.owner = owner;
-        this.optionsMap = optionsMap;
+        this.extraProcessors = extraProcessors == null ? Collections.<String, UrlProcessor>emptyMap() : extraProcessors;
+    }
+
+    public static abstract class UrlProcessor {
+        abstract void process(String url);
     }
 
 
@@ -47,7 +50,17 @@ public class DocumentOpeningHyperlinkListener extends DefaultHyperlinkListener {
     public void hyperlinkUpdate(final HyperlinkEvent ev) {
         if (ev.getEventType() == HyperlinkEvent.EventType.ACTIVATED && !(ev instanceof HTMLFrameHyperlinkEvent)) {
             final String urlString = ev.getDescription();
-            if (!urlString.toLowerCase().startsWith(URN_PREFIX) && !urlString.startsWith(OPTION_PREFIX)) { // So we can support a mixture of urn hyperlinks and standard hyperlinks
+            final List<String> prefixes = new ArrayList<String>(extraProcessors.keySet());
+            prefixes.add(URN_PREFIX);
+
+            boolean useSuper = true;
+            for (String prefix : prefixes) {
+                if(urlString.toLowerCase().startsWith(prefix.toLowerCase())) {
+                    useSuper = false;
+                }
+            }
+
+            if (useSuper) { // So we can support a mixture of urn hyperlinks and standard hyperlinks
                 super.hyperlinkUpdate(ev);
                 return;
             }
@@ -56,8 +69,14 @@ public class DocumentOpeningHyperlinkListener extends DefaultHyperlinkListener {
                 public void run() {
                     if (hyperlinkClickBeingProcessed.getAndSet(true)) return;
                     try {
-                        if (urlString.startsWith(OPTION_PREFIX)) {
-                            processOption();
+                        UrlProcessor processor = null;
+                        for (Map.Entry<String, UrlProcessor> entry : extraProcessors.entrySet()) {
+                            if(urlString.toLowerCase().startsWith(entry.getKey().toLowerCase())) {
+                                processor = entry.getValue();
+                            }
+                        }
+                        if (processor != null) {
+                            processor.process(urlString);
                         } else {
                             processURN();
                         }
@@ -65,19 +84,6 @@ public class DocumentOpeningHyperlinkListener extends DefaultHyperlinkListener {
                     finally {
                         hyperlinkClickBeingProcessed.set(false);
                     }
-                }
-
-                private void processOption() {
-                    final String optionLable = urlString.substring(OPTION_PREFIX.length());
-                    final ValidationOptions options = optionsMap.get(optionLable);
-
-                    SwingUtilities.invokeLater(new Runnable() {
-                        public void run() {
-                            options.setEnabled(false);
-                            Dialogs.DialogOptions dialogOptions = new Dialogs.DialogOptions(Dialogs.OK_ONLY, "Options");
-                            Dialogs.showMoreOptionsDialog(dialogOptions, options.getPanel(), options.getAdvancedPanel());
-                        }
-                    });
                 }
 
                 private void processURN() {
