@@ -65,11 +65,21 @@ public class Pipeline {
         List<NucleotideSequenceDocument> consensusSequences = new ArrayList<NucleotideSequenceDocument>();
         if(!contigs.isEmpty()) {
             CompositeProgressListener progressForEachContig = new CompositeProgressListener(assembleTracesProgress, contigs.size());
+            CompositeProgressListener progressForEachConsus = new CompositeProgressListener(assembleTracesProgress, contigs.size());
+
             for (SequenceAlignmentDocument contig : contigs) {
+                NucleotideGraphSequenceDocument consensus = ConsensusUtilities.getConsensus(contig);
+                List<NucleotideGraphSequenceDocument> consensusList = new ArrayList<NucleotideGraphSequenceDocument>();
+                consensusList.add(consensus);
+
+                progressForEachConsus.beginSubtask();
+                List<NucleotideGraphSequenceDocument> resultConsusList = trimTraces(consensusList, trimmingOptions, progressForEachConsus);
+                assert resultConsusList.size() == 1;
+                NucleotideGraphSequenceDocument retConsus = resultConsusList.get(0);
+
                 progressForEachContig.beginSubtask();
-                NucleotideSequenceDocument consensus = ConsensusUtilities.getConsensus(contig);
-                callback.addConsensus(consensus, progressForEachContig);
-                consensusSequences.add(consensus);
+                callback.addConsensus(retConsus, progressForEachContig);
+                consensusSequences.add(retConsus);
             }
         }
 
