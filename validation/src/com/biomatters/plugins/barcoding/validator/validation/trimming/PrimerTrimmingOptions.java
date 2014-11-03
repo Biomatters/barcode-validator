@@ -55,7 +55,7 @@ public class PrimerTrimmingOptions extends Options {
     }
 
     private void addPrimerSelectionOption() {
-        addPrimerSelectionOption(PRIMER_SELECTION_OPTION_NAME, "Primers", DocumentSelectionOption.FolderOrDocuments.EMPTY, true, Collections.<AnnotatedPluginDocument>emptyList());
+        addPrimerSelectionOption(PRIMER_SELECTION_OPTION_NAME, "Primers:", DocumentSelectionOption.FolderOrDocuments.EMPTY, true, Collections.<AnnotatedPluginDocument>emptyList());
     }
 
     private void addCostMatrixOptions() {

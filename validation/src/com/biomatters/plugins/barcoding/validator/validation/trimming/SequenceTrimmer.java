@@ -12,7 +12,7 @@ import jebl.util.ProgressListener;
 import java.util.*;
 
 /**
- * Functionality for trimming sequences. Non-instantiable.
+ * Static methods for trimming sequences. Non-instantiable.
  *
  * @author Gen Li
  *         Created on 9/09/14 11:03 AM
@@ -23,25 +23,18 @@ public class SequenceTrimmer {
     }
 
     /**
-     * Trims sequence by quality scores using the modified Mott algorithm.  This is the same
-     * algorithm used in PHRED and is also one of the trimming algorithms available in Geneious.
+     * Trims the supplied sequence by removing the greatest number of bases that can be removed from each of its ends by
+     * using either the Smith-Waterman algorithm with one of the supplied primers or by using the modified Mott
+     * algorithm.
      *
      * @param sequence Sequence to trim.
-     * @param errorProbabilityLimit Error probability limit for the modified mott algorithm.
+     * @param errorProbabilityLimit Error probability limit for the modified Mott algorithm.
+     * @param primers Primer sequences for the Smith-Waterman algorithm.
+     * @param gapOpenPenalty Gap open penalty for the Smith-Waterman algorithm.
+     * @param gapExtensionPenalty Gap extension penalty for the Smith-Waterman algorithm.
+     * @param scores Scores matrix for the Smith-Waterman algorithm.
      * @return Trimmed sequence.
      */
-    public static NucleotideGraphSequenceDocument trimSequenceByQuality(NucleotideGraphSequenceDocument sequence, double errorProbabilityLimit) {
-        return trimSequenceUsingTrimmage(sequence, ErrorProbabilityTrimmer.getTrimmage(sequence, TrimmableEnds.Both, errorProbabilityLimit));
-    }
-
-    public static NucleotideGraphSequenceDocument trimSequenceByPrimer(NucleotideGraphSequenceDocument sequence,
-                                                                       OligoSequenceDocument primer,
-                                                                       float gapOpenPenalty,
-                                                                       float gapExtensionPenalty,
-                                                                       Scores scores) {
-        return trimSequenceUsingTrimmage(sequence, getTrimmageForPrimerTrimming(sequence, primer, gapOpenPenalty, gapExtensionPenalty, scores));
-    }
-
     public static NucleotideGraphSequenceDocument trimSequenceByQualityAndPrimers(NucleotideGraphSequenceDocument sequence,
                                                                                   double errorProbabilityLimit,
                                                                                   List<OligoSequenceDocument> primers,
@@ -50,19 +43,35 @@ public class SequenceTrimmer {
                                                                                   Scores scores) {
         List<Trimmage> trimmages = new ArrayList<Trimmage>();
 
+        /* Add the trim regions that derive from running the modified Mott algorithm on the supplied sequence. */
         trimmages.add(ErrorProbabilityTrimmer.getTrimmage(sequence, TrimmableEnds.Both, errorProbabilityLimit));
 
+        /* Add the trim regions that derive from running the Smith-Waterman algorithm with each of the supplied primers
+         * on the supplied sequence.
+         */
         for (OligoSequenceDocument primer : primers) {
             trimmages.add(getTrimmageForPrimerTrimming(sequence, primer, gapOpenPenalty, gapExtensionPenalty, scores));
         }
 
-        return trimSequenceUsingTrimmage(sequence, max(trimmages));
+        /* Generate the trimmage that when used to trim the supplied sequence, removes the maximum number of bases that
+         * can be removed from each of its ends.
+         */
+        Trimmage maxTrimmage = max(trimmages);
+
+        if (maxTrimmage.trimAtStart > sequence.getSequenceLength() - maxTrimmage.trimAtEnd + 1) {
+            maxTrimmage = new Trimmage(sequence.getSequenceLength(), 0);
+        }
+
+        /* Trim the sequence using the generated trimmage and return the result. */
+        return trimSequenceUsingTrimmage(sequence, maxTrimmage);
     }
 
     /**
-     * @param sequence {@link NucleotideGraphSequenceDocument} to trim
-     * @param trimmage Region lengths to trim
-     * @return Trimmed {@link com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument}
+     * Trims the supplied sequence using the supplied trimmage.
+     *
+     * @param sequence Sequence to trim.
+     * @param trimmage The trimmage containing the number of bases to remove from each of the ends of the sequence.
+     * @return Trimmed sequence.
      */
     static NucleotideGraphSequenceDocument trimSequenceUsingTrimmage(NucleotideGraphSequenceDocument sequence, Trimmage trimmage) {
         SequenceExtractionUtilities.ExtractionOptions options = new SequenceExtractionUtilities.ExtractionOptions(trimmage.getNonTrimmedInterval(sequence.getSequenceLength()));
@@ -71,10 +80,28 @@ public class SequenceTrimmer {
         return (NucleotideGraphSequenceDocument)SequenceExtractionUtilities.extract(sequence, options);
     }
 
+    /**
+     * Constructs a trimmage where its trimAtStart field value and its trimAtEnd field value are equal to the maximum of
+     * trimmageOne's trimAtStart field value and trimmageTwo's trimAtStart field value and the maximum of trimmageOne's
+     * trimAtEnd field value and trimmageTwo's trimAtEnd field value respectively.
+     *
+     * @param trimmageOne
+     * @param trimmageTwo
+     * @return Constructed trimmage.
+     */
     private static Trimmage max(Trimmage trimmageOne, Trimmage trimmageTwo) {
-        return new Trimmage(Math.max(trimmageOne.trimAtStart, trimmageTwo.trimAtStart), Math.max(trimmageTwo.trimAtEnd, trimmageTwo.trimAtEnd));
+        return new Trimmage(Math.max(trimmageOne.trimAtStart, trimmageTwo.trimAtStart), Math.max(trimmageOne.trimAtEnd, trimmageTwo.trimAtEnd));
     }
 
+    /**
+     * Constructs a trimmage where its trimAtStart and trimAtEnd field values are equal to the maximum of the
+     * trimAtStart field values of the supplied trimmages and the maximum of the trimAtEnd field values of the supplied
+     * trimmages respectively.
+     *
+     *
+     * @param trimmages
+     * @return Constructed trimmage.
+     */
     private static Trimmage max(Collection<Trimmage> trimmages) {
         Trimmage maxTrimmage = new Trimmage(0, 0);
 
@@ -86,12 +113,13 @@ public class SequenceTrimmer {
     }
 
     /**
-     * Creates the trimmage that would be used for the trimming of the supplied sequence with the supplied primer and
-     * alignment settings.
+     * Constructs the trimmage for the trimming of the supplied sequence using the Smith-Waterman algorithm.
      *
-     * @param sequence
-     * @param primer
-     * @return Created Trimmage.
+     * @param sequence Sequence to trim.
+     * @param primer Primer sequence for the Smith-Waterman algorithm.
+     * @param gapOpenPenalty Gap open penalty for the Smith-Waterman algorithm.
+     * @param gapExtensionPenalty Gap extension penalty for the Smith-Waterman algorithm.
+     * @return Constructed trimmage.
      */
     private static Trimmage getTrimmageForPrimerTrimming(NucleotideGraphSequenceDocument sequence,
                                                          OligoSequenceDocument primer,
@@ -105,24 +133,31 @@ public class SequenceTrimmer {
         Scores scoresWithAdditionalCharacters = getScoresWithAdditionalCharacters(scores, Arrays.asList(SequenceUtilities.removeGaps(traceSequence), SequenceUtilities.removeGaps(primerSequence)));
 
         SequenceAnnotationInterval leftTrimInterval = new SmithWaterman(new String[] { traceSequence.toString(), primerSequence.toString() },
-                ProgressListener.EMPTY,
-                new SmithWatermanLinearSpaceAffine(scoresWithAdditionalCharacters, gapOpenPenalty, gapExtensionPenalty)).getIntervals()[0];
+                                                                        ProgressListener.EMPTY,
+                                                                        new SmithWatermanLinearSpaceAffine(scoresWithAdditionalCharacters, gapOpenPenalty, gapExtensionPenalty)).getIntervals()[0];
         SequenceAnnotationInterval rightTrimInterval = new SmithWaterman(new String[] { traceSequence.toString(), primerSequenceReversed.toString() },
-                ProgressListener.EMPTY,
-                new SmithWatermanLinearSpaceAffine(scoresWithAdditionalCharacters, gapOpenPenalty, gapExtensionPenalty)).getIntervals()[0];
+                                                                         ProgressListener.EMPTY,
+                                                                         new SmithWatermanLinearSpaceAffine(scoresWithAdditionalCharacters, gapOpenPenalty, gapExtensionPenalty)).getIntervals()[0];
 
         return new Trimmage(leftTrimInterval.getTo(), sequence.getSequenceLength() - rightTrimInterval.getFrom() + 1);
     }
 
+    /**
+     * Includes the unique characters from the supplied sequences into the supplied scores matrix.
+     *
+     * @param scores
+     * @param sequences
+     * @return The supplied scores matrix with the unique characters from the supplied sequences included.
+     */
     private static Scores getScoresWithAdditionalCharacters(Scores scores, List<CharSequence> sequences) {
         return Scores.includeAdditionalCharacters(scores, toString(getCharacters(sequences)));
     }
 
     /**
-     * Extracts the unique characters from the supplied sequences.
+     * Returns the unique characters from the supplied sequences.
      *
      * @param sequences
-     * @return Generated set.
+     * @return Unique characters from the supplied sequences.
      */
     private static Set<Character> getCharacters(List<CharSequence> sequences) {
         Set<Character> characters = new HashSet<Character>();
@@ -135,10 +170,10 @@ public class SequenceTrimmer {
     }
 
     /**
-     * Extracts the unique characters from the supplied sequence.
+     * Returns the unique characters from the supplied sequence.
      *
      * @param sequence
-     * @return Unique characters.
+     * @return Unique characters from the supplied sequence.
      */
     private static Set<Character> getCharacters(CharSequence sequence) {
         Set<Character> characters = new HashSet<Character>();
@@ -151,12 +186,13 @@ public class SequenceTrimmer {
     }
 
     /**
-     * Builds a string from the supplied set of characters.
+     * Constructs the string that contains each of the characters from the supplied set in the order specified by the
+     * iteration of the set.
      *
-     * Set['A', 'B', 'C'] -> String("ABC").
+     * When supplied Set['A', 'B', 'C'], String("ABC") is returned.
      *
      * @param characters
-     * @return Built string.
+     * @return Constructed string.
      */
     private static String toString(Set<Character> characters) {
         StringBuilder stringBuilder = new StringBuilder();
