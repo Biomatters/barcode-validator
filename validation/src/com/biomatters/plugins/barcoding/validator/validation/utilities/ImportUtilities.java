@@ -9,9 +9,14 @@ import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleot
 import com.biomatters.geneious.publicapi.plugin.DocumentImportException;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.PluginUtilities;
+import jebl.evolution.io.FastaImporter;
+import jebl.evolution.io.ImportException;
+import jebl.evolution.sequences.Sequence;
+import jebl.evolution.sequences.SequenceType;
 import jebl.util.ProgressListener;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
@@ -64,23 +69,40 @@ public class ImportUtilities {
      */
     public static List<NucleotideSequenceDocument> importBarcodes(List<String> sourcePaths) throws DocumentOperationException {
         List<NucleotideSequenceDocument> result = new ArrayList<NucleotideSequenceDocument>();
-        List<AnnotatedPluginDocument> importedDocuments;
 
-        /* Import documents. */
-        try {
-            importedDocuments = importDocuments(
-                    sourcePaths, Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)DefaultNucleotideSequence.class), BARCODE_ALLOWED_FILE_EXTENSIONS
-            );
-        } catch (DocumentOperationException e) {
-            throw new DocumentOperationException("Could not import barcodes: " + e.getMessage(), e);
-        }
+        /* Check existence of source paths, and import */
+        for (String sourcePath : sourcePaths) {
+            File file = new File(sourcePath);
+            if (!file.exists()) {
+                throw new DocumentOperationException("File or directory '" + sourcePath + "' does not exist.");
+            }
 
-        /* Filter out barcodes. */
-        for (AnnotatedPluginDocument importedDocument : importedDocuments) {
-            if (DefaultSequenceListDocument.class.isAssignableFrom(importedDocument.getDocumentClass())) {
-                result.addAll(((DefaultSequenceListDocument)importedDocument.getDocument()).getNucleotideSequences());
-            } else if (DefaultNucleotideSequence.class.isAssignableFrom(importedDocument.getDocumentClass())) {
-                result.add((NucleotideSequenceDocument)importedDocument.getDocument());
+            if (file.isDirectory()) {
+                File[] subSource = file.listFiles();
+                if (subSource == null) {
+                    throw new DocumentOperationException("Could not list files under directory '" + file.getAbsolutePath() + "'.");
+                }
+
+                List<String> subFiles = new ArrayList<String>();
+                for (File f : subSource) {
+                    subFiles.add(f.getPath());
+                }
+
+                result.addAll(importBarcodes(subFiles));
+            } else if (fileNameHasOneOfExtensions(file.getName(), BARCODE_ALLOWED_FILE_EXTENSIONS)) {
+                try {
+                    FastaImporter importer = new FastaImporter(file, SequenceType.NUCLEOTIDE);
+                    List<Sequence> sequences = importer.importSequences();
+                    for (Sequence seq : sequences) {
+                        result.add(new DefaultNucleotideSequence(seq));
+                    }
+                } catch (FileNotFoundException e) {
+                    throw new DocumentOperationException("Could not import barcodes: " + e.getMessage(), e);
+                } catch (ImportException e) {
+                    throw new DocumentOperationException("Could not import barcodes: " + e.getMessage(), e);
+                } catch (IOException e) {
+                    throw new DocumentOperationException("Could not import barcodes: " + e.getMessage(), e);
+                }
             }
         }
 
