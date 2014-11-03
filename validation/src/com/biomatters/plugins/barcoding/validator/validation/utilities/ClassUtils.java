@@ -29,7 +29,7 @@ public class ClassUtils {
             List<File> dirs = new ArrayList<File>();
             while (resources.hasMoreElements()) {
                 URL resource = resources.nextElement();
-                dirs.add(new File(resource.getFile()));
+                dirs.add(new File(resource.toURI().getPath()));
             }
 
             for (File directory : dirs) {
@@ -41,7 +41,7 @@ public class ClassUtils {
         return classes;
     }
 
-
+    @SuppressWarnings("unchecked")
     private static List<Class> findClasses(File directory, String packageName, Class[] superClass) {
         List<Class> classes = new ArrayList<Class>();
         if (!directory.exists()) {
@@ -49,12 +49,18 @@ public class ClassUtils {
         }
 
         File[] files = directory.listFiles();
+        if (files == null) {
+            return classes;
+        }
+
         for (File file : files) {
             if (file.isDirectory()) {
-                assert !file.getName().contains(".");
+                if (file.getName().contains(".")) {
+                    continue;
+                }
                 classes.addAll(findClasses(file, packageName + "." + file.getName(), superClass));
             } else if (file.getName().endsWith(".class")) {
-                Class cl = null;
+                Class cl;
                 try {
                     cl = Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6));
                 } catch (Throwable e) {

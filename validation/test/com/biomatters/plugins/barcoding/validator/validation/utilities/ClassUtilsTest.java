@@ -6,7 +6,6 @@ import junit.framework.TestCase;
 import java.util.List;
 
 /**
- * TODO: Write some javadoc
  *
  * @author Frank Lee
  *         Created on 3/11/14 10:45 AM
@@ -34,29 +33,59 @@ public class ClassUtilsTest extends TestCase {
     }
 
     public void testFindClass_fromParentPackage() {
+        boolean pass = false;
         List<Class> list = ClassUtils.findClass("com.biomatters", new Class[]{BarcodeValidation.class});
-        assertEquals(1, list.size());
-        assertTrue(list.get(0).equals(BarcodeConsensusValidation.class));
+
+        for (Class cl : list) {
+            if (cl.equals(BarcodeConsensusValidation.class)) {
+                pass = true;
+            }
+        }
+        assertTrue(pass);
     }
 
     public void testFindClass() {
+        boolean pass = false;
         List<Class> list = ClassUtils.findClass("com.biomatters.plugins.barcoding.validator.validation", new Class[]{BarcodeValidation.class});
-        assertEquals(1, list.size());
-        assertTrue(list.get(0).equals(BarcodeConsensusValidation.class));
+        for (Class cl : list) {
+            if (cl.equals(BarcodeConsensusValidation.class)) {
+                pass = true;
+            }
+        }
 
+        assertTrue(pass);
+
+        pass =false;
         list = ClassUtils.findClass("com.biomatters.plugins.barcoding.validator.validation", new Class[]{TraceValidation.class});
-        assertEquals(1, list.size());
-        assertTrue(list.get(0).equals(SlidingWindowTraceValidation.class));
+        for (Class cl : list) {
+            if (cl.equals(SlidingWindowTraceValidation.class)) {
+                pass = true;
+            }
+        }
+        assertTrue(pass);
     }
 
     public void testFindClass_interface() {
+        int count = 0;
         List<Class> list = ClassUtils.findClass("com.biomatters", new Class[]{Validation.class});
-        assertEquals(2, list.size());
+        for (Class cl : list) {
+            if (cl.equals(BarcodeConsensusValidation.class) || cl.equals(SlidingWindowTraceValidation.class)) {
+                count++;
+            }
+
+        }
+
+        assertEquals(2, count);
     }
 
     public void testFindClass_multipleSuper() {
+        boolean pass = false;
         List<Class> list = ClassUtils.findClass("com.biomatters", new Class[]{Validation.class, BarcodeValidation.class});
-        assertEquals(1, list.size());
-        assertTrue(list.get(0).equals(BarcodeConsensusValidation.class));
+        for (Class cl : list) {
+            if (cl.equals(BarcodeConsensusValidation.class)) {
+                pass = true;
+            }
+        }
+        assertTrue(pass);
     }
 }
