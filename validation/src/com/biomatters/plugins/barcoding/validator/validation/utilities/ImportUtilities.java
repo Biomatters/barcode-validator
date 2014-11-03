@@ -11,6 +11,7 @@ import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.PluginUtilities;
 import jebl.evolution.io.FastaImporter;
 import jebl.evolution.io.ImportException;
+import jebl.evolution.sequences.GaplessSequence;
 import jebl.evolution.sequences.Sequence;
 import jebl.evolution.sequences.SequenceType;
 import jebl.util.ProgressListener;
@@ -94,7 +95,7 @@ public class ImportUtilities {
                     FastaImporter importer = new FastaImporter(file, SequenceType.NUCLEOTIDE);
                     List<Sequence> sequences = importer.importSequences();
                     for (Sequence seq : sequences) {
-                        result.add(new DefaultNucleotideSequence(seq));
+                        result.add(new DefaultNucleotideSequence(new GaplessSequence(seq)));
                     }
                 } catch (FileNotFoundException e) {
                     throw new DocumentOperationException("Could not import barcodes: " + e.getMessage(), e);
