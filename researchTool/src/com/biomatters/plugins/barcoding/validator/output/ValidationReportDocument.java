@@ -35,12 +35,18 @@ public class ValidationReportDocument implements PluginDocument, PluginDocument.
         double errorProbabilityLimit = options.getTrimmingOptions().getQualityTrimmingOptions().getErrorProbabilityLimit();
 
         return "The following trimming and assembly parameters were used.<br>" +
-               "Quality Trimming: Error Probability Limit=" + options.getTrimmingOptions().getQualityTrimmingOptions().getErrorProbabilityLimit() + "<br>" +
-               "Primer Trimming: Score: " + options.getTrimmingOptions().getPrimerTrimmingOptions().getScores().getMatrixString() + "<br>" +
-               "                 Gap Option Penalty: " + options.getTrimmingOptions().getPrimerTrimmingOptions().getGapOptionPenalty() + "<br>" +
-               "                 Gap Extension Penalty: " + options.getTrimmingOptions().getPrimerTrimmingOptions().getGapExtensionPenalty() + "<br>" +
-               "Assembly: Min Overlap Length=" + options.getAssemblyOptions().getMinOverlapLength() + "," +
-               "Min Overlap Identity=" + options.getAssemblyOptions().getMinOverlapIdentity();
+               "<br>" +
+               "Trimming by quality:<br>" +
+               "Error Probability Limit = " + options.getTrimmingOptions().getQualityTrimmingOptions().getErrorProbabilityLimit() + "<br>" +
+               "<br>" +
+               "Trimming by primer:<br>" +
+               "Score = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getScores().getName() + "<br>" +
+               "Gap Option Penalty = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getGapOptionPenalty() + "<br>" +
+               "Gap Extension Penalty = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getGapExtensionPenalty() + "<br>" +
+               "<br>"+
+               "Assembly:<br>" +
+               "Min Overlap Length = " + options.getAssemblyOptions().getMinOverlapLength() + "<br>" +
+               "Min Overlap Identity = " + options.getAssemblyOptions().getMinOverlapIdentity();
     }
 
     @SuppressWarnings("UnusedDeclaration")
