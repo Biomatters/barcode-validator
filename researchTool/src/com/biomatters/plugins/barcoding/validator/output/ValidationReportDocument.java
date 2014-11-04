@@ -1,9 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.output;
 
 import com.biomatters.geneious.publicapi.documents.*;
-import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorOptions;
-import com.biomatters.plugins.barcoding.validator.validation.trimming.PrimerTrimmingOptions;
 import org.jdom.Element;
 
 import javax.annotation.Nullable;
@@ -43,11 +41,11 @@ public class ValidationReportDocument implements PluginDocument {
                "Trimming by quality:<br>" +
                "Error Probability Limit = " + options.getTrimmingOptions().getQualityTrimmingOptions().getErrorProbabilityLimit() + "<br>" +
                "<br>" +
-//               "Trimming by primer:<br>" +
-//               "Score = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getScores().getName() + "<br>" +
-//               "Gap Option Penalty = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getGapOptionPenalty() + "<br>" +
-//               "Gap Extension Penalty = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getGapExtensionPenalty() + "<br>" +
-//               "<br>"+
+               "Trimming by primer:<br>" +
+               "Score = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getScores().getName() + "<br>" +
+               "Gap Option Penalty = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getGapOptionPenalty() + "<br>" +
+               "Gap Extension Penalty = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getGapExtensionPenalty() + "<br>" +
+               "<br>"+
                "Assembly:<br>" +
                "Min Overlap Length = " + options.getAssemblyOptions().getMinOverlapLength() + "<br>" +
                "Min Overlap Identity = " + options.getAssemblyOptions().getMinOverlapIdentity();
