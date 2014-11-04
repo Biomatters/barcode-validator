@@ -232,8 +232,8 @@ public class BatchValidationReportViewer extends DocumentViewer {
         private RowTableModel(List<OptionIdentifier> optionsToShow, List<Row> rows) {
             this.optionsToShow = optionsToShow;
             this.rows = rows;
-            numPassedIndex = actions.size() + optionsToShow.size();
-            numWithFailIndex = actions.size() + optionsToShow.size() + 1;
+            numPassedIndex = actions.size() + optionsToShow.size() - 1;
+            numWithFailIndex = actions.size() + optionsToShow.size();
         }
 
         @Override
