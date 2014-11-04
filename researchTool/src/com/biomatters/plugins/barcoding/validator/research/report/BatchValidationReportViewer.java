@@ -1,20 +1,28 @@
 package com.biomatters.plugins.barcoding.validator.research.report;
 
-import com.biomatters.geneious.publicapi.components.Dialogs;
+import com.biomatters.geneious.publicapi.components.GLabel;
+import com.biomatters.geneious.publicapi.components.GPanel;
+import com.biomatters.geneious.publicapi.components.GTable;
+import com.biomatters.geneious.publicapi.components.GTextPane;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
-import com.biomatters.geneious.publicapi.documents.MalformedURNException;
 import com.biomatters.geneious.publicapi.documents.URN;
+import com.biomatters.geneious.publicapi.plugin.DocumentViewer;
+import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
 import com.biomatters.plugins.barcoding.validator.output.ValidationReportDocument;
+import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorOptions;
 
-import javax.swing.event.HyperlinkListener;
+import javax.swing.*;
+import javax.swing.table.AbstractTableModel;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Matthew Cheung
  *         Created on 4/11/14 11:36 AM
  */
-public class BatchValidationReportViewer extends HtmlReportDocumentViewer {
+public class BatchValidationReportViewer extends DocumentViewer {
     private Map<URN, ValidationReportDocument> reports = new HashMap<URN, ValidationReportDocument>();
 
     public BatchValidationReportViewer(AnnotatedPluginDocument[] reportApds) {
@@ -28,7 +36,7 @@ public class BatchValidationReportViewer extends HtmlReportDocumentViewer {
 
 
     @Override
-    public String getHtml() {
+    public JComponent getComponent() {
         if(reports.isEmpty()) {
             return null;
         }
@@ -37,9 +45,12 @@ public class BatchValidationReportViewer extends HtmlReportDocumentViewer {
         Set<URN> barcodeUrns = null;
         List<Row> rows = new ArrayList<Row>();
         int numPassedEverything = 0;
+
         for (Map.Entry<URN, ValidationReportDocument> entry : reports.entrySet()) {
             HashSet<URN> barcodesInThisReport = new HashSet<URN>();
             ValidationReportDocument report = entry.getValue();
+            BarcodeValidatorOptions optionsUsed = report.getOptionsUsed();
+            Map<OptionIdentifier, String> valuesFromOptions = getValuesFromOptions(optionsUsed);
             int count = 0;
             boolean passedEverything = true;
             for (ValidationOutputRecord validationOutputRecord : report.getRecords()) {
@@ -50,7 +61,7 @@ public class BatchValidationReportViewer extends HtmlReportDocumentViewer {
                     passedEverything = false;
                 }
             }
-            rows.add(new Row(entry.getKey(), count, report.getRecords().size() - count));
+            rows.add(new Row(entry.getKey(), count, report.getRecords().size() - count, valuesFromOptions));
             if(passedEverything) {
                 numPassedEverything++;
             }
@@ -73,72 +84,168 @@ public class BatchValidationReportViewer extends HtmlReportDocumentViewer {
             }
         }));
 
-        return "<h1>Summary of " + reports.size() + " Validation Runs</h1>" +
-                "<br><br>" +
-                (barcodesNotTheSame ? "<font color=\"red\">Warning: Input barcode sequences for selected reports do not match</font><br><br>" : "") +
-                numPassedEverything + " out of " + reports.size() + " passed all validations on all data sets." +
-                "<br><br>" + getHtmlTable(rows);
-    }
+        GPanel rootPanel = new GPanel(new BorderLayout());
 
-    private static final String SHOW_OPTIONS_PREFIX = "showOptions:";
+        JTextPane textPane = new GTextPane();
+        textPane.setContentType("text/html");
+        textPane.setEditable(false);
+        textPane.setText(getHeaderText(reports.size(), barcodesNotTheSame, numPassedEverything));
+        rootPanel.add(textPane, BorderLayout.NORTH);
 
-    private static String getHtmlTable(List<Row> rows) {
-        StringBuilder html = new StringBuilder("<table border=\"1\"><tr>" +
-                "<td>Parameters</td>" +
-                "<td># Validations Passing All</td>" +
-                "<td># Validations Failed At Least One</td>" +
-        "</tr>");
+        boolean missing = false;
+        Set<OptionIdentifier> optionIds = new HashSet<OptionIdentifier>();
         for (Row row : rows) {
-            html.append("<tr>");
-            html.append("<td>").append(getReportLink(row)).append(" - ").append(getShowOptionsLink(row)).append("</td>");
-            html.append("<td>").append(row.numAllPassed).append("</td>");
-            html.append("<td>").append(row.numFailedAtLeastOne).append("</td>");
-            html.append("</tr>");
+            if(row.valuesFromOptions == null) {
+                missing = true;
+            } else {
+                optionIds.addAll(row.valuesFromOptions.keySet());
+            }
         }
-        html.append("</table>");
-        return html.toString();
+        if(!missing) {
+            List<OptionIdentifier> idsOfDifferent = new ArrayList<OptionIdentifier>();
+            for (OptionIdentifier optionId : optionIds) {
+                Set<String> values = new HashSet<String>();
+                for (Row row : rows) {
+                    values.add(row.valuesFromOptions.get(optionId));
+                }
+                if(values.size() > 1) {
+                    idsOfDifferent.add(optionId);
+                }
+            }
+
+            rootPanel.add(new JScrollPane(new GTable(new RowTableModel(idsOfDifferent, rows))));
+        } else {
+            rootPanel.add(new GLabel("No table shown because one of the selected reports was created prior to v0.2"));
+        }
+
+        return rootPanel;
     }
 
-    private static String getReportLink(Row row) {
-        return "<a href=\"" + row.urn.toString() + "\">Report</a>";
-
+    private static Map<OptionIdentifier, String> getValuesFromOptions(Options optionsUsed) {
+        if(optionsUsed == null) {
+            return null;
+        }
+        return getValuesFromOptions("", optionsUsed);
     }
 
-    private static String getShowOptionsLink(Row row) {
-        return "<a href=\"" + SHOW_OPTIONS_PREFIX + row.urn.toString() + "\">Show Options</a>";
+    private static Map<OptionIdentifier, String> getValuesFromOptions(String prefix, Options options) {
+        Map<OptionIdentifier, String> result = new HashMap<OptionIdentifier, String>();
+        for (Options.Option option : options.getOptions()) {
+            if(!(option instanceof Options.LabelOption)) {
+                result.put(new OptionIdentifier(prefix + option.getName(), option.getLabel()), option.getValueAsString());
+            }
+        }
+
+        for (Map.Entry<String, Options> entry : options.getChildOptions().entrySet()) {
+            result.putAll(getValuesFromOptions(prefix + entry.getKey() + ".", entry.getValue()));
+        }
+
+        return result;
     }
 
-    private class Row {
+    private static class OptionIdentifier {
+        private String fullName;
+        private String label;
+
+        private OptionIdentifier(String fullName, String label) {
+            this.fullName = fullName;
+            this.label = label.trim();
+            if(label.endsWith(":")) {
+                this.label = label.substring(0, label.length()-1);
+            }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            OptionIdentifier that = (OptionIdentifier) o;
+
+            if (!fullName.equals(that.fullName)) return false;
+            if (!label.equals(that.label)) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fullName.hashCode();
+            result = 31 * result + label.hashCode();
+            return result;
+        }
+    }
+
+    private static String getHeaderText(int runs, boolean barcodesNotTheSame, int numPassedEverything) {
+        return "<h1>Summary of " + runs + " Validation Runs</h1>" +
+                (barcodesNotTheSame ? "<font color=\"red\">Warning: Input barcode sequences for selected reports do not match</font><br><br>" : "") +
+                numPassedEverything + " out of " + runs + " passed all validations on all data sets.<br><br>";
+    }
+
+    private static class Row {
         URN urn;
         int numAllPassed;
         int numFailedAtLeastOne;
+        Map<OptionIdentifier, String> valuesFromOptions;
 
-        private Row(URN urn, int numAllPassed, int numFailedAtLeastOne) {
+        private Row(URN urn, int numAllPassed, int numFailedAtLeastOne, Map<OptionIdentifier, String> valuesFromOptions) {
             this.urn = urn;
             this.numAllPassed = numAllPassed;
             this.numFailedAtLeastOne = numFailedAtLeastOne;
+            this.valuesFromOptions = valuesFromOptions;
         }
     }
 
-    @Override
-    public HyperlinkListener getHyperlinkListener() {
-        return new DocumentOpeningHyperlinkListener("BatchValidationReportViewerFactory",
-                Collections.<String, DocumentOpeningHyperlinkListener.UrlProcessor>singletonMap(SHOW_OPTIONS_PREFIX,
-                new DocumentOpeningHyperlinkListener.UrlProcessor() {
-                    @Override
-                    void process(String url) {
-                        String urnString = url.substring(SHOW_OPTIONS_PREFIX.length());
-                        try {
-                            URN urn = new URN(urnString);
-                            ValidationReportDocument report = reports.get(urn);
-                            if(report != null) {
-                                Dialogs.showMessageDialog(report.getDescriptionOfOptions(), "Parameters");
-                            }
-                        } catch (MalformedURNException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                })
-        );
+    private static class RowTableModel extends AbstractTableModel {
+
+        private List<OptionIdentifier> optionsToShow;
+        private List<Row> rows;
+        private int numPassedIndex;
+        private int numWithFailIndex;
+
+        private RowTableModel(List<OptionIdentifier> optionsToShow, List<Row> rows) {
+            this.optionsToShow = optionsToShow;
+            this.rows = rows;
+            numPassedIndex = optionsToShow.size();
+            numWithFailIndex = optionsToShow.size() + 1;
+        }
+
+        @Override
+        public int getRowCount() {
+            return rows.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return optionsToShow.size() + 2;
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            if(column < optionsToShow.size()) {
+                return optionsToShow.get(column).label;
+            } else if(column == numPassedIndex) {
+                return "# Passed All";
+            } else if(column == numWithFailIndex) {
+                return "# Failed At Least One";
+            }
+            return null;
+        }
+
+
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            Row row = rows.get(rowIndex);
+            if(columnIndex < optionsToShow.size()) {
+                return row.valuesFromOptions.get(optionsToShow.get(columnIndex));
+            } else if(columnIndex == numPassedIndex) {
+                return row.numAllPassed;
+            } else if(columnIndex == numWithFailIndex) {
+                return row.numFailedAtLeastOne;
+            } else {
+                return null;
+            }
+        }
     }
 }

@@ -4,6 +4,7 @@ import com.biomatters.geneious.publicapi.documents.*;
 import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorOptions;
 import org.jdom.Element;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -19,21 +20,22 @@ public class ValidationReportDocument implements PluginDocument, PluginDocument.
 
     private static final String NAME_KEY = "name";
     private static final String OUTPUT_KEY = "output";
-    private static final String OPTIONS_KEY = "optionsUsed";
+    private static final String OPTIONS_DESC_KEY = "optionsUsed";
+    private static final String OPTION_VALUES_KEY = "optionsValuesUsed";
 
     private String name;
     private List<ValidationOutputRecord> outputs;
-    private String optionsUsed;
+    // One of the following is non-null.  Early version stored only the description.
+    @Nullable private BarcodeValidatorOptions optionsUsed;
+    @Nullable private String optionsDescription;
 
     public ValidationReportDocument(String name, List<ValidationOutputRecord> outputs, BarcodeValidatorOptions options) {
         this.name = name;
         this.outputs = outputs;
-        optionsUsed = generateDescriptionFromOptions(options);
+        optionsUsed = options;
     }
 
     private static String generateDescriptionFromOptions(BarcodeValidatorOptions options) {
-        double errorProbabilityLimit = options.getTrimmingOptions().getQualityTrimmingOptions().getErrorProbabilityLimit();
-
         return "The following trimming and assembly parameters were used.<br>" +
                "Quality Trimming: Error Probability Limit=" + options.getTrimmingOptions().getQualityTrimmingOptions().getErrorProbabilityLimit() + "<br>" +
                "Primer Trimming: Score: " + options.getTrimmingOptions().getPrimerTrimmingOptions().getScores().getMatrixString() + "<br>" +
@@ -55,11 +57,13 @@ public class ValidationReportDocument implements PluginDocument, PluginDocument.
             name = "";
         }
 
-        optionsUsed = element.getChildText(OPTIONS_KEY);
-        if(optionsUsed == null) {
-            optionsUsed = "";
+        Element optionsElement = element.getChild(OPTION_VALUES_KEY);
+        if(optionsElement != null) {
+            optionsUsed = new BarcodeValidatorOptions();
+            optionsUsed.valuesFromXML(optionsElement);
+        } else {
+            optionsDescription = element.getChildText(OPTIONS_DESC_KEY);
         }
-
         outputs = new ArrayList<ValidationOutputRecord>();
         List<Element> children = element.getChildren(OUTPUT_KEY);
         for (Element child : children) {
@@ -71,7 +75,13 @@ public class ValidationReportDocument implements PluginDocument, PluginDocument.
     public Element toXML() {
         Element element = new Element(XMLSerializable.ROOT_ELEMENT_NAME);
         element.addContent(new Element(NAME_KEY).setText(name));
-        element.addContent(new Element(OPTIONS_KEY).setText(optionsUsed));
+        if(optionsUsed != null) {
+            // We only serialize the values in case the format changes.  This also means we don't have to worry about
+            // making BarcodeValidationOptions completely serializable.
+            element.addContent(optionsUsed.valuesToXML(OPTION_VALUES_KEY));
+        } else if(optionsDescription != null) {
+            element.addContent(new Element(OPTIONS_DESC_KEY).setText(optionsDescription));
+        }
         for (ValidationOutputRecord output : outputs) {
             element.addContent(XMLSerializer.classToXML(OUTPUT_KEY, output));
         }
@@ -127,6 +137,15 @@ public class ValidationReportDocument implements PluginDocument, PluginDocument.
      * @return a human readable summary of the options used in the operation that generated this report
      */
     public String getDescriptionOfOptions() {
+        if(optionsDescription == null) {
+            return generateDescriptionFromOptions(optionsUsed);
+        } else {
+            return optionsDescription;
+        }
+    }
+
+    @Nullable
+    public BarcodeValidatorOptions getOptionsUsed() {
         return optionsUsed;
     }
 }
