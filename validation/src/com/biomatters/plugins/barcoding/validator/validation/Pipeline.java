@@ -13,6 +13,7 @@ import jebl.util.CompositeProgressListener;
 import jebl.util.ProgressListener;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -65,20 +66,21 @@ public class Pipeline {
         List<NucleotideSequenceDocument> consensusSequences = new ArrayList<NucleotideSequenceDocument>();
         if(!contigs.isEmpty()) {
             CompositeProgressListener progressForEachContig = new CompositeProgressListener(assembleTracesProgress, contigs.size());
-            CompositeProgressListener progressForEachConsus = new CompositeProgressListener(assembleTracesProgress, contigs.size());
 
             for (SequenceAlignmentDocument contig : contigs) {
-                NucleotideGraphSequenceDocument consensus = ConsensusUtilities.getConsensus(contig);
-                List<NucleotideGraphSequenceDocument> consensusList = new ArrayList<NucleotideGraphSequenceDocument>();
-                consensusList.add(consensus);
+                progressForEachContig.beginSubtask();
 
-                progressForEachConsus.beginSubtask();
-                List<NucleotideGraphSequenceDocument> resultConsusList = trimTraces(consensusList, trimmingOptions, progressForEachConsus);
+                CompositeProgressListener progressForEachConsensusStep = new CompositeProgressListener(progressForEachContig, 2);
+
+                progressForEachConsensusStep.beginSubtask();
+                NucleotideGraphSequenceDocument consensus = ConsensusUtilities.getConsensus(contig);
+                List<NucleotideGraphSequenceDocument> resultConsusList = trimTraces(
+                        Collections.singletonList(consensus), trimmingOptions, progressForEachConsensusStep);
                 assert resultConsusList.size() == 1;
                 NucleotideGraphSequenceDocument retConsus = resultConsusList.get(0);
 
-                progressForEachContig.beginSubtask();
-                callback.addConsensus(retConsus, progressForEachContig);
+                progressForEachConsensusStep.beginSubtask();
+                callback.addConsensus(retConsus, progressForEachConsensusStep);
                 consensusSequences.add(retConsus);
             }
         }
