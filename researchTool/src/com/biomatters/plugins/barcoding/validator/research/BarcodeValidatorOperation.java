@@ -84,10 +84,15 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
         composite.beginSubtask();
         Iterator<BarcodeValidatorOptions> iterator = allOptions.iterator();
-        CompositeProgressListener perIteration = new CompositeProgressListener(composite, allOptions.getBatchSize());
+        int batchSize = allOptions.getBatchSize();
+        CompositeProgressListener perIteration = new CompositeProgressListener(composite, batchSize);
+
+        int maxLengthOfCounter = String.valueOf(batchSize).length();
+        String formatPattern = "%0" + maxLengthOfCounter + "d";
+
         int i = 1;
         while(iterator.hasNext()) {
-            String setName = "Parameter Set " + i++;
+            String setName = "Parameter Set " + String.format(formatPattern, i++);
             perIteration.beginSubtask(setName);
             runPipelineWithOptions(setName, SUB_SUB_FOLDER_SEPARATOR, suppliedBarcodesToSuppliedTraces, operationCallback, iterator.next(), perIteration);
             // OperationCallback does not yet support sub sub folders.  So we need to do this manually afterwards.
