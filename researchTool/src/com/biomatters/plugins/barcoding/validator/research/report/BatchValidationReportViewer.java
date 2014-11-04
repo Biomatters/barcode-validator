@@ -8,6 +8,7 @@ import com.biomatters.geneious.publicapi.plugin.DocumentViewer;
 import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
 import com.biomatters.plugins.barcoding.validator.output.ValidationReportDocument;
+import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorOperation;
 import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorOptions;
 
 import javax.swing.*;
@@ -63,7 +64,7 @@ public class BatchValidationReportViewer extends DocumentViewer {
                     passedEverything = false;
                 }
             }
-            rows.add(new Row(entry.getKey(), count, report.getRecords().size() - count, valuesFromOptions));
+            rows.add(new Row(report.getName(), entry.getKey(), count, report.getRecords().size() - count, valuesFromOptions));
             if(passedEverything) {
                 numPassedEverything++;
             }
@@ -200,12 +201,14 @@ public class BatchValidationReportViewer extends DocumentViewer {
     }
 
     private static class Row {
+        String name;
         URN urn;
         int numAllPassed;
         int numFailedAtLeastOne;
         Map<OptionIdentifier, String> valuesFromOptions;
 
-        private Row(URN urn, int numAllPassed, int numFailedAtLeastOne, Map<OptionIdentifier, String> valuesFromOptions) {
+        private Row(String name, URN urn, int numAllPassed, int numFailedAtLeastOne, Map<OptionIdentifier, String> valuesFromOptions) {
+            this.name = name;
             this.urn = urn;
             this.numAllPassed = numAllPassed;
             this.numFailedAtLeastOne = numFailedAtLeastOne;
@@ -215,25 +218,65 @@ public class BatchValidationReportViewer extends DocumentViewer {
 
     private static class RowTableModel extends AbstractTableModel {
 
-        private List<ColumnAction> actions = Arrays.<ColumnAction>asList(
-                new ColumnAction("Select Report") {
-                    @Override
-                    void process(Row row) {
-                        DocumentUtilities.selectDocument(row.urn);
-                    }
+        private static final SimpleResultColumn NAME_COLUMN = new SimpleResultColumn("Name") {
+            @Override
+            Object getValueForRow(Row row) {
+                String rowName = row.name;
+                if (rowName.endsWith(BarcodeValidatorOperation.REPORT_NAME_SUFFIX)) {
+                    rowName = rowName.substring(0, rowName.length() - BarcodeValidatorOperation.REPORT_NAME_SUFFIX.length());
                 }
-        );
+                return rowName;
+            }
+        };
 
-        private List<OptionIdentifier> optionsToShow;
+
+        private static final ResultColumn SELECT_REPORT_COLUMN = new ResultColumn() {
+            @Override
+            String getColumnHeader() {
+                return "";
+            }
+
+            @Override
+            Object getValueForRow(Row row) {
+                return "<html><a href=\"" + row.urn + "\">Select Report</a></html>";
+            }
+
+            @Override
+            void processClick(Row row) {
+                DocumentUtilities.selectDocument(row.urn);
+            }
+        };
+        private static final SimpleResultColumn NUM_FAIL_COLUMN = new SimpleResultColumn("# Failed At Least One") {
+            @Override
+            Object getValueForRow(Row row) {
+                return row.numFailedAtLeastOne;
+            }
+        };
+        private static final SimpleResultColumn NUM_PASS_COLUMN = new SimpleResultColumn("# Passed All") {
+            @Override
+            Object getValueForRow(Row row) {
+                return row.numAllPassed;
+            }
+        };
+
+        private List<ResultColumn> columns;
         private List<Row> rows;
-        private int numPassedIndex;
-        private int numWithFailIndex;
 
         private RowTableModel(List<OptionIdentifier> optionsToShow, List<Row> rows) {
-            this.optionsToShow = optionsToShow;
             this.rows = rows;
-            numPassedIndex = actions.size() + optionsToShow.size() - 1;
-            numWithFailIndex = actions.size() + optionsToShow.size();
+            columns = new ArrayList<ResultColumn>();
+            columns.add(NAME_COLUMN);
+            columns.add(SELECT_REPORT_COLUMN);
+            for (final OptionIdentifier optionIdentifier : optionsToShow) {
+                columns.add(new SimpleResultColumn(optionIdentifier.label) {
+                    @Override
+                    Object getValueForRow(Row row) {
+                        return row.valuesFromOptions.get(optionIdentifier);
+                    }
+                });
+            }
+            columns.add(NUM_PASS_COLUMN);
+            columns.add(NUM_FAIL_COLUMN);
         }
 
         @Override
@@ -243,62 +286,62 @@ public class BatchValidationReportViewer extends DocumentViewer {
 
         @Override
         public int getColumnCount() {
-            return actions.size() + optionsToShow.size() + 2;
+            return columns.size();
         }
 
         @Override
         public String getColumnName(int column) {
-            if(column < actions.size()) {
+            if(column < 0 || column >= columns.size()) {
                 return "";
             }
-            column-=actions.size();
-
-            if(column < optionsToShow.size()) {
-                return optionsToShow.get(column).label;
-            } else if(column == numPassedIndex) {
-                return "# Passed All";
-            } else if(column == numWithFailIndex) {
-                return "# Failed At Least One";
-            }
-            return null;
+            return columns.get(column).getColumnHeader();
         }
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            Row row = rows.get(rowIndex);
-            if(columnIndex < actions.size()) {
-                return "<html><a href=\"" + row.urn + "\">" + actions.get(columnIndex).columnLabel + "</a></html>";
+            if(columnIndex < 0 || columnIndex >= columns.size() || rowIndex < 0 || rowIndex >= rows.size()) {
+                return "";
             }
-            columnIndex-=actions.size();
 
-            if(columnIndex < optionsToShow.size()) {
-                return row.valuesFromOptions.get(optionsToShow.get(columnIndex));
-            } else if(columnIndex == numPassedIndex) {
-                return row.numAllPassed;
-            } else if(columnIndex == numWithFailIndex) {
-                return row.numFailedAtLeastOne;
-            } else {
-                return null;
-            }
+            Row row = rows.get(rowIndex);
+            ResultColumn column = columns.get(columnIndex);
+            return column.getValueForRow(row);
         }
 
         public void processAction(int rowIndex, int columnIndex) {
-            if(columnIndex < 0 || columnIndex >= actions.size()) {
+            if(columnIndex < 0 || columnIndex >= columns.size() || rowIndex < 0 || rowIndex >= rows.size()) {
                 return;
             }
-            ColumnAction action = actions.get(columnIndex);
-            if(action != null) {
-                action.process(rows.get(rowIndex));
-            }
+
+            Row row = rows.get(rowIndex);
+            ResultColumn column = columns.get(columnIndex);
+            column.processClick(row);
         }
     }
 
-    private static abstract class ColumnAction {
-        String columnLabel;
-        protected ColumnAction(String columnLabel) {
-            this.columnLabel = columnLabel;
+    private static abstract class ResultColumn {
+        abstract String getColumnHeader();
+        abstract Object getValueForRow(Row row);
+        abstract void processClick(Row row);
+    }
+
+    private abstract static class SimpleResultColumn extends ResultColumn {
+
+        private String columnHeader;
+
+        private SimpleResultColumn(String columnHeader) {
+            this.columnHeader = columnHeader;
         }
 
-        abstract void process(Row row);
+        @Override
+        String getColumnHeader() {
+            return columnHeader;
+        }
+
+        @Override
+        abstract Object getValueForRow(Row row);
+
+        @Override
+        void processClick(Row row) {}
     }
 }

@@ -230,8 +230,10 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         }
 
         validationProgress.beginSubtask();
-        operationCallback.addDocument(new ValidationReportDocument("Validation Report", outputs, barcodeValidatorOptions), false, validationProgress);
+        operationCallback.addDocument(new ValidationReportDocument(setName + REPORT_NAME_SUFFIX, outputs, barcodeValidatorOptions), false, validationProgress);
     }
+
+    public static final String REPORT_NAME_SUFFIX = " Validation Report";
 
 
     /**
