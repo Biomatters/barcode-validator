@@ -16,7 +16,7 @@ import java.util.List;
  * @author Matthew Cheung
  *         Created on 30/09/14 3:03 PM
  */
-public class ValidationReportDocument implements PluginDocument, PluginDocument.ReferencedDocumentsNotLoaded {
+public class ValidationReportDocument implements PluginDocument {
 
     private static final String NAME_KEY = "name";
     private static final String OUTPUT_KEY = "output";
