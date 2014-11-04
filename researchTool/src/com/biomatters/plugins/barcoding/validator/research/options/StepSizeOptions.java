@@ -1,6 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.research.options;
 
 import com.biomatters.geneious.publicapi.plugin.Options;
+import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorOperation;
 
 import javax.swing.*;
 import java.util.List;
@@ -20,9 +21,9 @@ class StepSizeOptions<T extends Number> extends Options {
     StepSizeOptions(MultiValueOption<T> baseOption) {
         this.baseOption = baseOption;
         beginAlignHorizontally(baseOption.getLabel(), false);
-        minOption = baseOption.addOption(this, "min", "Min Value:", true);
-        maxOption = baseOption.addOption(this, "max", "Max Value:", true);
-        stepOption = baseOption.addOption(this, "step", "Step Size:", false);
+        minOption = baseOption.addOption(this, baseOption.getName()+"_min", "Min Value:", true);
+        maxOption = baseOption.addOption(this, baseOption.getName()+"_max", "Max Value:", true);
+        stepOption = baseOption.addOption(this, baseOption.getName()+"_step", "Step Size:", false);
         endAlignHorizontally();
     }
 
