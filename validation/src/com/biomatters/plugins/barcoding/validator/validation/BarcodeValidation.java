@@ -4,6 +4,7 @@ import com.biomatters.geneious.publicapi.components.Dialogs;
 import com.biomatters.plugins.barcoding.validator.validation.utilities.ClassUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -20,20 +21,6 @@ public abstract class BarcodeValidation implements Validation {
      * @return List of BarcodeValidation objects.
      */
     public static synchronized List<BarcodeValidation> getBarcodeValidations() {
-        if (impls == null) {
-            impls = new ArrayList<BarcodeValidation>();
-
-            List<Class> ret = ClassUtils.findClass(IMPLEMENTS_PAKCAGE, new Class[] {BarcodeValidation.class});
-            for (Class cl : ret) {
-                try {
-                    impls.add((BarcodeValidation)cl.newInstance());
-                } catch (InstantiationException e) {
-                    Dialogs.showMessageDialog("Failed to initialize class " + cl.getName(), " because of " + e.getMessage());
-                } catch (IllegalAccessException e) {
-                    Dialogs.showMessageDialog("Failed to access class " + cl.getName(), " because of " + e.getMessage());
-                }
-            }
-        }
-        return impls;
+        return Arrays.<BarcodeValidation>asList(new BarcodeConsensusValidation());
     }
 }

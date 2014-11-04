@@ -5,6 +5,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSeque
 import com.biomatters.plugins.barcoding.validator.validation.utilities.ClassUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -30,21 +31,6 @@ public abstract class TraceValidation implements Validation {
      * @return List of TraceValidation objects.
      */
     public synchronized static List<TraceValidation> getTraceValidations() {
-        if (impls == null) {
-            impls = new ArrayList<TraceValidation>();
-
-            List<Class> ret = ClassUtils.findClass(IMPLEMENTS_PAKCAGE, new Class[]{TraceValidation.class});
-            for (Class cl : ret) {
-                try {
-                    impls.add((TraceValidation)cl.newInstance());
-                } catch (InstantiationException e) {
-                    Dialogs.showMessageDialog("Failed to initialize class " + cl.getName(), " because of " + e.getMessage());
-                } catch (IllegalAccessException e) {
-                    Dialogs.showMessageDialog("Failed to access class " + cl.getName(), " because of " + e.getMessage());
-                }
-            }
-        }
-
-        return impls;
+        return Arrays.<TraceValidation>asList(new SlidingWindowTraceValidation());
     }
 }
