@@ -1,10 +1,8 @@
 package com.biomatters.plugins.barcoding.validator.research.report;
 
-import com.biomatters.geneious.publicapi.components.GLabel;
-import com.biomatters.geneious.publicapi.components.GPanel;
-import com.biomatters.geneious.publicapi.components.GTable;
-import com.biomatters.geneious.publicapi.components.GTextPane;
+import com.biomatters.geneious.publicapi.components.*;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
+import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.plugin.DocumentViewer;
 import com.biomatters.geneious.publicapi.plugin.Options;
@@ -17,6 +15,8 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -115,9 +115,21 @@ public class BatchValidationReportViewer extends DocumentViewer {
                 }
             }
 
-            RowTableModel model = new RowTableModel(idsOfDifferent, rows);
+            final RowTableModel model = new RowTableModel(idsOfDifferent, rows);
             GTable table = new GTable(model);
             table.setRowSorter(new TableRowSorter<TableModel>(model));
+
+            table.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    Object source = e.getSource();
+                    if(source instanceof JTable) {
+                        JTable table = (JTable) source;
+                        model.processAction(table.rowAtPoint(e.getPoint()), table.columnAtPoint(e.getPoint()));
+                    }
+                }
+            });
+
             rootPanel.add(new JScrollPane(table));
         } else {
             rootPanel.add(new GLabel("No table shown because one of the selected reports was created prior to v0.2"));
@@ -203,6 +215,15 @@ public class BatchValidationReportViewer extends DocumentViewer {
 
     private static class RowTableModel extends AbstractTableModel {
 
+        private List<ColumnAction> actions = Arrays.<ColumnAction>asList(
+                new ColumnAction("Select Report") {
+                    @Override
+                    void process(Row row) {
+                        DocumentUtilities.selectDocument(row.urn);
+                    }
+                }
+        );
+
         private List<OptionIdentifier> optionsToShow;
         private List<Row> rows;
         private int numPassedIndex;
@@ -211,8 +232,8 @@ public class BatchValidationReportViewer extends DocumentViewer {
         private RowTableModel(List<OptionIdentifier> optionsToShow, List<Row> rows) {
             this.optionsToShow = optionsToShow;
             this.rows = rows;
-            numPassedIndex = optionsToShow.size();
-            numWithFailIndex = optionsToShow.size() + 1;
+            numPassedIndex = actions.size() + optionsToShow.size();
+            numWithFailIndex = actions.size() + optionsToShow.size() + 1;
         }
 
         @Override
@@ -222,11 +243,16 @@ public class BatchValidationReportViewer extends DocumentViewer {
 
         @Override
         public int getColumnCount() {
-            return optionsToShow.size() + 2;
+            return actions.size() + optionsToShow.size() + 2;
         }
 
         @Override
         public String getColumnName(int column) {
+            if(column < actions.size()) {
+                return "";
+            }
+            column-=actions.size();
+
             if(column < optionsToShow.size()) {
                 return optionsToShow.get(column).label;
             } else if(column == numPassedIndex) {
@@ -237,11 +263,14 @@ public class BatchValidationReportViewer extends DocumentViewer {
             return null;
         }
 
-
-
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             Row row = rows.get(rowIndex);
+            if(columnIndex < actions.size()) {
+                return "<html><a href=\"" + row.urn + "\">" + actions.get(columnIndex).columnLabel + "</a></html>";
+            }
+            columnIndex-=actions.size();
+
             if(columnIndex < optionsToShow.size()) {
                 return row.valuesFromOptions.get(optionsToShow.get(columnIndex));
             } else if(columnIndex == numPassedIndex) {
@@ -252,5 +281,24 @@ public class BatchValidationReportViewer extends DocumentViewer {
                 return null;
             }
         }
+
+        public void processAction(int rowIndex, int columnIndex) {
+            if(columnIndex < 0 || columnIndex >= actions.size()) {
+                return;
+            }
+            ColumnAction action = actions.get(columnIndex);
+            if(action != null) {
+                action.process(rows.get(rowIndex));
+            }
+        }
+    }
+
+    private static abstract class ColumnAction {
+        String columnLabel;
+        protected ColumnAction(String columnLabel) {
+            this.columnLabel = columnLabel;
+        }
+
+        abstract void process(Row row);
     }
 }
