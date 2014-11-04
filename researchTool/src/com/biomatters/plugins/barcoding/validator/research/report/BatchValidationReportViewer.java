@@ -14,6 +14,8 @@ import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorOptio
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -113,7 +115,10 @@ public class BatchValidationReportViewer extends DocumentViewer {
                 }
             }
 
-            rootPanel.add(new JScrollPane(new GTable(new RowTableModel(idsOfDifferent, rows))));
+            RowTableModel model = new RowTableModel(idsOfDifferent, rows);
+            GTable table = new GTable(model);
+            table.setRowSorter(new TableRowSorter<TableModel>(model));
+            rootPanel.add(new JScrollPane(table));
         } else {
             rootPanel.add(new GLabel("No table shown because one of the selected reports was created prior to v0.2"));
         }
