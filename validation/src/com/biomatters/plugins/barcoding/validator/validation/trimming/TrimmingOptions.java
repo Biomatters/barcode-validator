@@ -26,6 +26,8 @@ public class TrimmingOptions extends Options {
 
     private void init() {
         addChildOptions(QUALITY_TRIMMING_OPTIONS_NAME, "By Quality", "Quality trimming", new ErrorProbabilityOptions(), true);
-        addChildOptions(PRIMER_TRIMMING_OPTIONS_NAME, "By Primer", "Primer trimming", new PrimerTrimmingOptions(TrimmingOptions.class), true);
+        PrimerTrimmingOptions primerOptions = new PrimerTrimmingOptions(TrimmingOptions.class);
+        primerOptions.setVisible(false);
+        addChildOptions(PRIMER_TRIMMING_OPTIONS_NAME, "By Primer", "Primer trimming", primerOptions, true);
     }
 }

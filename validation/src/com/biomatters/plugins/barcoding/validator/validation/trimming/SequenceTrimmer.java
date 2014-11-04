@@ -49,9 +49,9 @@ public class SequenceTrimmer {
         /* Add the trim regions that derive from running the Smith-Waterman algorithm with each of the supplied primers
          * on the supplied sequence.
          */
-        for (OligoSequenceDocument primer : primers) {
-            trimmages.add(getTrimmageForPrimerTrimming(sequence, primer, gapOpenPenalty, gapExtensionPenalty, scores));
-        }
+//        for (OligoSequenceDocument primer : primers) {
+//            trimmages.add(getTrimmageForPrimerTrimming(sequence, primer, gapOpenPenalty, gapExtensionPenalty, scores));
+//        }
 
         /* Generate the trimmage that when used to trim the supplied sequence, removes the maximum number of bases that
          * can be removed from each of its ends.
