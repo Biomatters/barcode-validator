@@ -1,12 +1,14 @@
 package com.biomatters.plugins.barcoding.validator.validation.utilities;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Modifier;
-import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 /**
  * Util class used to find descendant class of specific superclass
@@ -17,39 +19,84 @@ import java.util.List;
 
 public class ClassUtils {
 
+    @SuppressWarnings("unchecked")
     public static List<Class> findClass(String packageName, Class[] superClass) {
         List<Class> classes = new ArrayList<Class>();
-        if (packageName == null || packageName.trim().length() == 0) {
+        if (packageName == null || packageName.trim().length() == 0 || superClass == null || superClass.length == 0) {
             return classes;
         }
 
+        List<String> files = new ArrayList<String>();
+
         try {
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             String path = packageName.replace('.', '/');
-            Enumeration<URL> resources = classLoader.getResources(path);
-            List<File> dirs = new ArrayList<File>();
+            Enumeration<URL> resources = Thread.currentThread().getContextClassLoader().getResources(path);
             while (resources.hasMoreElements()) {
                 URL resource = resources.nextElement();
-                URI uri = resource.toURI();
-                if (uri != null && uri.getPath() != null) {
-                    dirs.add(new File(uri.getPath()));
-                } else {
-                    dirs.add(new File(resource.getFile()));
+                if ("jar".equals(resource.getProtocol())) {
+                    files.addAll(findClassesFromJar(resource.getPath()));
+                } else if ("file".equals(resource.getProtocol())) {
+                    files.addAll(findClassesFromFile(new File(resource.getPath()), packageName));
                 }
             }
 
-            for (File directory : dirs) {
-                classes.addAll(findClasses(directory, packageName, superClass));
-            }
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        for (String file : files) {
+            Class cl;
+            try {
+                cl = Class.forName(file);
+            } catch (Throwable e) {
+                continue;
+            }
+
+            //do not return abstract class
+            if (Modifier.isAbstract(cl.getModifiers())) {
+                continue;
+            }
+
+            int i;
+            for (i = 0; i < superClass.length; i++) {
+                if (!superClass[i].isAssignableFrom(cl)) {
+                    break;
+                }
+            }
+
+            if (i == superClass.length) {
+                classes.add(cl);
+            }
+        }
+
         return classes;
     }
 
-    @SuppressWarnings("unchecked")
-    private static List<Class> findClasses(File directory, String packageName, Class[] superClass) {
-        List<Class> classes = new ArrayList<Class>();
+    private static List<String> findClassesFromJar(String jarPath) {
+        List<String> myClassName = new ArrayList<String>();
+        String[] jarInfo = jarPath.split("!");
+        String jarFilePath = jarInfo[0].substring(jarInfo[0].indexOf("/"));
+        String packagePath = jarInfo[1].substring(1);
+        try {
+            JarFile jarFile = new JarFile(jarFilePath);
+            Enumeration<JarEntry> entrys = jarFile.entries();
+            while (entrys.hasMoreElements()) {
+                JarEntry jarEntry = entrys.nextElement();
+                String entryName = jarEntry.getName();
+                if (entryName.endsWith(".class") && entryName.startsWith(packagePath)) {
+                    entryName = entryName.replace("/", ".").substring(0, entryName.lastIndexOf("."));
+                    myClassName.add(entryName);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return myClassName;
+    }
+
+    private static List<String> findClassesFromFile(File directory, String packageName) {
+        List<String> classes = new ArrayList<String>();
         if (!directory.exists()) {
             return classes;
         }
@@ -64,30 +111,9 @@ public class ClassUtils {
                 if (file.getName().contains(".")) {
                     continue;
                 }
-                classes.addAll(findClasses(file, packageName + "." + file.getName(), superClass));
+                classes.addAll(findClassesFromFile(file, packageName + "." + file.getName()));
             } else if (file.getName().endsWith(".class")) {
-                Class cl;
-                try {
-                    cl = Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6));
-                } catch (Throwable e) {
-                    continue;
-                }
-
-                //do not return abstract class
-                if (Modifier.isAbstract(cl.getModifiers())) {
-                    continue;
-                }
-
-                int i;
-                for (i = 0; i < superClass.length; i++) {
-                    if (!superClass[i].isAssignableFrom(cl)) {
-                        break;
-                    }
-                }
-
-                if (i == superClass.length) {
-                    classes.add(cl);
-                }
+                classes.add(packageName + '.' + file.getName().substring(0, file.getName().length() - 6));
             }
         }
         return classes;
