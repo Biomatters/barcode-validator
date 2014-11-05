@@ -23,8 +23,8 @@ public class SequenceTrimmer {
     }
 
     /**
-     * Trims the supplied sequence by removing the greatest number of bases that can be removed via either modified Mott 
-     * algorithm or the Smith-Waterman algorithm.
+     * Trims the supplied sequence by removing the greatest number of bases that can be removed via the modified Mott
+     * algorithm and the Smith-Waterman algorithm.
      *
      * @param sequence Sequence to trim.
      * @param errorProbabilityLimit Error probability limit for the modified Mott algorithm.
@@ -32,8 +32,9 @@ public class SequenceTrimmer {
      * @param gapOpenPenalty Gap open penalty for the Smith-Waterman algorithm.
      * @param gapExtensionPenalty Gap extension penalty for the Smith-Waterman algorithm.
      * @param scores Scores matrix for the Smith-Waterman algorithm.
-     * @param maxMismatches Maximum number of mismatched bases that are allowed for Smith-Waterman alignment results.
-     * @param minMatchLength Minimum number of matched bases that are allowed for Smith-Waterman alignment results.
+     * @param maxMismatches Maximum number of mismatched bases that are allowed for the Smith-Waterman alignment
+     *                      results.
+     * @param minMatchLength Minimum number of matched bases that are allowed for the Smith-Waterman alignment results.
      * @return Trimmed sequence.
      */
     public static NucleotideGraphSequenceDocument trimSequenceByQualityAndPrimers(NucleotideGraphSequenceDocument sequence,
@@ -46,19 +47,17 @@ public class SequenceTrimmer {
                                                                                   int minMatchLength) {
         List<Trimmage> trimmages = new ArrayList<Trimmage>();
 
-        /* Add the Trimmage that derives from running the modified Mott algorithm on the supplied sequence. */
+        /* Get the Trimmage that derives from running the modified Mott algorithm on the supplied sequence. */
         trimmages.add(ErrorProbabilityTrimmer.getTrimmage(sequence, TrimmableEnds.Both, errorProbabilityLimit));
 
-        /* Add the Trimmages that derive from aligning the supplied sequence with each of the supplied primers using the
+        /* Get the Trimmages that derive from aligning the supplied sequence with each of the supplied primers using the
          * Smith-Waterman algorithm.
          */
         for (OligoSequenceDocument primer : primers) {
             trimmages.add(getTrimmageForPrimerTrimming(sequence, primer, gapOpenPenalty, gapExtensionPenalty, scores, maxMismatches, minMatchLength));
         }
 
-        /* Generate the Trimmage with the maximum trimAtStart value and the maximum trimAtEnd value that is found among
-         * trimmages.
-         */
+        /* Calculate the maximization of the Trimmages. */
         Trimmage maxTrimmage = max(trimmages);
 
         if (maxTrimmage.trimAtStart > sequence.getSequenceLength() - maxTrimmage.trimAtEnd + 1) {
@@ -135,7 +134,9 @@ public class SequenceTrimmer {
         CharSequence primerSequence = primer.getBindingSequence();
         CharSequence primerSequenceReversed = SequenceUtilities.reverseComplement(primerSequence);
 
-        /* Add any additional characters from the supplied sequence and the supplied primer to the supplied scores matrix. */
+        /* Add any additional characters from the supplied sequence and the supplied primer to the supplied scores
+         * matrix.
+         */
         Scores scoresWithAdditionalCharacters = getScoresWithAdditionalCharacters(scores, Arrays.asList(SequenceUtilities.removeGaps(traceSequence), SequenceUtilities.removeGaps(primerSequence)));
 
         /* Align the supplied sequence and the supplied primer via the Smith-Waterman algorithm. */
@@ -157,11 +158,11 @@ public class SequenceTrimmer {
      * Returns the amount of bases to trim off from the supplied sequence using the Smith-Waterman algorithm.
      *
      * @param sequence Sequence to trim.
-     * @param primerAlignmentResult Result of running the Smith-Waterman algorithm on the supplied sequence
+     * @param primerAlignmentResult Result of running the Smith-Waterman algorithm on the supplied sequence.
      * @param maxMismatches Maximum number of mismatched bases that are allowed between the supplied portion of sequence
      *                      and the supplied portion of primer.
      * @param minMatchLength Minimum number of matched bases that are allowed in an alignment.
-     * @param reversed True if the primer that is associated with the trimming is of a reverse direction.
+     * @param reversed True if the primer that is associated with the trimming is a reverse primer.
      * @return Amount of bases to remove from (the left end, if reversed==true, or the right end, if reverse==false, of)
      * the supplied sequence.
      */
