@@ -1,6 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.validation.utilities;
 
 import com.biomatters.plugins.barcoding.validator.validation.*;
+import jebl.evolution.io.ImportException;
 import junit.framework.TestCase;
 
 import java.util.List;
@@ -83,6 +84,17 @@ public class ClassUtilsTest extends TestCase {
         List<Class> list = ClassUtils.findClass("com.biomatters", new Class[]{Validation.class, BarcodeValidation.class});
         for (Class cl : list) {
             if (cl.equals(BarcodeConsensusValidation.class)) {
+                pass = true;
+            }
+        }
+        assertTrue(pass);
+    }
+
+    public void testFindClass_fromJar() {
+        boolean pass = false;
+        List<Class> list = ClassUtils.findClass("jebl.evolution.io", new Class[]{Exception.class});
+        for (Class cl : list) {
+            if (cl.equals(ImportException.class)) {
                 pass = true;
             }
         }
