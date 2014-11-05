@@ -28,8 +28,14 @@ public class ClassUtils {
 
         List<String> files = new ArrayList<String>();
 
+        ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
         try {
             String path = packageName.replace('.', '/');
+            ClassLoader classLoader = superClass[0].getClassLoader();
+            if (classLoader != null) {
+                Thread.currentThread().setContextClassLoader(classLoader);
+            }
+
             Enumeration<URL> resources = Thread.currentThread().getContextClassLoader().getResources(path);
             while (resources.hasMoreElements()) {
                 URL resource = resources.nextElement();
@@ -40,33 +46,34 @@ public class ClassUtils {
                 }
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            for (String file : files) {
+                Class cl;
+                try {
+                    cl = Class.forName(file);
+                } catch (Throwable e) {
+                    continue;
+                }
 
-        for (String file : files) {
-            Class cl;
-            try {
-                cl = Class.forName(file);
-            } catch (Throwable e) {
-                continue;
-            }
+                //do not return abstract class
+                if (Modifier.isAbstract(cl.getModifiers())) {
+                    continue;
+                }
 
-            //do not return abstract class
-            if (Modifier.isAbstract(cl.getModifiers())) {
-                continue;
-            }
+                int i;
+                for (i = 0; i < superClass.length; i++) {
+                    if (!superClass[i].isAssignableFrom(cl)) {
+                        break;
+                    }
+                }
 
-            int i;
-            for (i = 0; i < superClass.length; i++) {
-                if (!superClass[i].isAssignableFrom(cl)) {
-                    break;
+                if (i == superClass.length) {
+                    classes.add(cl);
                 }
             }
-
-            if (i == superClass.length) {
-                classes.add(cl);
-            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            Thread.currentThread().setContextClassLoader(oldLoader);
         }
 
         return classes;
