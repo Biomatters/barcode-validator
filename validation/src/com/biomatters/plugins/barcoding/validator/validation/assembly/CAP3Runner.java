@@ -2,14 +2,10 @@ package com.biomatters.plugins.barcoding.validator.validation.assembly;
 
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
-import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
-import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.*;
 import com.biomatters.geneious.publicapi.implementations.DefaultAlignmentDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
-import com.biomatters.geneious.publicapi.utilities.Execution;
-import com.biomatters.geneious.publicapi.utilities.FileUtilities;
-import com.biomatters.geneious.publicapi.utilities.SystemUtilities;
+import com.biomatters.geneious.publicapi.utilities.*;
 import com.biomatters.plugins.barcoding.validator.validation.utilities.ImportUtilities;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -95,14 +91,16 @@ public class CAP3Runner {
                         }
                     }
                 }
-                    DefaultAlignmentDocument assembly = new DefaultAlignmentDocument(
-                            unalignedSeqDocs.toArray(new SequenceDocument[expectedSequences]),
-                            referencedSequences,
-                            alignedCharSequences.toArray(new CharSequence[expectedSequences]),
-                            null, null, contigName == null ? "Assembly" : contigName,
-                            ProgressListener.EMPTY);
-                    assembly.setContig(true);
-                    results.add(assembly);
+
+                List<CharSequence> alignedCharSequencesWithAnnotation = restoreTrim(unalignedSeqDocs, alignedCharSequences);
+                DefaultAlignmentDocument assembly = new DefaultAlignmentDocument(
+                        unalignedSeqDocs.toArray(new SequenceDocument[expectedSequences]),
+                        referencedSequences,
+                        alignedCharSequencesWithAnnotation.toArray(new CharSequence[expectedSequences]),
+                        null, null, contigName == null ? "Assembly" : contigName,
+                        ProgressListener.EMPTY);
+                assembly.setContig(true);
+                results.add(assembly);
             }
             return results;
         } catch (DocumentOperationException e) {
@@ -111,6 +109,123 @@ public class CAP3Runner {
             throw new DocumentOperationException("Could not assemble contigs: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new DocumentOperationException("Could not assemble contigs: " + e.getMessage(), e);
+        }
+    }
+
+    private static List<CharSequence> restoreTrim(List<SequenceDocument> unalignedSeqDocs, List<CharSequence> alignedCharSequences) throws DocumentOperationException {
+        List<TempSequence> sequenceList = new ArrayList<TempSequence>();
+
+        int start = Integer.MAX_VALUE;
+        int end = Integer.MIN_VALUE;
+        for (int i = 0; i < unalignedSeqDocs.size(); i++) {
+            TempSequence tempSequence = new TempSequence(unalignedSeqDocs.get(i), alignedCharSequences.get(i));
+            start = start > tempSequence.getPredictStartIndex() ? tempSequence.getPredictStartIndex() : start;
+            end = end > tempSequence.getPredictEndIndex() ? end : tempSequence.getPredictEndIndex();
+            sequenceList.add(tempSequence);
+        }
+
+        List<CharSequence> ret = new ArrayList<CharSequence>();
+        for (TempSequence tempSequence : sequenceList) {
+            ret.add(tempSequence.restoreTrimSequence(start, end));
+        }
+
+        return ret;
+    }
+
+    private static class TempSequence {
+        private SequenceDocument sequenceDocument;
+        private CharSequence charSequence;
+        private CharSequence prefix = SequenceCharSequence.EMPTY;
+        private CharSequence suffix = SequenceCharSequence.EMPTY;
+        private int nonGapStart;
+        private int nonGapEnd;
+        private boolean isReversed;
+
+        private TempSequence(SequenceDocument sequenceDocument, CharSequence charSequence) {
+            this.sequenceDocument = sequenceDocument;
+            this.charSequence = charSequence;
+
+            nonGapStart = -1;
+            int i = 0;
+            while (charSequence.charAt(i) == '-' && i < charSequence.length()) {
+                i++;
+            }
+            nonGapStart = i;
+
+            i = charSequence.length() - 1;
+            while (charSequence.charAt(i) == '-' && i >= 0) {
+                i--;
+            }
+            nonGapEnd = i;
+
+            CharSequence withoutGaps = SequenceUtilities.removeGaps(charSequence);
+            SequenceCharSequence originCharSeq = sequenceDocument.getCharSequence();
+            if (originCharSeq.toString().toUpperCase().contains(withoutGaps.toString())) {
+                isReversed = false;
+            } else {
+                CharSequence reverseComplement = SequenceUtilities.reverseComplement(withoutGaps);
+                if (originCharSeq.toString().toUpperCase().contains(reverseComplement.toString())) {
+                    isReversed = true;
+                } else {
+                    System.out.println("sequences do not match");
+                    System.out.println("sequence document is : " + originCharSeq);
+                    System.out.println("sequence from alignment is : " + charSequence);
+                    throw new IllegalArgumentException("sequences do not match");
+                }
+            }
+
+            for (SequenceAnnotation annotation : sequenceDocument.getSequenceAnnotations()) {
+                if (SequenceAnnotation.TYPE_TRIMMED.equals(annotation.getType())) {
+                    for (SequenceAnnotationInterval interval : annotation.getIntervals()) {
+                        if (interval.getFrom() == 1) {
+                            prefix = originCharSeq.subSequence(0, interval.getTo());
+                        }
+
+                        if (interval.getTo() == originCharSeq.length()) {
+                            suffix = originCharSeq.subSequence(interval.getFrom() - 1, interval.getTo());
+                        }
+                    }
+                }
+            }
+
+            if (isReversed) {
+                CharSequence tmp = SequenceUtilities.reverseComplement(prefix);
+                prefix = SequenceUtilities.reverseComplement(suffix);
+                suffix = tmp;
+            }
+        }
+
+        public SequenceDocument getSequenceDocument() {
+            return sequenceDocument;
+        }
+
+        public void setSequenceDocument(SequenceDocument sequenceDocument) {
+            this.sequenceDocument = sequenceDocument;
+        }
+
+        public CharSequence getCharSequence() {
+            return charSequence;
+        }
+
+        public void setCharSequence(CharSequence charSequence) {
+            this.charSequence = charSequence;
+        }
+
+        public int getPredictStartIndex (){
+            return nonGapStart - prefix.length();
+        }
+
+        public int getPredictEndIndex (){
+            return nonGapEnd + suffix.length();
+        }
+
+        public CharSequence restoreTrimSequence(int start, int end) {
+            List<CharSequence> sequences = new ArrayList<CharSequence>();
+            sequences.add(prefix);
+            sequences.add(charSequence.subSequence(nonGapStart, nonGapEnd + 1));
+            sequences.add(suffix);
+            CharSequence concatenate = CharSequenceUtilities.concatenate(sequences);
+            return SequenceCharSequence.withTerminalGaps(getPredictStartIndex() - start, concatenate, end - getPredictEndIndex());
         }
     }
 
@@ -219,8 +334,21 @@ public class CAP3Runner {
             if(name == null) {
                 name = seq.getName();
             }
+
+            char[] chars = seq.getSequenceString().toUpperCase().toCharArray();
+            List<SequenceAnnotation> sequenceAnnotations = seq.getSequenceAnnotations();
+            for (SequenceAnnotation annotation : sequenceAnnotations) {
+                String type = annotation.getType();
+                if (SequenceAnnotation.TYPE_TRIMMED.endsWith(type)) {
+                    for (SequenceAnnotationInterval interval : annotation.getIntervals()) {
+                        replaceChars(chars, interval, '_');
+                    }
+                }
+            }
+
+            String ret = new String(chars).replaceAll("_", "");
             fastaOutput.append(">").append(name).append(" ").append(seq.getDescription()).append("\n")
-                       .append(seq.getSequenceString().toUpperCase()).append("\n");
+                       .append(ret).append("\n");
         }
 
         /* Remove trailing new line. */
@@ -229,6 +357,12 @@ public class CAP3Runner {
         }
 
         return fastaOutput.toString();
+    }
+
+    private static void replaceChars(char[] chars, SequenceAnnotationInterval interval, char c) {
+        for (int i = interval.getFrom() - 1; i <= interval.getTo() - 1; i++) {
+            chars[i] = c;
+        }
     }
 
     private static Map<String, String> getEnvironmentToRunCap3() throws DocumentOperationException {

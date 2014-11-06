@@ -33,7 +33,7 @@ public class Pipeline {
         CompositeProgressListener stepsProgress = new CompositeProgressListener(progressListener, 4);
 
         stepsProgress.beginSubtask("Trimming Traces");
-        List<NucleotideGraphSequenceDocument> trimmedTraces = trimTraces(traces, trimmingOptions, stepsProgress);
+        List<NucleotideGraphSequenceDocument> trimmedTraces = trimTraces(traces, trimmingOptions, true, stepsProgress);
 
         stepsProgress.beginSubtask("Validating Traces...");
         CompositeProgressListener traceValidationProgress = new CompositeProgressListener(stepsProgress, 3);
@@ -75,7 +75,7 @@ public class Pipeline {
                 progressForEachConsensusStep.beginSubtask();
                 NucleotideGraphSequenceDocument consensus = ConsensusUtilities.getConsensus(contig);
                 List<NucleotideGraphSequenceDocument> resultConsusList = trimTraces(
-                        Collections.singletonList(consensus), trimmingOptions, progressForEachConsensusStep);
+                        Collections.singletonList(consensus), trimmingOptions, true, progressForEachConsensusStep);
                 assert resultConsusList.size() == 1;
                 NucleotideGraphSequenceDocument retConsus = resultConsusList.get(0);
 
@@ -180,6 +180,7 @@ public class Pipeline {
 
     private static List<NucleotideGraphSequenceDocument> trimTraces(List<NucleotideGraphSequenceDocument> traces,
                                                                     TrimmingOptions options,
+                                                                    boolean addAnnotation,
                                                                     ProgressListener progressListener) throws DocumentOperationException {
         List<NucleotideGraphSequenceDocument> trimmedTraces = new ArrayList<NucleotideGraphSequenceDocument>();
         CompositeProgressListener trimmingProgress = new CompositeProgressListener(progressListener, traces.size());
@@ -192,7 +193,7 @@ public class Pipeline {
                     options.getPrimerTrimmingOptions().getPrimers(),
                     (float)options.getPrimerTrimmingOptions().getGapOptionPenalty(),
                     (float)options.getPrimerTrimmingOptions().getGapExtensionPenalty(),
-                    options.getPrimerTrimmingOptions().getScores()));
+                    options.getPrimerTrimmingOptions().getScores(), addAnnotation));
         }
 
         return trimmedTraces;

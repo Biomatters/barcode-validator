@@ -1,8 +1,10 @@
 package com.biomatters.plugins.barcoding.validator.validation.trimming;
 
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotation;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationInterval;
 import com.biomatters.geneious.publicapi.implementations.SequenceExtractionUtilities;
+import com.biomatters.geneious.publicapi.implementations.sequence.DefaultSequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.sequence.OligoSequenceDocument;
 import com.biomatters.geneious.publicapi.utilities.SequenceUtilities;
 import jebl.evolution.align.SmithWatermanLinearSpaceAffine;
@@ -40,7 +42,8 @@ public class SequenceTrimmer {
                                                                                   List<OligoSequenceDocument> primers,
                                                                                   float gapOpenPenalty,
                                                                                   float gapExtensionPenalty,
-                                                                                  Scores scores) {
+                                                                                  Scores scores,
+                                                                                  boolean addAnnotion) {
         List<Trimmage> trimmages = new ArrayList<Trimmage>();
 
         /* Add the trim regions that derive from running the modified Mott algorithm on the supplied sequence. */
@@ -62,8 +65,15 @@ public class SequenceTrimmer {
             maxTrimmage = new Trimmage(sequence.getSequenceLength(), 0);
         }
 
-        /* Trim the sequence using the generated trimmage and return the result. */
-        return trimSequenceUsingTrimmage(sequence, maxTrimmage);
+        if (addAnnotion && sequence instanceof DefaultSequenceDocument) {
+            SequenceAnnotation annotation = SequenceAnnotation.createTrimAnnotation(1, maxTrimmage.trimAtStart);
+            annotation.addInterval(sequence.getSequenceLength() - maxTrimmage.trimAtEnd + 1, sequence.getSequenceLength());
+            ((DefaultSequenceDocument)sequence).addSequenceAnnotation(annotation);
+            return sequence;
+        } else {
+            /* Trim the sequence using the generated trimmage and return the result. */
+            return trimSequenceUsingTrimmage(sequence, maxTrimmage);
+        }
     }
 
     /**

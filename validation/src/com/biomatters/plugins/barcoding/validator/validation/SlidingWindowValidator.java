@@ -6,7 +6,6 @@ import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationIn
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocumentWithEditableAnnotations;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -67,10 +66,10 @@ public class SlidingWindowValidator {
                     ", Step Size=" + stepSize+
                     ", Min Quality=" + minQuality +
                     ", Min Ratio=" + minRatioSatisfied + "%");
-            List<SequenceAnnotation> annotations = new ArrayList<SequenceAnnotation>();
-            annotations.add(annotation);
             annotation.setIntervals(SequenceAnnotationInterval.merge(annotation.getIntervals(), false));
-            ((SequenceDocumentWithEditableAnnotations) sequence).setAnnotations(annotations);
+            List<SequenceAnnotation> sequenceAnnotations = sequence.getSequenceAnnotations();
+            sequenceAnnotations.add(annotation);
+            ((SequenceDocumentWithEditableAnnotations) sequence).setAnnotations(sequenceAnnotations);
         }
 
         return ret;
