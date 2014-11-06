@@ -6,6 +6,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationIn
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocumentWithEditableAnnotations;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -47,12 +48,12 @@ public class SlidingWindowValidator {
         }
 
         boolean ret = true;
-        SequenceAnnotation annotation = new SequenceAnnotation(FAILED_REGION_NAME, FAILED_REGION_TYPE);
+        SequenceAnnotation validationFailureAnnotation = new SequenceAnnotation(FAILED_REGION_NAME, FAILED_REGION_TYPE);
         /* Validate sequences. */
         try {
             for (int i = 0; i <= sequence.getSequenceLength() - winSize; i += stepSize) {
                 if (!validateQualities(getQualityWindow(sequence, i, winSize), minQuality, minRatioSatisfied)) {
-                    annotation.addInterval(i, i + winSize - 1);
+                    validationFailureAnnotation.addInterval(i, i + winSize - 1);
                     ret = false;
                 }
             }
@@ -61,14 +62,15 @@ public class SlidingWindowValidator {
         }
 
         if (!ret && sequence instanceof SequenceDocumentWithEditableAnnotations) {
-            annotation.setQualifier("Validation Settings",
-                    "Window Size=" + winSize +
-                    ", Step Size=" + stepSize+
-                    ", Min Quality=" + minQuality +
-                    ", Min Ratio=" + minRatioSatisfied + "%");
-            annotation.setIntervals(SequenceAnnotationInterval.merge(annotation.getIntervals(), false));
-            List<SequenceAnnotation> sequenceAnnotations = sequence.getSequenceAnnotations();
-            sequenceAnnotations.add(annotation);
+            validationFailureAnnotation.setQualifier("Validation Settings",
+                                                     "Window Size=" + winSize +
+                                                     ", Step Size=" + stepSize +
+                                                     ", Min Quality=" + minQuality +
+                                                     ", Min Ratio=" + minRatioSatisfied + "%");
+            validationFailureAnnotation.setIntervals(SequenceAnnotationInterval.merge(validationFailureAnnotation.getIntervals(), false));
+            List<SequenceAnnotation> sequenceAnnotations = new ArrayList<SequenceAnnotation>();
+            sequenceAnnotations.addAll(sequence.getSequenceAnnotations());
+            sequenceAnnotations.add(validationFailureAnnotation);
             ((SequenceDocumentWithEditableAnnotations) sequence).setAnnotations(sequenceAnnotations);
         }
 
