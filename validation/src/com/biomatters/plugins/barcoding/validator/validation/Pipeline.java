@@ -7,6 +7,7 @@ import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Runner;
 import com.biomatters.plugins.barcoding.validator.validation.consensus.ConsensusUtilities;
+import com.biomatters.plugins.barcoding.validator.validation.trimming.PrimerTrimmingOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.SequenceTrimmer;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
 import jebl.util.CompositeProgressListener;
@@ -185,15 +186,20 @@ public class Pipeline {
         List<NucleotideGraphSequenceDocument> trimmedTraces = new ArrayList<NucleotideGraphSequenceDocument>();
         CompositeProgressListener trimmingProgress = new CompositeProgressListener(progressListener, traces.size());
 
+        PrimerTrimmingOptions primerTrimmingOptions = options.getPrimerTrimmingOptions();
+
         for (NucleotideGraphSequenceDocument trace : traces) {
             trimmingProgress.beginSubtask("Trimming " + trace.getName());
 
             trimmedTraces.add(SequenceTrimmer.trimSequenceByQualityAndPrimers(trace,
-                    options.getQualityTrimmingOptions().getErrorProbabilityLimit(),
-                    options.getPrimerTrimmingOptions().getPrimers(),
-                    (float)options.getPrimerTrimmingOptions().getGapOptionPenalty(),
-                    (float)options.getPrimerTrimmingOptions().getGapExtensionPenalty(),
-                    options.getPrimerTrimmingOptions().getScores(), addAnnotation));
+                                                                              options.getQualityTrimmingOptions().getErrorProbabilityLimit(),
+                                                                              primerTrimmingOptions.getPrimers(),
+                                                                              (float)primerTrimmingOptions.getGapOptionPenalty(),
+                                                                              (float)primerTrimmingOptions.getGapExtensionPenalty(),
+                                                                              primerTrimmingOptions.getScores(),
+                    														  addAnnotation,
+                                                                              primerTrimmingOptions.getMaximumMismatches(),
+                                                                              primerTrimmingOptions.getMinimumMatchLength()));
         }
 
         return trimmedTraces;

@@ -1,15 +1,11 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
 import com.biomatters.geneious.publicapi.plugin.Options;
-import com.biomatters.plugins.barcoding.validator.research.options.DoubleMultiValueOption;
-import com.biomatters.plugins.barcoding.validator.research.options.IntegerMultiValueOption;
-import com.biomatters.plugins.barcoding.validator.research.options.MultiValueOption;
 import com.biomatters.plugins.barcoding.validator.validation.BarcodeCompareValidation;
 import com.biomatters.plugins.barcoding.validator.validation.TraceValidation;
 import com.biomatters.plugins.barcoding.validator.validation.Validation;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
-import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
 
 import java.util.*;
