@@ -197,9 +197,9 @@ public class Pipeline {
                                                                               (float)primerTrimmingOptions.getGapOptionPenalty(),
                                                                               (float)primerTrimmingOptions.getGapExtensionPenalty(),
                                                                               primerTrimmingOptions.getScores(),
-                    														  addAnnotation,
                                                                               primerTrimmingOptions.getMaximumMismatches(),
-                                                                              primerTrimmingOptions.getMinimumMatchLength()));
+                                                                              primerTrimmingOptions.getMinimumMatchLength(),
+                                                                              addAnnotation));
         }
 
         return trimmedTraces;
