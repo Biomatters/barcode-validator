@@ -53,7 +53,7 @@ public class SlidingWindowValidator {
         try {
             for (int i = 0; i <= sequence.getSequenceLength() - winSize; i += stepSize) {
                 if (!validateQualities(getQualityWindow(sequence, i, winSize), minQuality, minRatioSatisfied)) {
-                    validationFailureAnnotation.addInterval(i, i + winSize - 1);
+                    validationFailureAnnotation.addInterval(i + 1, i + winSize);
                     ret = false;
                 }
             }

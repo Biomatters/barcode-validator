@@ -27,8 +27,8 @@ public class SequenceTrimmer {
     }
 
     /**
-     * Trims the supplied sequence by removing the greatest number of bases that can be removed via the modified Mott
-     * algorithm and the Smith-Waterman algorithm.
+     * Trims the supplied sequence by removing or annotating the greatest number of bases that can be removed via the
+     * modified Mott algorithm and the Smith-Waterman algorithm.
      *
      * @param sequence Sequence to trim.
      * @param errorProbabilityLimit Error probability limit for the modified Mott algorithm.
@@ -36,7 +36,7 @@ public class SequenceTrimmer {
      * @param gapOpenPenalty Gap open penalty for the Smith-Waterman algorithm.
      * @param gapExtensionPenalty Gap extension penalty for the Smith-Waterman algorithm.
      * @param scores Scores matrix for the Smith-Waterman algorithm.
-     * @param addAnnotion add trim annotation or just cut them off.
+     * @param addAnnotations If true, trim regions are annotated. If false, trim regions are removed.
      * @param maxMismatches Maximum number of mismatched bases that are allowed for the Smith-Waterman alignment
      *                      results.
      * @param minMatchLength Minimum number of matched bases that are allowed for the Smith-Waterman alignment results.
@@ -50,7 +50,7 @@ public class SequenceTrimmer {
                                                                                   Scores scores,
                                                                                   int maxMismatches,
                                                                                   int minMatchLength,
-                                                                                  boolean addAnnotion) {
+                                                                                  boolean addAnnotations) {
         List<Trimmage> trimmages = new ArrayList<Trimmage>();
 
         /* Get the Trimmage that derives from running the modified Mott algorithm on the supplied sequence. */
@@ -66,11 +66,11 @@ public class SequenceTrimmer {
         /* Calculate the maximization of the Trimmages. */
         Trimmage maxTrimmage = max(trimmages);
 
-        if (maxTrimmage.trimAtStart > sequence.getSequenceLength() - maxTrimmage.trimAtEnd + 1) {
+        if (maxTrimmage.trimAtStart >= sequence.getSequenceLength() - maxTrimmage.trimAtEnd + 1) {
             maxTrimmage = new Trimmage(sequence.getSequenceLength(), 0);
         }
 
-        if (addAnnotion && sequence instanceof DefaultSequenceDocument) {
+        if (addAnnotations && sequence instanceof DefaultSequenceDocument) {
             SequenceAnnotation annotation = SequenceAnnotation.createTrimAnnotation(1, maxTrimmage.trimAtStart);
             annotation.addInterval(sequence.getSequenceLength() - maxTrimmage.trimAtEnd + 1, sequence.getSequenceLength());
             ((DefaultSequenceDocument)sequence).addSequenceAnnotation(annotation);
@@ -257,7 +257,7 @@ public class SequenceTrimmer {
      * @param alignmentResult Result of the Smith-Waterman alignment.
      * @param sequenceLength Length of the sequence of the Smith-Waterman alignment.
      * @param primerLength Length of the primer of the Smith-Waterman alignment.
-     * @return The full intervals of the Smith-Waterman alignment.
+     * @return Full intervals of the Smith-Waterman alignment.
      */
     private static SequenceAnnotationInterval[] getFullMatchIntervals(SmithWaterman alignmentResult,
                                                                       int sequenceLength,

@@ -47,25 +47,29 @@ public class CAP3Runner {
     public static List<SequenceAlignmentDocument> assemble(List<NucleotideGraphSequenceDocument> sequences,
                                                            String executablePath,
                                                            int minOverlapLength,
-                                                           int minOverlapIdentity, String contigName,
+                                                           int minOverlapIdentity,
+                                                           String contigName,
                                                            ProgressListener progressListener) throws DocumentOperationException {
-        if(sequences.size() < 2) {  // There must be at least two traces to produce an assembly
+        if (sequences.size() < 2) { // There must be at least two traces to produce an assembly
             return Collections.emptyList();
         }
 
         BiMap<String, NucleotideGraphSequenceDocument> nameSequenceMapping = HashBiMap.create();
+
         for (NucleotideGraphSequenceDocument seq : sequences) {
             String tmpName = UUID.randomUUID().toString();
-            if(nameSequenceMapping.containsValue(seq)) {
+
+            if (nameSequenceMapping.containsValue(seq)) {
                 throw new DocumentOperationException("Cannot assemble sequence to itself.  Input list contains multiple copies of " + seq.getName() +".");
             }
+
             nameSequenceMapping.put(tmpName, seq);
         }
 
         try {
-
             String resultFilePath = runCap3Assembler(createFastaFile(sequences, nameSequenceMapping.inverse()), executablePath, minOverlapLength, minOverlapIdentity, progressListener);
-            if(assemblyFailed(sequences, resultFilePath)) {
+
+            if (assemblyFailed(sequences, resultFilePath)) {
                 return Collections.emptyList();
             }
 
@@ -80,11 +84,14 @@ public class CAP3Runner {
 
                 for (SequenceDocument alignedSeq : align.getSequences()) {
                     NucleotideGraphSequenceDocument originalDoc = getStartFromMap(nameSequenceMapping, alignedSeq.getName());
+
                     if (originalDoc != null) {
-                        AnnotatedPluginDocument apd = DocumentUtilities.getAnnotatedPluginDocumentThatContains(originalDoc);
                         alignedCharSequences.add(alignedSeq.getCharSequence());
+
                         unalignedSeqDocs.add(originalDoc);
-                        if(apd != null) {
+
+                        AnnotatedPluginDocument apd = DocumentUtilities.getAnnotatedPluginDocumentThatContains(originalDoc);
+                        if (apd != null) {
                             referencedSequences.add(new SequenceAlignmentDocument.ReferencedSequence(apd));
                         } else {
                             referencedSequences.add(null);
@@ -93,13 +100,17 @@ public class CAP3Runner {
                 }
 
                 List<CharSequence> alignedCharSequencesWithAnnotation = restoreTrim(unalignedSeqDocs, alignedCharSequences);
+
                 DefaultAlignmentDocument assembly = new DefaultAlignmentDocument(
                         unalignedSeqDocs.toArray(new SequenceDocument[expectedSequences]),
                         referencedSequences,
                         alignedCharSequencesWithAnnotation.toArray(new CharSequence[expectedSequences]),
                         null, null, contigName == null ? "Assembly" : contigName,
-                        ProgressListener.EMPTY);
+                        ProgressListener.EMPTY
+                );
+
                 assembly.setContig(true);
+
                 results.add(assembly);
             }
             return results;
@@ -113,18 +124,20 @@ public class CAP3Runner {
     }
 
     private static List<CharSequence> restoreTrim(List<SequenceDocument> unalignedSeqDocs, List<CharSequence> alignedCharSequences) throws DocumentOperationException {
+        List<CharSequence> ret = new ArrayList<CharSequence>();
         List<TempSequence> sequenceList = new ArrayList<TempSequence>();
-
         int start = Integer.MAX_VALUE;
         int end = Integer.MIN_VALUE;
+
         for (int i = 0; i < unalignedSeqDocs.size(); i++) {
             TempSequence tempSequence = new TempSequence(unalignedSeqDocs.get(i), alignedCharSequences.get(i));
+
             start = start > tempSequence.getPredictStartIndex() ? tempSequence.getPredictStartIndex() : start;
             end = end > tempSequence.getPredictEndIndex() ? end : tempSequence.getPredictEndIndex();
+
             sequenceList.add(tempSequence);
         }
 
-        List<CharSequence> ret = new ArrayList<CharSequence>();
         for (TempSequence tempSequence : sequenceList) {
             ret.add(tempSequence.restoreTrimSequence(start, end));
         }
@@ -159,17 +172,21 @@ public class CAP3Runner {
             nonGapEnd = i;
 
             CharSequence withoutGaps = SequenceUtilities.removeGaps(charSequence);
+
             SequenceCharSequence originCharSeq = sequenceDocument.getCharSequence();
+
             if (originCharSeq.toString().toUpperCase().contains(withoutGaps.toString())) {
                 isReversed = false;
             } else {
                 CharSequence reverseComplement = SequenceUtilities.reverseComplement(withoutGaps);
+
                 if (originCharSeq.toString().toUpperCase().contains(reverseComplement.toString())) {
                     isReversed = true;
                 } else {
                     System.out.println("sequences do not match");
                     System.out.println("sequence document is : " + originCharSeq);
                     System.out.println("sequence from alignment is : " + charSequence);
+
                     throw new IllegalArgumentException("sequences do not match");
                 }
             }
@@ -190,7 +207,9 @@ public class CAP3Runner {
 
             if (isReversed) {
                 CharSequence tmp = SequenceUtilities.reverseComplement(prefix);
+
                 prefix = SequenceUtilities.reverseComplement(suffix);
+
                 suffix = tmp;
             }
         }
@@ -221,10 +240,13 @@ public class CAP3Runner {
 
         public CharSequence restoreTrimSequence(int start, int end) {
             List<CharSequence> sequences = new ArrayList<CharSequence>();
+
             sequences.add(prefix);
             sequences.add(charSequence.subSequence(nonGapStart, nonGapEnd + 1));
             sequences.add(suffix);
+
             CharSequence concatenate = CharSequenceUtilities.concatenate(sequences);
+
             return SequenceCharSequence.withTerminalGaps(getPredictStartIndex() - start, concatenate, end - getPredictEndIndex());
         }
     }
@@ -232,10 +254,12 @@ public class CAP3Runner {
     private static NucleotideGraphSequenceDocument getStartFromMap(Map<String, NucleotideGraphSequenceDocument> nameSequenceMapping, String tmpName) {
         for (Map.Entry<String, NucleotideGraphSequenceDocument> entry : nameSequenceMapping.entrySet()) {
             String key = entry.getKey();
+
             if (tmpName.startsWith(key)) {
                 return entry.getValue();
             }
         }
+
         return null;
     }
 
@@ -255,9 +279,11 @@ public class CAP3Runner {
         // The result file would use at least a byte per character in the sequence name.  If it doesn't it probably
         // does not contain an assembly
         long sizeOfDocs = 0;
+
         for (NucleotideGraphSequenceDocument sequence : sequences) {
             sizeOfDocs += sequence.getName().length();
         }
+
         return !resultFile.exists() || resultFile.length() < sizeOfDocs;
     }
 
@@ -278,7 +304,6 @@ public class CAP3Runner {
             throws DocumentOperationException, InterruptedException, IOException {
         Cap3OutputListener listener = new Cap3OutputListener();
 
-        /* Run. */
         Execution exec = new Execution(
                 new String[] {
                         executablePath,
@@ -294,6 +319,8 @@ public class CAP3Runner {
                 false
         );
         exec.setWorkingDirectory(fastafilePath.substring(0, fastafilePath.lastIndexOf(File.separator)));
+
+        /* Run. */
         int exitCode = exec.execute(getEnvironmentToRunCap3());
 
         if (exitCode != 0) {
@@ -331,7 +358,7 @@ public class CAP3Runner {
         /* Generate fasta output. */
         for (NucleotideGraphSequenceDocument seq : sequences) {
             String name = renameMap.get(seq);
-            if(name == null) {
+            if (name == null) {
                 name = seq.getName();
             }
 
@@ -339,6 +366,7 @@ public class CAP3Runner {
             List<SequenceAnnotation> sequenceAnnotations = seq.getSequenceAnnotations();
             for (SequenceAnnotation annotation : sequenceAnnotations) {
                 String type = annotation.getType();
+
                 if (SequenceAnnotation.TYPE_TRIMMED.endsWith(type)) {
                     for (SequenceAnnotationInterval interval : annotation.getIntervals()) {
                         replaceChars(chars, interval, '_');
@@ -366,15 +394,17 @@ public class CAP3Runner {
     }
 
     private static Map<String, String> getEnvironmentToRunCap3() throws DocumentOperationException {
-        if(SystemUtilities.isWindows()) {
-            String dllFileName = "cygwin1.dll";
+        String dllFileName = "cygwin1.dll";
+        String pathVariableName = "Path";
+
+        if (SystemUtilities.isWindows()) {
             File cygwinDll = FileUtilities.getResourceForClass(CAP3Runner.class, dllFileName);
-            if(cygwinDll == null) {
+
+            if (cygwinDll == null) {
                 throw new DocumentOperationException(dllFileName + " missing from plugin.  Try reinstalling.");
             }
-            String pathVariableName = "Path";
-            return Collections.singletonMap(pathVariableName,
-                    System.getProperty(pathVariableName) + ";" + cygwinDll.getParent());
+
+            return Collections.singletonMap(pathVariableName, System.getProperty(pathVariableName) + ";" + cygwinDll.getParent());
         } else {
             return Collections.emptyMap();
         }
