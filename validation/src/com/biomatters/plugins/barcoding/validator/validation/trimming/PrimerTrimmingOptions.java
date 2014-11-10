@@ -87,6 +87,6 @@ public class PrimerTrimmingOptions extends Options {
     }
 
     private void addMinimumMatchLengthOptions() {
-        addIntegerOption(MINIMUM_MATCH_LENGTH_OPTIONS_NAME, "Minimum Match Length", 5, 1, Integer.MAX_VALUE);
+        addIntegerOption(MINIMUM_MATCH_LENGTH_OPTIONS_NAME, "Minimum Match Length", 15, 1, Integer.MAX_VALUE);
     }
 }

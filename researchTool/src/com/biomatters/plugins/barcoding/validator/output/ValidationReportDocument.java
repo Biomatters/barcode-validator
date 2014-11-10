@@ -38,15 +38,17 @@ public class ValidationReportDocument implements PluginDocument {
     private static String generateDescriptionFromOptions(BarcodeValidatorOptions options) {
         return "The following trimming and assembly parameters were used.<br>" +
                "<br>" +
-               "Trimming by quality:<br>" +
+               "<u>Trimming by quality</u><br>" +
                "Error Probability Limit = " + options.getTrimmingOptions().getQualityTrimmingOptions().getErrorProbabilityLimit() + "<br>" +
                "<br>" +
-               "Trimming by primer:<br>" +
-               "Score = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getScores().getName() + "<br>" +
+               "<u>Trimming by primers</u><br>" +
+               "Max Mismatches = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getMaximumMismatches() + "<br>" +
+               "Min Match Length = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getMinimumMatchLength() + "<br>" +
+               "Score Matrix " + options.getTrimmingOptions().getPrimerTrimmingOptions().getScores().getName() + "<br>" +
                "Gap Option Penalty = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getGapOptionPenalty() + "<br>" +
                "Gap Extension Penalty = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getGapExtensionPenalty() + "<br>" +
                "<br>"+
-               "Assembly:<br>" +
+               "<u>Assembly</u><br>" +
                "Min Overlap Length = " + options.getAssemblyOptions().getMinOverlapLength() + "<br>" +
                "Min Overlap Identity = " + options.getAssemblyOptions().getMinOverlapIdentity();
     }
