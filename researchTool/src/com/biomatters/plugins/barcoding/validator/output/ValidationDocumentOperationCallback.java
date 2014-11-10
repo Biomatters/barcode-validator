@@ -8,11 +8,13 @@ import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSeque
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
+import com.biomatters.geneious.publicapi.implementations.sequence.DefaultSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperation;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationCallback;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationResult;
+import com.biomatters.plugins.barcoding.validator.validation.trimming.SequenceTrimmer;
 import jebl.util.CompositeProgressListener;
 import jebl.util.ProgressListener;
 
@@ -69,10 +71,19 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
     public List<NucleotideGraphSequenceDocument> addTrimmedTraces(List<NucleotideGraphSequenceDocument> traces, ProgressListener progressListener) throws DocumentOperationException {
         List<NucleotideGraphSequenceDocument> results = new ArrayList<NucleotideGraphSequenceDocument>();
 
-        CompositeProgressListener savingProgress = new CompositeProgressListener(progressListener, traces.size());
+        CompositeProgressListener savingProgress = new CompositeProgressListener(progressListener, 2 * traces.size());
         for (NucleotideGraphSequenceDocument trimmedTrace : traces) {
+            String name = trimmedTrace.getName();
+
             savingProgress.beginSubtask();
-            AnnotatedPluginDocument doc = saveDocument(trimmedTrace, savingProgress);
+            ((DefaultSequenceDocument)trimmedTrace).setName(name + SequenceTrimmer.ANNOTATION_SUFFIX);
+            saveDocument(trimmedTrace, savingProgress);
+            ((DefaultSequenceDocument)trimmedTrace).setName(name);
+
+            savingProgress.beginSubtask();
+            ((DefaultSequenceDocument)trimmedTrace).setName(name + SequenceTrimmer.TRIMMED_SUFFIX);
+            AnnotatedPluginDocument doc = saveDocument(SequenceTrimmer.trimSequenceUsingUsingAnnotation(trimmedTrace), savingProgress);
+            ((DefaultSequenceDocument)trimmedTrace).setName(name);
             if(!NucleotideGraphSequenceDocument.class.isAssignableFrom(doc.getDocumentClass())) {
                 throw new IllegalStateException("Saving NucleotideGraphSequenceDocument to database created " + doc.getDocumentClass().getSimpleName());
             }
