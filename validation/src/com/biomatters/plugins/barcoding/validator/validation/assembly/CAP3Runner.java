@@ -99,12 +99,10 @@ public class CAP3Runner {
                     }
                 }
 
-                List<CharSequence> alignedCharSequencesWithAnnotation = restoreTrim(unalignedSeqDocs, alignedCharSequences);
-
                 DefaultAlignmentDocument assembly = new DefaultAlignmentDocument(
                         unalignedSeqDocs.toArray(new SequenceDocument[expectedSequences]),
                         referencedSequences,
-                        alignedCharSequencesWithAnnotation.toArray(new CharSequence[expectedSequences]),
+                        alignedCharSequences.toArray(new CharSequence[expectedSequences]),
                         null, null, contigName == null ? "Assembly" : contigName,
                         ProgressListener.EMPTY
                 );
@@ -120,134 +118,6 @@ public class CAP3Runner {
             throw new DocumentOperationException("Could not assemble contigs: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new DocumentOperationException("Could not assemble contigs: " + e.getMessage(), e);
-        }
-    }
-
-    private static List<CharSequence> restoreTrim(List<SequenceDocument> unalignedSeqDocs, List<CharSequence> alignedCharSequences) throws DocumentOperationException {
-        List<CharSequence> ret = new ArrayList<CharSequence>();
-        List<TempSequence> sequenceList = new ArrayList<TempSequence>();
-        int start = Integer.MAX_VALUE;
-        int end = Integer.MIN_VALUE;
-
-        for (int i = 0; i < unalignedSeqDocs.size(); i++) {
-            TempSequence tempSequence = new TempSequence(unalignedSeqDocs.get(i), alignedCharSequences.get(i));
-
-            start = start > tempSequence.getPredictStartIndex() ? tempSequence.getPredictStartIndex() : start;
-            end = end > tempSequence.getPredictEndIndex() ? end : tempSequence.getPredictEndIndex();
-
-            sequenceList.add(tempSequence);
-        }
-
-        for (TempSequence tempSequence : sequenceList) {
-            ret.add(tempSequence.restoreTrimSequence(start, end));
-        }
-
-        return ret;
-    }
-
-    private static class TempSequence {
-        private SequenceDocument sequenceDocument;
-        private CharSequence charSequence;
-        private CharSequence prefix = SequenceCharSequence.EMPTY;
-        private CharSequence suffix = SequenceCharSequence.EMPTY;
-        private int nonGapStart;
-        private int nonGapEnd;
-        private boolean isReversed;
-
-        private TempSequence(SequenceDocument sequenceDocument, CharSequence charSequence) {
-            this.sequenceDocument = sequenceDocument;
-            this.charSequence = charSequence;
-
-            nonGapStart = -1;
-            int i = 0;
-            while (charSequence.charAt(i) == '-' && i < charSequence.length()) {
-                i++;
-            }
-            nonGapStart = i;
-
-            i = charSequence.length() - 1;
-            while (charSequence.charAt(i) == '-' && i >= 0) {
-                i--;
-            }
-            nonGapEnd = i;
-
-            CharSequence withoutGaps = SequenceUtilities.removeGaps(charSequence);
-
-            SequenceCharSequence originCharSeq = sequenceDocument.getCharSequence();
-
-            if (originCharSeq.toString().toUpperCase().contains(withoutGaps.toString())) {
-                isReversed = false;
-            } else {
-                CharSequence reverseComplement = SequenceUtilities.reverseComplement(withoutGaps);
-
-                if (originCharSeq.toString().toUpperCase().contains(reverseComplement.toString())) {
-                    isReversed = true;
-                } else {
-                    System.out.println("sequences do not match");
-                    System.out.println("sequence document is : " + originCharSeq);
-                    System.out.println("sequence from alignment is : " + charSequence);
-
-                    throw new IllegalArgumentException("sequences do not match");
-                }
-            }
-
-            for (SequenceAnnotation annotation : sequenceDocument.getSequenceAnnotations()) {
-                if (SequenceAnnotation.TYPE_TRIMMED.equals(annotation.getType())) {
-                    for (SequenceAnnotationInterval interval : annotation.getIntervals()) {
-                        if (interval.getFrom() == 1) {
-                            prefix = originCharSeq.subSequence(0, interval.getTo());
-                        }
-
-                        if (interval.getTo() == originCharSeq.length()) {
-                            suffix = originCharSeq.subSequence(interval.getFrom() - 1, interval.getTo());
-                        }
-                    }
-                }
-            }
-
-            if (isReversed) {
-                CharSequence tmp = SequenceUtilities.reverseComplement(prefix);
-
-                prefix = SequenceUtilities.reverseComplement(suffix);
-
-                suffix = tmp;
-            }
-        }
-
-        public SequenceDocument getSequenceDocument() {
-            return sequenceDocument;
-        }
-
-        public void setSequenceDocument(SequenceDocument sequenceDocument) {
-            this.sequenceDocument = sequenceDocument;
-        }
-
-        public CharSequence getCharSequence() {
-            return charSequence;
-        }
-
-        public void setCharSequence(CharSequence charSequence) {
-            this.charSequence = charSequence;
-        }
-
-        public int getPredictStartIndex (){
-            return nonGapStart - prefix.length();
-        }
-
-        public int getPredictEndIndex (){
-            return nonGapEnd + suffix.length();
-        }
-
-        public CharSequence restoreTrimSequence(int start, int end) {
-            List<CharSequence> sequences = new ArrayList<CharSequence>();
-
-            sequences.add(prefix);
-            sequences.add(charSequence.subSequence(nonGapStart, nonGapEnd + 1));
-            sequences.add(suffix);
-
-            CharSequence concatenate = CharSequenceUtilities.concatenate(sequences);
-
-            return SequenceCharSequence.withTerminalGaps(getPredictStartIndex() - start, concatenate, end - getPredictEndIndex());
         }
     }
 
@@ -362,21 +232,8 @@ public class CAP3Runner {
                 name = seq.getName();
             }
 
-            char[] chars = seq.getSequenceString().toUpperCase().toCharArray();
-            List<SequenceAnnotation> sequenceAnnotations = seq.getSequenceAnnotations();
-            for (SequenceAnnotation annotation : sequenceAnnotations) {
-                String type = annotation.getType();
-
-                if (SequenceAnnotation.TYPE_TRIMMED.endsWith(type)) {
-                    for (SequenceAnnotationInterval interval : annotation.getIntervals()) {
-                        replaceChars(chars, interval, '_');
-                    }
-                }
-            }
-
-            String ret = new String(chars).replaceAll("_", "");
             fastaOutput.append(">").append(name).append(" ").append(seq.getDescription()).append("\n")
-                       .append(ret).append("\n");
+                       .append(seq.getSequenceString().toUpperCase()).append("\n");
         }
 
         /* Remove trailing new line. */

@@ -23,6 +23,9 @@ public class SequenceTrimmer {
     private static final int SMITH_WATERMAN_SEQUENCE_INDEX = 0;
     private static final int SMITH_WATERMAN_PRIMER_INDEX   = 1;
 
+    public static final String ANNOTATION_SUFFIX = " trims annotated";
+    public static final String TRIMMED_SUFFIX = " trimmed";
+
     private SequenceTrimmer() {
     }
 
@@ -71,9 +74,16 @@ public class SequenceTrimmer {
         }
 
         if (addAnnotations && sequence instanceof DefaultSequenceDocument) {
-            SequenceAnnotation annotation = SequenceAnnotation.createTrimAnnotation(1, maxTrimmage.trimAtStart);
-            annotation.addInterval(sequence.getSequenceLength() - maxTrimmage.trimAtEnd + 1, sequence.getSequenceLength());
-            ((DefaultSequenceDocument)sequence).addSequenceAnnotation(annotation);
+            SequenceAnnotation annotation;
+            if (maxTrimmage.trimAtStart > 0) {
+                annotation = SequenceAnnotation.createTrimAnnotation(1, maxTrimmage.trimAtStart);
+                ((DefaultSequenceDocument)sequence).addSequenceAnnotation(annotation);
+            }
+
+            if (maxTrimmage.trimAtEnd > 0) {
+                annotation = SequenceAnnotation.createTrimAnnotation(sequence.getSequenceLength() - maxTrimmage.trimAtEnd + 1, sequence.getSequenceLength());
+                ((DefaultSequenceDocument)sequence).addSequenceAnnotation(annotation);
+            }
             return sequence;
         } else {
             /* Trim the sequence using the generated trimmage and return the result. */
@@ -90,7 +100,34 @@ public class SequenceTrimmer {
      */
     static NucleotideGraphSequenceDocument trimSequenceUsingTrimmage(NucleotideGraphSequenceDocument sequence, Trimmage trimmage) {
         SequenceExtractionUtilities.ExtractionOptions options = new SequenceExtractionUtilities.ExtractionOptions(trimmage.getNonTrimmedInterval(sequence.getSequenceLength()));
-        options.setOverrideName(sequence.getName() + " trimmed");
+        options.setOverrideName(sequence.getName() + TRIMMED_SUFFIX);
+
+        return (NucleotideGraphSequenceDocument)SequenceExtractionUtilities.extract(sequence, options);
+    }
+
+    /**
+     * Trims the supplied sequence using the supplied Trimmed annotation.
+     *
+     * @param sequence Sequence to trim, which trimmed annotation should be in the ends of sequence
+     * @return Trimmed sequence.
+     */
+    public static NucleotideGraphSequenceDocument trimSequenceUsingUsingAnnotation(NucleotideGraphSequenceDocument sequence) {
+        int start = 1;
+        int end = sequence.getCharSequence().length();
+        for (SequenceAnnotation annotation : sequence.getSequenceAnnotations()) {
+            if (SequenceAnnotation.TYPE_TRIMMED.equals(annotation.getType())) {
+                for (SequenceAnnotationInterval interval : annotation.getIntervals()) {
+                    if (interval.getFrom() == 1) {
+                        start = start < interval.getTo() ? interval.getTo() : start;
+                    } else if (interval.getTo() == sequence.getCharSequence().length()) {
+                        end = end > interval.getFrom() ? interval.getFrom() : end;
+                    }
+                }
+            }
+        }
+
+        SequenceExtractionUtilities.ExtractionOptions options = new SequenceExtractionUtilities.ExtractionOptions(start + 1, end - 1);
+        options.setOverrideName(sequence.getName());
 
         return (NucleotideGraphSequenceDocument)SequenceExtractionUtilities.extract(sequence, options);
     }
