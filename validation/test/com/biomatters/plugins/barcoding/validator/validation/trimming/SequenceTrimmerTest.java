@@ -117,52 +117,49 @@ public class SequenceTrimmerTest extends Assert {
      *    GG{AG}.
      *
      * Trimmed Sequence:     AAAA
-     * Number of mismatches: 1
+     * Number of mismatches: 3
      * Match length:         2
      */
 
     @Test
     public void testUnderMaxMismatches() {
-        int maxMismatches = 2;
-
-        NucleotideGraphSequenceDocument trimmedSequence = SequenceTrimmer.trimSequenceByQualityAndPrimers(
-                sequencePrimer,
-                Integer.MAX_VALUE,
-                Collections.singletonList(primer),
-                Float.MAX_VALUE,
-                Float.MAX_VALUE,
-                new CostMatrixOption("Scores", "Scores", true).getPossibleOptionValues().get(5).getScores(),
-                maxMismatches,
-                0,
-                false
-        );
-
-        assertEquals(expectedTrimmedSequence, trimmedSequence.getSequenceString());
+        testMaxMismatches(4, expectedTrimmedSequence.toString());
     }
 
     @Test
     public void testEqualsMaxMismatches() {
-        int maxMismatches = 1;
-
-        NucleotideGraphSequenceDocument trimmedSequence = SequenceTrimmer.trimSequenceByQualityAndPrimers(
-                sequencePrimer,
-                Integer.MAX_VALUE,
-                Collections.singletonList(primer),
-                Float.MAX_VALUE,
-                Float.MAX_VALUE,
-                new CostMatrixOption("Scores", "Scores", true).getPossibleOptionValues().get(5).getScores(),
-                maxMismatches,
-                0,
-                false
-        );
-
-        assertEquals(expectedTrimmedSequence, trimmedSequence.getSequenceString());
+        testMaxMismatches(3, expectedTrimmedSequence.toString());
     }
 
     @Test
     public void testOverMaxMismatches() {
-        int maxMismatches = 0;
+        testMaxMismatches(2, charSequencePrimer.toString());
+    }
 
+    @Test
+    public void testOverMinimumMatchLength() {
+        testMinMatchLength(1, expectedTrimmedSequence.toString());
+    }
+
+    @Test
+    public void testEqualsMinimumMatchLength() {
+        testMinMatchLength(2, expectedTrimmedSequence.toString());
+    }
+
+    @Test
+    public void testUnderMinimumMatchLength() {
+        testMinMatchLength(3, charSequencePrimer.toString());
+    }
+
+    private void testMaxMismatches(int maxMismatches, String expectedTrimmedSequence) {
+        testMatchConstraints(maxMismatches, 0, expectedTrimmedSequence);
+    }
+
+    private void testMinMatchLength(int minMatchLength, String expectedTrimmedSequence) {
+        testMatchConstraints(Integer.MAX_VALUE, minMatchLength, expectedTrimmedSequence);
+    }
+
+    private void testMatchConstraints(int maxMismatches, int minMatchLength, String expectedTrimmedSequence) {
         NucleotideGraphSequenceDocument trimmedSequence = SequenceTrimmer.trimSequenceByQualityAndPrimers(
                 sequencePrimer,
                 Integer.MAX_VALUE,
@@ -171,64 +168,10 @@ public class SequenceTrimmerTest extends Assert {
                 Float.MAX_VALUE,
                 new CostMatrixOption("Scores", "Scores", true).getPossibleOptionValues().get(5).getScores(),
                 maxMismatches,
-                0,
-                false
-        );
-
-        assertEquals(charSequencePrimer, trimmedSequence.getSequenceString());
-    }
-
-    @Test
-    public void testOverMinimumMatchLength() {
-        int minimumMatchLength = 1;
-        NucleotideGraphSequenceDocument trimmedSequence = SequenceTrimmer.trimSequenceByQualityAndPrimers(
-                sequencePrimer,
-                Integer.MAX_VALUE,
-                Collections.singletonList(primer),
-                Float.MAX_VALUE,
-                Float.MAX_VALUE,
-                new CostMatrixOption("Scores", "Scores", true).getPossibleOptionValues().get(5).getScores(),
-                Integer.MAX_VALUE,
-                minimumMatchLength,
+                minMatchLength,
                 false
         );
 
         assertEquals(expectedTrimmedSequence, trimmedSequence.getSequenceString());
-    }
-
-    @Test
-    public void testEqualsMinimumMatchLength() {
-        int minimumMatchLength = 2;
-        NucleotideGraphSequenceDocument trimmedSequence = SequenceTrimmer.trimSequenceByQualityAndPrimers(
-                sequencePrimer,
-                Integer.MAX_VALUE,
-                Collections.singletonList(primer),
-                Float.MAX_VALUE,
-                Float.MAX_VALUE,
-                new CostMatrixOption("Scores", "Scores", true).getPossibleOptionValues().get(5).getScores(),
-                Integer.MAX_VALUE,
-                minimumMatchLength,
-                false
-        );
-
-        assertEquals(expectedTrimmedSequence, trimmedSequence.getSequenceString());
-    }
-
-    @Test
-    public void testUnderMinimumMatchLength() {
-        int minimumMatchLength = 3;
-        NucleotideGraphSequenceDocument trimmedSequence = SequenceTrimmer.trimSequenceByQualityAndPrimers(
-                sequencePrimer,
-                Integer.MAX_VALUE,
-                Collections.singletonList(primer),
-                Float.MAX_VALUE,
-                Float.MAX_VALUE,
-                new CostMatrixOption("Scores", "Scores", true).getPossibleOptionValues().get(5).getScores(),
-                Integer.MAX_VALUE,
-                minimumMatchLength,
-                false
-        );
-
-        assertEquals(charSequencePrimer, trimmedSequence.getSequenceString());
     }
 }

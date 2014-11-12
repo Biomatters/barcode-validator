@@ -106,14 +106,15 @@ public class SequenceTrimmer {
     }
 
     /**
-     * Trims the supplied sequence using the supplied Trimmed annotation.
+     * Trims the supplied sequence using Trimmed annotations that are found on the supplied sequence.
      *
-     * @param sequence Sequence to trim, which trimmed annotation should be in the ends of sequence
+     * @param sequence Sequence to trim.
      * @return Trimmed sequence.
      */
-    public static NucleotideGraphSequenceDocument trimSequenceUsingUsingAnnotation(NucleotideGraphSequenceDocument sequence) {
+    public static NucleotideGraphSequenceDocument trimSequenceUsingAnnotation(NucleotideGraphSequenceDocument sequence) {
         int start = 1;
         int end = sequence.getCharSequence().length();
+
         for (SequenceAnnotation annotation : sequence.getSequenceAnnotations()) {
             if (SequenceAnnotation.TYPE_TRIMMED.equals(annotation.getType())) {
                 for (SequenceAnnotationInterval interval : annotation.getIntervals()) {
@@ -127,6 +128,7 @@ public class SequenceTrimmer {
         }
 
         SequenceExtractionUtilities.ExtractionOptions options = new SequenceExtractionUtilities.ExtractionOptions(start + 1, end - 1);
+
         options.setOverrideName(sequence.getName());
 
         return (NucleotideGraphSequenceDocument)SequenceExtractionUtilities.extract(sequence, options);
@@ -172,9 +174,8 @@ public class SequenceTrimmer {
      * @param primer Primer sequence for the Smith-Waterman algorithm.
      * @param gapOpenPenalty Gap open penalty for the Smith-Waterman algorithm.
      * @param gapExtensionPenalty Gap extension penalty for the Smith-Waterman algorithm.
-     * @param maxMismatches Maximum number of mismatched bases that are allowed for the Smith-Waterman alignment
-     *                      results.
-     * @param minMatchLength Minimum number of matched bases that are allowed for the Smith-Waterman alignment results.
+     * @param maxMismatches Maximum number of mismatched bases that are allowed for the Smith-Waterman alignments.
+     * @param minMatchLength Minimum number of matched bases that are allowed for the Smith-Waterman alignments.
      * @return Constructed Trimmage.
      */
     private static Trimmage getTrimmageForPrimerTrimming(NucleotideGraphSequenceDocument sequence,
@@ -204,11 +205,11 @@ public class SequenceTrimmer {
                 new SmithWatermanLinearSpaceAffine(scoresWithAdditionalCharacters, gapOpenPenalty, gapExtensionPenalty)
         );
 
-        SequenceAnnotationInterval[] primerAlignmentFullMatchIntervals = getFullMatchIntervals(primerAlignmentResult, sequenceCharSequence.length(), primerSequence.length());
-        SequenceAnnotationInterval[] reversePrimerAlignmentFullMatchIntervals = getFullMatchIntervals(reversePrimerAlignmentResult, sequenceCharSequence.length(), primerSequenceReversed.length());
+        SequenceAnnotationInterval[] primerAlignmentFullMatchIntervals = getFullMatchIntervals(primerAlignmentResult.getIntervals(), sequenceCharSequence.length(), primerSequence.length());
+        SequenceAnnotationInterval[] reversePrimerAlignmentFullMatchIntervals = getFullMatchIntervals(reversePrimerAlignmentResult.getIntervals(), sequenceCharSequence.length(), primerSequenceReversed.length());
 
-        int amountToTrimFromLeftEndOfSequence = getAmountToTrimByPrimer(sequenceCharSequence, primerSequence, primerAlignmentFullMatchIntervals, maxMismatches, minMatchLength, false);
-        int amountToTrimFromRightEndOfSequence = getAmountToTrimByPrimer(sequenceCharSequence, primerSequenceReversed, reversePrimerAlignmentFullMatchIntervals, maxMismatches, minMatchLength, true);
+        int amountToTrimFromLeftEndOfSequence = getAmountToTrimByPrimer(sequenceCharSequence, primerSequence, primerAlignmentResult, primerAlignmentFullMatchIntervals, maxMismatches, minMatchLength, false);
+        int amountToTrimFromRightEndOfSequence = getAmountToTrimByPrimer(sequenceCharSequence, primerSequenceReversed, reversePrimerAlignmentResult, reversePrimerAlignmentFullMatchIntervals, maxMismatches, minMatchLength, true);
 
         return new Trimmage(amountToTrimFromLeftEndOfSequence, amountToTrimFromRightEndOfSequence);
     }
@@ -217,7 +218,8 @@ public class SequenceTrimmer {
      * Returns the amount of bases to trim from a sequence using the Smith-Waterman algorithm.
      *
      * @param sequence Sequence to trim.
-     * @param primer Primer sequence for the Smith-Waterman algorithm.
+     * @param primer Primer sequence associated with the Smith-Waterman alignment.
+     * @param alignmentResult Results of the Smith-Waterman alignment.
      * @param alignmentFullMatchIntervals Full match intervals of the Smith-Waterman alignment.
      * @param reversed True if the primer that is associated with the trimming is of a reverse direction.
      * @return Amount of bases to remove from (the left end, if reversed==true, or the right end, if reverse==false, of)
@@ -225,13 +227,14 @@ public class SequenceTrimmer {
      */
     private static int getAmountToTrimByPrimer(CharSequence sequence,
                                                CharSequence primer,
+                                               SmithWaterman alignmentResult,
                                                SequenceAnnotationInterval[] alignmentFullMatchIntervals,
                                                int maxMismatches,
                                                int minMatchLength,
                                                boolean reversed) {
         if (alignmentFullMatchIntervals[0] == null
                 || alignmentFullMatchIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].getLength() < minMatchLength
-                || hasMoreThanMaximumNumberOfMismatches(sequence, primer, alignmentFullMatchIntervals, maxMismatches)) {
+                || hasMoreThanMaximumNumberOfMismatches(sequence, primer, alignmentResult, alignmentFullMatchIntervals, maxMismatches)) {
             return 0;
         }
 
@@ -241,22 +244,40 @@ public class SequenceTrimmer {
     /**
      * Checks if the number of mismatched bases in a Smith-Waterman alignment is above a specified threshold.
      *
-     * @param sequence The sequence for the Smith-Waterman alignment.
-     * @param primer The primer sequence for the Smith-Waterman alignment.
-     * @param alignmentFullMatchIntervals Full match intervals of the Smith-Waterman alignment.
+     * @param sequence The sequence of the Smith-Waterman alignment.
+     * @param primer The primer sequence of the Smith-Waterman alignment.
+     * @param alignmentResult Result of the Smith-Waterman alignment.
      * @param maxMismatches Maximum number of mismatched bases that are allowed in the Smith-Waterman alignment.
      * @return True if the number of mismatched bases in the Smith-Waterman alignment is > maxMismatches.
      */
     private static boolean hasMoreThanMaximumNumberOfMismatches(CharSequence sequence,
                                                                 CharSequence primer,
+                                                                SmithWaterman alignmentResult,
                                                                 SequenceAnnotationInterval[] alignmentFullMatchIntervals,
                                                                 int maxMismatches) {
-        int numOfMismatches = 0;
 
         CharSequence portionOfSequenceAlignedToPrimer = sequence.subSequence(alignmentFullMatchIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].getFrom() - 1,
                                                                              alignmentFullMatchIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].getTo());
         CharSequence portionOfPrimerAlignedToSequence = primer.subSequence(alignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX].getFrom() - 1,
                                                                            alignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX].getTo());
+
+        int differenceOfFromBetweenOriginalAndFullIntervalsSequence = alignmentResult.getIntervals()[SMITH_WATERMAN_SEQUENCE_INDEX].getFrom() - alignmentFullMatchIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].getFrom();
+        int differenceOfToBetweenOriginalAndFullIntervalsSequence = alignmentFullMatchIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].getTo() - alignmentResult.getIntervals()[SMITH_WATERMAN_SEQUENCE_INDEX].getTo();
+        int differenceOfFromBetweenOriginalAndFullIntervalsPrimer = alignmentResult.getIntervals()[SMITH_WATERMAN_PRIMER_INDEX].getFrom() - alignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX].getFrom();
+        int differenceOfToBetweenOriginalAndFullIntervalsPrimer = alignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX].getTo() - alignmentResult.getIntervals()[SMITH_WATERMAN_PRIMER_INDEX].getTo();
+
+        portionOfSequenceAlignedToPrimer = portionOfSequenceAlignedToPrimer.subSequence(0, differenceOfFromBetweenOriginalAndFullIntervalsSequence) +
+                                           alignmentResult.getAlignedSequences()[SMITH_WATERMAN_SEQUENCE_INDEX] +
+                                           portionOfSequenceAlignedToPrimer.subSequence(portionOfSequenceAlignedToPrimer.length() - differenceOfToBetweenOriginalAndFullIntervalsSequence, portionOfSequenceAlignedToPrimer.length());
+
+        portionOfPrimerAlignedToSequence = portionOfPrimerAlignedToSequence.subSequence(0, differenceOfFromBetweenOriginalAndFullIntervalsPrimer) +
+                                           alignmentResult.getAlignedSequences()[SMITH_WATERMAN_PRIMER_INDEX] +
+                                           portionOfPrimerAlignedToSequence.subSequence(portionOfPrimerAlignedToSequence.length() - differenceOfToBetweenOriginalAndFullIntervalsPrimer, portionOfPrimerAlignedToSequence.length());
+
+        int numOfMismatches = 0;
+
+        numOfMismatches += alignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX].getFrom() - 1;
+        numOfMismatches += primer.length() - alignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX].getTo();
 
         for (int i = 0; i < portionOfPrimerAlignedToSequence.length(); i++) {
             if (portionOfSequenceAlignedToPrimer.charAt(i) != portionOfPrimerAlignedToSequence.charAt(i)) {
@@ -291,30 +312,27 @@ public class SequenceTrimmer {
      * Of which The corresponding intervals, 1 -> 2 for the sequence and 3 -> 4 for the primer, are the full match
      * intervals.
      *
-     * @param alignmentResult Result of the Smith-Waterman alignment.
+     * @param smithWatermanAlignmentIntervals Alignment intervals from the Smith-Waterman alignment.
      * @param sequenceLength Length of the sequence of the Smith-Waterman alignment.
-     * @param primerLength Length of the primer of the Smith-Waterman alignment.
-     * @return Full intervals of the Smith-Waterman alignment.
+     * @param primerLength Length of the primer of the the Smith-Waterman alignment.
+     * @return Full match intervals of the Smith-Waterman alignment.
      */
-    private static SequenceAnnotationInterval[] getFullMatchIntervals(SmithWaterman alignmentResult,
+    private static SequenceAnnotationInterval[] getFullMatchIntervals(SequenceAnnotationInterval[] smithWatermanAlignmentIntervals,
                                                                       int sequenceLength,
                                                                       int primerLength) {
-        SequenceAnnotationInterval[] fullMatchIntervals = new SequenceAnnotationInterval[2];
-
-        if (alignmentResult.getIntervals()[0] != null) {
-            SequenceAnnotationInterval intervalOfAlignedPortionOfSequenceSmithWaterman = alignmentResult.getIntervals()[SMITH_WATERMAN_SEQUENCE_INDEX];
-            SequenceAnnotationInterval intervalOfAlignedPortionOfPrimerSmithWaterman = alignmentResult.getIntervals()[SMITH_WATERMAN_PRIMER_INDEX];
-
-            int sequenceFullIntervalFrom = Math.max(0, intervalOfAlignedPortionOfSequenceSmithWaterman.getFrom() - intervalOfAlignedPortionOfPrimerSmithWaterman.getFrom()) + 1;
-            int sequenceFullIntervalTo = Math.min(sequenceLength, intervalOfAlignedPortionOfSequenceSmithWaterman.getTo() + primerLength - intervalOfAlignedPortionOfPrimerSmithWaterman.getTo());
-            int primerFullIntervalFrom = intervalOfAlignedPortionOfPrimerSmithWaterman.getFrom() - intervalOfAlignedPortionOfSequenceSmithWaterman.getFrom() + sequenceFullIntervalFrom;
-            int primerFullIntervalTo = intervalOfAlignedPortionOfPrimerSmithWaterman.getTo() + sequenceFullIntervalTo - intervalOfAlignedPortionOfSequenceSmithWaterman.getTo();
-
-            fullMatchIntervals[SMITH_WATERMAN_SEQUENCE_INDEX] = new SequenceAnnotationInterval(sequenceFullIntervalFrom, sequenceFullIntervalTo);
-            fullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX] = new SequenceAnnotationInterval(primerFullIntervalFrom, primerFullIntervalTo);
+        if (smithWatermanAlignmentIntervals[0] == null) {
+            return smithWatermanAlignmentIntervals;
         }
 
-        return fullMatchIntervals;
+        int sequenceFullIntervalFrom = Math.max(1, smithWatermanAlignmentIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].getFrom() - smithWatermanAlignmentIntervals[SMITH_WATERMAN_PRIMER_INDEX].getFrom() + 1);
+        int sequenceFullIntervalTo = Math.min(sequenceLength, smithWatermanAlignmentIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].getTo() + primerLength - smithWatermanAlignmentIntervals[SMITH_WATERMAN_PRIMER_INDEX].getTo());
+        int primerFullIntervalFrom = smithWatermanAlignmentIntervals[SMITH_WATERMAN_PRIMER_INDEX].getFrom() - smithWatermanAlignmentIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].getFrom() + sequenceFullIntervalFrom;
+        int primerFullIntervalTo = smithWatermanAlignmentIntervals[SMITH_WATERMAN_PRIMER_INDEX].getTo() + sequenceFullIntervalTo - smithWatermanAlignmentIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].getTo();
+
+        return new SequenceAnnotationInterval[] {
+                new SequenceAnnotationInterval(sequenceFullIntervalFrom, sequenceFullIntervalTo),
+                new SequenceAnnotationInterval(primerFullIntervalFrom, primerFullIntervalTo)
+        };
     }
 
     /**
