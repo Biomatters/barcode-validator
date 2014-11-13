@@ -239,7 +239,7 @@ public class SequenceTrimmer {
     }
 
     private static SequenceAnnotationInterval getIntervalOfPrimerInSequence(OligoSequenceDocument primer, SequenceAnnotationInterval sequenceOverlapInterval, SequenceAnnotationInterval primerOverlapInterval) {
-        int startOfPrimerInSequence = sequenceOverlapInterval.getMinimumIndex() - primerOverlapInterval.getMinimumIndex() -1;
+        int startOfPrimerInSequence = sequenceOverlapInterval.getMinimumIndex() - (primerOverlapInterval.getMinimumIndex() - 1);
         int endOfPrimerInSequence = sequenceOverlapInterval.getMaximumIndex() - (primer.getSequenceLength() - primerOverlapInterval.getMaximumIndex());
         return new SequenceAnnotationInterval(startOfPrimerInSequence, endOfPrimerInSequence, sequenceOverlapInterval.getDirection());
     }
