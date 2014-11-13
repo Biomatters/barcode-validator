@@ -1,5 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation.trimming;
 
+import com.biomatters.geneious.publicapi.documents.sequence.EditableSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotation;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationInterval;
@@ -9,6 +10,8 @@ import com.biomatters.geneious.publicapi.implementations.sequence.OligoSequenceD
 import com.biomatters.geneious.publicapi.utilities.SequenceUtilities;
 import jebl.evolution.align.SmithWatermanLinearSpaceAffine;
 import jebl.evolution.align.scores.Scores;
+import jebl.evolution.sequences.NucleotideState;
+import jebl.evolution.sequences.Nucleotides;
 import jebl.util.ProgressListener;
 
 import java.util.*;
@@ -208,10 +211,37 @@ public class SequenceTrimmer {
         SequenceAnnotationInterval[] primerAlignmentFullMatchIntervals = getFullMatchIntervals(primerAlignmentResult.getIntervals(), sequenceCharSequence.length(), primerSequence.length());
         SequenceAnnotationInterval[] reversePrimerAlignmentFullMatchIntervals = getFullMatchIntervals(reversePrimerAlignmentResult.getIntervals(), sequenceCharSequence.length(), primerSequenceReversed.length());
 
+        List<SequenceAnnotation> primerAnnotations = new ArrayList<SequenceAnnotation>();
         int amountToTrimFromLeftEndOfSequence = getAmountToTrimByPrimer(sequenceCharSequence, primerSequence, primerAlignmentResult, primerAlignmentFullMatchIntervals, maxMismatches, minMatchLength, false);
+        if(amountToTrimFromLeftEndOfSequence > 0) {
+            SequenceAnnotationInterval intervalInSeqAlignedToPrimer = getIntervalOfPrimerInSequence(
+                    primer,
+                    primerAlignmentFullMatchIntervals[SMITH_WATERMAN_SEQUENCE_INDEX],
+                    primerAlignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX]);
+            primerAnnotations.add(new SequenceAnnotation(primer.getName(), SequenceAnnotation.TYPE_PRIMER_BIND,
+                    intervalInSeqAlignedToPrimer));
+        }
         int amountToTrimFromRightEndOfSequence = getAmountToTrimByPrimer(sequenceCharSequence, primerSequenceReversed, reversePrimerAlignmentResult, reversePrimerAlignmentFullMatchIntervals, maxMismatches, minMatchLength, true);
+        if(amountToTrimFromRightEndOfSequence > 0) {
+            SequenceAnnotationInterval intervalInSeqAlignedToPrimer = getIntervalOfPrimerInSequence(
+                                primer,
+                                reversePrimerAlignmentFullMatchIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].reverse(),
+                                reversePrimerAlignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX]);
+            primerAnnotations.add(new SequenceAnnotation(primer.getName(), SequenceAnnotation.TYPE_PRIMER_BIND_REVERSE,
+                    intervalInSeqAlignedToPrimer));
+        }
+        if(!primerAnnotations.isEmpty() && sequence instanceof EditableSequenceDocument) {
+            primerAnnotations.addAll(sequence.getSequenceAnnotations());
+            ((EditableSequenceDocument)sequence).setAnnotations(primerAnnotations);
+        }
 
         return new Trimmage(amountToTrimFromLeftEndOfSequence, amountToTrimFromRightEndOfSequence);
+    }
+
+    private static SequenceAnnotationInterval getIntervalOfPrimerInSequence(OligoSequenceDocument primer, SequenceAnnotationInterval sequenceOverlapInterval, SequenceAnnotationInterval primerOverlapInterval) {
+        int startOfPrimerInSequence = sequenceOverlapInterval.getMinimumIndex() - primerOverlapInterval.getMinimumIndex() -1;
+        int endOfPrimerInSequence = sequenceOverlapInterval.getMaximumIndex() - (primer.getSequenceLength() - primerOverlapInterval.getMaximumIndex());
+        return new SequenceAnnotationInterval(startOfPrimerInSequence, endOfPrimerInSequence, sequenceOverlapInterval.getDirection());
     }
 
     /**
@@ -280,12 +310,21 @@ public class SequenceTrimmer {
         numOfMismatches += primer.length() - alignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX].getTo();
 
         for (int i = 0; i < portionOfPrimerAlignedToSequence.length(); i++) {
-            if (portionOfSequenceAlignedToPrimer.charAt(i) != portionOfPrimerAlignedToSequence.charAt(i)) {
+            if (isMismatch(portionOfSequenceAlignedToPrimer.charAt(i),  portionOfPrimerAlignedToSequence.charAt(i))) {
                 numOfMismatches++;
             }
         }
 
         return numOfMismatches > maxMismatches;
+    }
+
+    private static boolean isMismatch(char sequenceChar, char primerChar) {
+        NucleotideState sequenceState = Nucleotides.getState(sequenceChar);
+        NucleotideState primerState = Nucleotides.getState(primerChar);
+        if(sequenceState == null || primerState == null) {
+            return true;
+        }
+        return !sequenceState.possiblyEqual(primerState);
     }
 
     /**
