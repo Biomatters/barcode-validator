@@ -23,8 +23,8 @@ public class SequenceTrimmer {
     private static final int SMITH_WATERMAN_SEQUENCE_INDEX = 0;
     private static final int SMITH_WATERMAN_PRIMER_INDEX   = 1;
 
-    public static final String ANNOTATION_SUFFIX = " trims annotated";
-    public static final String TRIMMED_SUFFIX = " trimmed";
+    public static final String ANNOTATION_SUFFIX = "trims annotated";
+    public static final String TRIMMED_SUFFIX = "trimmed";
 
     private SequenceTrimmer() {
     }
@@ -100,7 +100,7 @@ public class SequenceTrimmer {
      */
     static NucleotideGraphSequenceDocument trimSequenceUsingTrimmage(NucleotideGraphSequenceDocument sequence, Trimmage trimmage) {
         SequenceExtractionUtilities.ExtractionOptions options = new SequenceExtractionUtilities.ExtractionOptions(trimmage.getNonTrimmedInterval(sequence.getSequenceLength()));
-        options.setOverrideName(sequence.getName() + TRIMMED_SUFFIX);
+        options.setOverrideName(sequence.getName() + " " + TRIMMED_SUFFIX);
 
         return (NucleotideGraphSequenceDocument)SequenceExtractionUtilities.extract(sequence, options);
     }
@@ -111,7 +111,7 @@ public class SequenceTrimmer {
      * @param sequence Sequence to trim.
      * @return Trimmed sequence.
      */
-    public static NucleotideGraphSequenceDocument trimSequenceUsingAnnotation(NucleotideGraphSequenceDocument sequence) {
+    public static NucleotideGraphSequenceDocument trimSequenceUsingAnnotations(NucleotideGraphSequenceDocument sequence) {
         int start = 1;
         int end = sequence.getCharSequence().length();
 
@@ -130,6 +130,8 @@ public class SequenceTrimmer {
         SequenceExtractionUtilities.ExtractionOptions options = new SequenceExtractionUtilities.ExtractionOptions(start + 1, end - 1);
 
         options.setOverrideName(sequence.getName());
+
+
 
         return (NucleotideGraphSequenceDocument)SequenceExtractionUtilities.extract(sequence, options);
     }
@@ -266,21 +268,21 @@ public class SequenceTrimmer {
         int differenceOfFromBetweenOriginalAndFullIntervalsPrimer = alignmentResult.getIntervals()[SMITH_WATERMAN_PRIMER_INDEX].getFrom() - alignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX].getFrom();
         int differenceOfToBetweenOriginalAndFullIntervalsPrimer = alignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX].getTo() - alignmentResult.getIntervals()[SMITH_WATERMAN_PRIMER_INDEX].getTo();
 
-        portionOfSequenceAlignedToPrimer = portionOfSequenceAlignedToPrimer.subSequence(0, differenceOfFromBetweenOriginalAndFullIntervalsSequence) +
-                                           alignmentResult.getAlignedSequences()[SMITH_WATERMAN_SEQUENCE_INDEX] +
-                                           portionOfSequenceAlignedToPrimer.subSequence(portionOfSequenceAlignedToPrimer.length() - differenceOfToBetweenOriginalAndFullIntervalsSequence, portionOfSequenceAlignedToPrimer.length());
+        CharSequence portionOfSequenceAlignedToPrimerWithDeletions = portionOfSequenceAlignedToPrimer.subSequence(0, differenceOfFromBetweenOriginalAndFullIntervalsSequence) +
+                                                                     alignmentResult.getAlignedSequences()[SMITH_WATERMAN_SEQUENCE_INDEX] +
+                                                                     portionOfSequenceAlignedToPrimer.subSequence(portionOfSequenceAlignedToPrimer.length() - differenceOfToBetweenOriginalAndFullIntervalsSequence, portionOfSequenceAlignedToPrimer.length());
 
-        portionOfPrimerAlignedToSequence = portionOfPrimerAlignedToSequence.subSequence(0, differenceOfFromBetweenOriginalAndFullIntervalsPrimer) +
-                                           alignmentResult.getAlignedSequences()[SMITH_WATERMAN_PRIMER_INDEX] +
-                                           portionOfPrimerAlignedToSequence.subSequence(portionOfPrimerAlignedToSequence.length() - differenceOfToBetweenOriginalAndFullIntervalsPrimer, portionOfPrimerAlignedToSequence.length());
+        CharSequence portionOfPrimerAlignedToSequenceWithDeletions = portionOfPrimerAlignedToSequence.subSequence(0, differenceOfFromBetweenOriginalAndFullIntervalsPrimer) +
+                                                                     alignmentResult.getAlignedSequences()[SMITH_WATERMAN_PRIMER_INDEX] +
+                                                                     portionOfPrimerAlignedToSequence.subSequence(portionOfPrimerAlignedToSequence.length() - differenceOfToBetweenOriginalAndFullIntervalsPrimer, portionOfPrimerAlignedToSequence.length());
 
         int numOfMismatches = 0;
 
         numOfMismatches += alignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX].getFrom() - 1;
         numOfMismatches += primer.length() - alignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX].getTo();
 
-        for (int i = 0; i < portionOfPrimerAlignedToSequence.length(); i++) {
-            if (portionOfSequenceAlignedToPrimer.charAt(i) != portionOfPrimerAlignedToSequence.charAt(i)) {
+        for (int i = 0; i < portionOfSequenceAlignedToPrimerWithDeletions.length(); i++) {
+            if (portionOfSequenceAlignedToPrimerWithDeletions.charAt(i) != portionOfPrimerAlignedToSequenceWithDeletions.charAt(i)) {
                 numOfMismatches++;
             }
         }
