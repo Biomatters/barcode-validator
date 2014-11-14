@@ -6,6 +6,9 @@ import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSeque
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.implementations.sequence.OligoSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
+import com.biomatters.plugins.barcoding.validator.validation.ValidationTestUtilities;
+import jebl.evolution.sequences.Nucleotides;
+import jebl.evolution.sequences.State;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -151,22 +154,117 @@ public class SequenceTrimmerTest extends Assert {
         testMinMatchLength(3, charSequencePrimer.toString());
     }
 
+    @Test
+    public void worksWithAmbiguities() {
+        String primer = "TTATTC";
+        String sequence = "TTATTCGGGGGGGGGGGGGGGG";
+        String trimmed = "GGGGGGGGGGGGGGGG";
+        testTrimmingWhenMustMatchExactly(sequence, primer, trimmed);
+        for (State state : Nucleotides.getStates()) {
+            if(state == Nucleotides.GAP_STATE) {
+                continue;  // Skip the gap since only aligned sequence will have gaps and we don't trim those.
+            }
+            String newSequence = sequence.replace(Nucleotides.A_STATE.getCode(), state.getCode());
+            if(state.getCanonicalStates().contains(Nucleotides.A_STATE)) {
+                testTrimmingWhenMustMatchExactly(newSequence, primer, trimmed);
+            } else {
+                testTrimmingWhenMustMatchExactly(newSequence, primer, newSequence);
+            }
+        }
+    }
+
+    @Test
+    public void trimmingOnEnds() {
+        String primer = "ACTG";
+        String reversePrimer = "TATAG";
+        testTrimmingWhenMustMatchExactly("ACTGCTATA", primer, "CTATA");
+        testTrimmingWhenMustMatchExactly("ACTGCTATA", reversePrimer, "ACTG");
+    }
+
+    @Test
+    public void trimsUpToAndIncludingPrimer() {
+        String primer = "ACTG";
+        String reversePrimer = "TATAG";
+        testTrimmingWhenMustMatchExactly("ACACACTGCTATATTTA", primer, "CTATATTTA");
+        testTrimmingWhenMustMatchExactly("ACACACTGCTATATTTA", reversePrimer, "ACACACTG");
+    }
+
+    @Test
+    public void testPartialTrimsAtEnd() {
+        String primer = "ACTG";
+        String reversePrimer = "TATAG";
+        testTrimming("CTGCTAT", primer, "CTAT", 1, 3, (float)PrimerTrimmingOptions.DEFAULT_GAP_OPEN);
+        testTrimming("CTGCTAT", reversePrimer, "CTG", 1, 3, (float)PrimerTrimmingOptions.DEFAULT_GAP_OPEN);
+    }
+
+    @Test
+    public void testTrimsOverMismatch() {
+        String basicSequence = "GCGGGCTTTAAACAACTTGAAG";
+        String primer = "GCGGGC";
+
+        doIterativeMismatchTest(basicSequence, primer, "TTTAAACAACTTGAAG", true);
+    }
+
+    @Test
+    public void testTrimsOverMismatchOnReverse() {
+        String basicSequence = "CCCCCCCCCCCCCCCCCCCCCTTTGGG";
+        String primer = "CCCAAA";
+
+        doIterativeMismatchTest(basicSequence, primer, "CCCCCCCCCCCCCCCCCCCCC", false);
+    }
+
+    @Test
+    public void testMismatchCheckWithGaps() {
+        String untrimmed = "AAACCTTAAGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG";
+        String primerWithoutMiddlePiece = "AAATTAA";
+        String trimmed = "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG";
+
+        // We set the gap open penalty to 3.0 so that the aligner will more readily open a gap
+        //
+        // The expected alignment will include 2 gaps.
+        // AAACCTTAA
+        // AAA--TTAA
+        testTrimming(untrimmed, primerWithoutMiddlePiece, trimmed, 2, 7, 3.0f);
+        testTrimming(untrimmed, primerWithoutMiddlePiece, untrimmed, 1, 7, 3.0f);
+    }
+
+    private void doIterativeMismatchTest(String basicSequence, String primer, String expected, boolean replaceFromFront) {
+        for(int i=0; i<primer.length(); i++) {
+            char[] chars = basicSequence.toCharArray();
+            int index = replaceFromFront ? i : chars.length-i-1;
+            chars[index] = 'A';
+            String toTest = new String(chars);
+            testTrimming(toTest, primer, expected, 1, primer.length()-1, (float)PrimerTrimmingOptions.DEFAULT_GAP_OPEN);
+        }
+    }
+
+    private void testTrimmingWhenMustMatchExactly(CharSequence sequence, CharSequence primer, CharSequence expected) {
+        testTrimming(sequence, primer, expected, 0, 0, (float)PrimerTrimmingOptions.DEFAULT_GAP_OPEN);
+    }
+
+    private void testTrimming(CharSequence sequence, CharSequence primer, CharSequence expected, int maxMismatches, int minMatchLength, float gapOpen) {
+        DefaultNucleotideGraphSequence seqDoc = ValidationTestUtilities.getTestSequenceWithConsistentQuality(sequence, 40);
+        OligoSequenceDocument primerDoc = new OligoSequenceDocument("primer", null, primer, new Date());
+        testMatchConstraints(maxMismatches, minMatchLength, gapOpen, seqDoc, primerDoc, expected);
+    }
+
     private void testMaxMismatches(int maxMismatches, String expectedTrimmedSequence) {
-        testMatchConstraints(maxMismatches, 0, expectedTrimmedSequence);
+        testMatchConstraints(maxMismatches, 0, (float)PrimerTrimmingOptions.DEFAULT_GAP_OPEN, sequencePrimer, primer, expectedTrimmedSequence);
     }
 
     private void testMinMatchLength(int minMatchLength, String expectedTrimmedSequence) {
-        testMatchConstraints(Integer.MAX_VALUE, minMatchLength, expectedTrimmedSequence);
+        testMatchConstraints(Integer.MAX_VALUE, minMatchLength, (float)PrimerTrimmingOptions.DEFAULT_GAP_OPEN, sequencePrimer, primer, expectedTrimmedSequence);
     }
 
-    private void testMatchConstraints(int maxMismatches, int minMatchLength, String expectedTrimmedSequence) {
+    private void testMatchConstraints(int maxMismatches, int minMatchLength, float gapOpen, NucleotideGraphSequenceDocument inputSequence, OligoSequenceDocument primer, CharSequence expectedTrimmedSequence) {
+
         NucleotideGraphSequenceDocument trimmedSequence = SequenceTrimmer.trimSequenceByQualityAndPrimers(
-                sequencePrimer,
+                inputSequence,
                 Integer.MAX_VALUE,
                 Collections.singletonList(primer),
-                Float.MAX_VALUE,
-                Float.MAX_VALUE,
-                new CostMatrixOption("Scores", "Scores", true).getPossibleOptionValues().get(5).getScores(),
+                gapOpen,
+                (float)PrimerTrimmingOptions.DEFAULT_GAP_EXTEND,
+                new CostMatrixOption("Scores", "Scores", true).getDefaultValue().getScores(),
                 maxMismatches,
                 minMatchLength,
                 false

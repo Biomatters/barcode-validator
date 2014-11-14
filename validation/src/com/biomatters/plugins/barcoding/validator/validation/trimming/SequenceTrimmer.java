@@ -1,5 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation.trimming;
 
+import com.biomatters.geneious.publicapi.documents.sequence.EditableSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotation;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationInterval;
@@ -9,6 +10,8 @@ import com.biomatters.geneious.publicapi.implementations.sequence.OligoSequenceD
 import com.biomatters.geneious.publicapi.utilities.SequenceUtilities;
 import jebl.evolution.align.SmithWatermanLinearSpaceAffine;
 import jebl.evolution.align.scores.Scores;
+import jebl.evolution.sequences.NucleotideState;
+import jebl.evolution.sequences.Nucleotides;
 import jebl.util.ProgressListener;
 
 import java.util.*;
@@ -23,8 +26,8 @@ public class SequenceTrimmer {
     private static final int SMITH_WATERMAN_SEQUENCE_INDEX = 0;
     private static final int SMITH_WATERMAN_PRIMER_INDEX   = 1;
 
-    public static final String ANNOTATION_SUFFIX = " trims annotated";
-    public static final String TRIMMED_SUFFIX = " trimmed";
+    public static final String ANNOTATION_SUFFIX = "trims annotated";
+    public static final String TRIMMED_SUFFIX = "trimmed";
 
     private SequenceTrimmer() {
     }
@@ -92,7 +95,17 @@ public class SequenceTrimmer {
     }
 
     /**
-     * Trims the supplied sequence using the supplied Trimmage.
+     * Trims the supplied sequence by removing regions that are annotated by Trimmed annotations.
+     *
+     * @param sequence Sequence to trim.
+     * @return Trimmed sequence.
+     */
+    public static NucleotideGraphSequenceDocument trimSequenceUsingAnnotations(NucleotideGraphSequenceDocument sequence) {
+        return (NucleotideGraphSequenceDocument)SequenceExtractionUtilities.extract(sequence, new SequenceExtractionUtilities.ExtractionOptions(getNonTrimmedIntervals(sequence)));
+    }
+
+    /**
+     * Trims the supplied sequence by using the supplied Trimmage.
      *
      * @param sequence Sequence to trim.
      * @param trimmage Bases to trim.
@@ -100,36 +113,7 @@ public class SequenceTrimmer {
      */
     static NucleotideGraphSequenceDocument trimSequenceUsingTrimmage(NucleotideGraphSequenceDocument sequence, Trimmage trimmage) {
         SequenceExtractionUtilities.ExtractionOptions options = new SequenceExtractionUtilities.ExtractionOptions(trimmage.getNonTrimmedInterval(sequence.getSequenceLength()));
-        options.setOverrideName(sequence.getName() + TRIMMED_SUFFIX);
-
-        return (NucleotideGraphSequenceDocument)SequenceExtractionUtilities.extract(sequence, options);
-    }
-
-    /**
-     * Trims the supplied sequence using Trimmed annotations that are found on the supplied sequence.
-     *
-     * @param sequence Sequence to trim.
-     * @return Trimmed sequence.
-     */
-    public static NucleotideGraphSequenceDocument trimSequenceUsingAnnotation(NucleotideGraphSequenceDocument sequence) {
-        int start = 1;
-        int end = sequence.getCharSequence().length();
-
-        for (SequenceAnnotation annotation : sequence.getSequenceAnnotations()) {
-            if (SequenceAnnotation.TYPE_TRIMMED.equals(annotation.getType())) {
-                for (SequenceAnnotationInterval interval : annotation.getIntervals()) {
-                    if (interval.getFrom() == 1) {
-                        start = start < interval.getTo() ? interval.getTo() : start;
-                    } else if (interval.getTo() == sequence.getCharSequence().length()) {
-                        end = end > interval.getFrom() ? interval.getFrom() : end;
-                    }
-                }
-            }
-        }
-
-        SequenceExtractionUtilities.ExtractionOptions options = new SequenceExtractionUtilities.ExtractionOptions(start + 1, end - 1);
-
-        options.setOverrideName(sequence.getName());
+        options.setOverrideName(sequence.getName() + " " + TRIMMED_SUFFIX);
 
         return (NucleotideGraphSequenceDocument)SequenceExtractionUtilities.extract(sequence, options);
     }
@@ -208,10 +192,37 @@ public class SequenceTrimmer {
         SequenceAnnotationInterval[] primerAlignmentFullMatchIntervals = getFullMatchIntervals(primerAlignmentResult.getIntervals(), sequenceCharSequence.length(), primerSequence.length());
         SequenceAnnotationInterval[] reversePrimerAlignmentFullMatchIntervals = getFullMatchIntervals(reversePrimerAlignmentResult.getIntervals(), sequenceCharSequence.length(), primerSequenceReversed.length());
 
+        List<SequenceAnnotation> primerAnnotations = new ArrayList<SequenceAnnotation>();
         int amountToTrimFromLeftEndOfSequence = getAmountToTrimByPrimer(sequenceCharSequence, primerSequence, primerAlignmentResult, primerAlignmentFullMatchIntervals, maxMismatches, minMatchLength, false);
+        if(amountToTrimFromLeftEndOfSequence > 0) {
+            SequenceAnnotationInterval intervalInSeqAlignedToPrimer = getIntervalOfPrimerInSequence(
+                    primer,
+                    primerAlignmentFullMatchIntervals[SMITH_WATERMAN_SEQUENCE_INDEX],
+                    primerAlignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX]);
+            primerAnnotations.add(new SequenceAnnotation(primer.getName(), SequenceAnnotation.TYPE_PRIMER_BIND,
+                    intervalInSeqAlignedToPrimer));
+        }
         int amountToTrimFromRightEndOfSequence = getAmountToTrimByPrimer(sequenceCharSequence, primerSequenceReversed, reversePrimerAlignmentResult, reversePrimerAlignmentFullMatchIntervals, maxMismatches, minMatchLength, true);
+        if(amountToTrimFromRightEndOfSequence > 0) {
+            SequenceAnnotationInterval intervalInSeqAlignedToPrimer = getIntervalOfPrimerInSequence(
+                                primer,
+                                reversePrimerAlignmentFullMatchIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].reverse(),
+                                reversePrimerAlignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX]);
+            primerAnnotations.add(new SequenceAnnotation(primer.getName(), SequenceAnnotation.TYPE_PRIMER_BIND_REVERSE,
+                    intervalInSeqAlignedToPrimer));
+        }
+        if(!primerAnnotations.isEmpty() && sequence instanceof EditableSequenceDocument) {
+            primerAnnotations.addAll(sequence.getSequenceAnnotations());
+            ((EditableSequenceDocument)sequence).setAnnotations(primerAnnotations);
+        }
 
         return new Trimmage(amountToTrimFromLeftEndOfSequence, amountToTrimFromRightEndOfSequence);
+    }
+
+    private static SequenceAnnotationInterval getIntervalOfPrimerInSequence(OligoSequenceDocument primer, SequenceAnnotationInterval sequenceOverlapInterval, SequenceAnnotationInterval primerOverlapInterval) {
+        int startOfPrimerInSequence = sequenceOverlapInterval.getMinimumIndex() - (primerOverlapInterval.getMinimumIndex() - 1);
+        int endOfPrimerInSequence = sequenceOverlapInterval.getMaximumIndex() - (primer.getSequenceLength() - primerOverlapInterval.getMaximumIndex());
+        return new SequenceAnnotationInterval(startOfPrimerInSequence, endOfPrimerInSequence, sequenceOverlapInterval.getDirection());
     }
 
     /**
@@ -266,26 +277,35 @@ public class SequenceTrimmer {
         int differenceOfFromBetweenOriginalAndFullIntervalsPrimer = alignmentResult.getIntervals()[SMITH_WATERMAN_PRIMER_INDEX].getFrom() - alignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX].getFrom();
         int differenceOfToBetweenOriginalAndFullIntervalsPrimer = alignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX].getTo() - alignmentResult.getIntervals()[SMITH_WATERMAN_PRIMER_INDEX].getTo();
 
-        portionOfSequenceAlignedToPrimer = portionOfSequenceAlignedToPrimer.subSequence(0, differenceOfFromBetweenOriginalAndFullIntervalsSequence) +
-                                           alignmentResult.getAlignedSequences()[SMITH_WATERMAN_SEQUENCE_INDEX] +
-                                           portionOfSequenceAlignedToPrimer.subSequence(portionOfSequenceAlignedToPrimer.length() - differenceOfToBetweenOriginalAndFullIntervalsSequence, portionOfSequenceAlignedToPrimer.length());
+        CharSequence portionOfSequenceAlignedToPrimerWithDeletions = portionOfSequenceAlignedToPrimer.subSequence(0, differenceOfFromBetweenOriginalAndFullIntervalsSequence) +
+                                                                     alignmentResult.getAlignedSequences()[SMITH_WATERMAN_SEQUENCE_INDEX] +
+                                                                     portionOfSequenceAlignedToPrimer.subSequence(portionOfSequenceAlignedToPrimer.length() - differenceOfToBetweenOriginalAndFullIntervalsSequence, portionOfSequenceAlignedToPrimer.length());
 
-        portionOfPrimerAlignedToSequence = portionOfPrimerAlignedToSequence.subSequence(0, differenceOfFromBetweenOriginalAndFullIntervalsPrimer) +
-                                           alignmentResult.getAlignedSequences()[SMITH_WATERMAN_PRIMER_INDEX] +
-                                           portionOfPrimerAlignedToSequence.subSequence(portionOfPrimerAlignedToSequence.length() - differenceOfToBetweenOriginalAndFullIntervalsPrimer, portionOfPrimerAlignedToSequence.length());
+        CharSequence portionOfPrimerAlignedToSequenceWithDeletions = portionOfPrimerAlignedToSequence.subSequence(0, differenceOfFromBetweenOriginalAndFullIntervalsPrimer) +
+                                                                     alignmentResult.getAlignedSequences()[SMITH_WATERMAN_PRIMER_INDEX] +
+                                                                     portionOfPrimerAlignedToSequence.subSequence(portionOfPrimerAlignedToSequence.length() - differenceOfToBetweenOriginalAndFullIntervalsPrimer, portionOfPrimerAlignedToSequence.length());
 
         int numOfMismatches = 0;
 
         numOfMismatches += alignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX].getFrom() - 1;
         numOfMismatches += primer.length() - alignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX].getTo();
 
-        for (int i = 0; i < portionOfPrimerAlignedToSequence.length(); i++) {
-            if (portionOfSequenceAlignedToPrimer.charAt(i) != portionOfPrimerAlignedToSequence.charAt(i)) {
+        for (int i = 0; i < portionOfSequenceAlignedToPrimerWithDeletions.length(); i++) {
+            if (isMismatch(portionOfSequenceAlignedToPrimerWithDeletions.charAt(i), portionOfPrimerAlignedToSequenceWithDeletions.charAt(i))) {
                 numOfMismatches++;
             }
         }
 
         return numOfMismatches > maxMismatches;
+    }
+
+    private static boolean isMismatch(char sequenceChar, char primerChar) {
+        NucleotideState sequenceState = Nucleotides.getState(sequenceChar);
+        NucleotideState primerState = Nucleotides.getState(primerChar);
+        if(sequenceState == null || primerState == null || sequenceState == Nucleotides.GAP_STATE || primerState == Nucleotides.GAP_STATE) {
+            return true;
+        }
+        return !sequenceState.possiblyEqual(primerState);
     }
 
     /**
@@ -395,5 +415,85 @@ public class SequenceTrimmer {
         }
 
         return stringBuilder.toString();
+    }
+
+    /**
+     * Returns annotations that denote regions from the supplied sequence that are not annotated by Trimmed annotations.
+     *
+     * @param sequence Sequence to create annotations for.
+     * @return "Non-trimmed" annotations of the supplied sequence.
+     */
+    private static List<SequenceAnnotationInterval> getNonTrimmedIntervals(NucleotideGraphSequenceDocument sequence) {
+        return getNonTrimmedIntervals(getTrimmedIntervals(sequence), sequence.getSequenceLength());
+    }
+
+    /**
+     * Returns annotations that denote regions from a sequence that are not annotated by Trimmed annotations.
+     *
+     * @param trimmedIntervals Trimmed intervals of the sequence.
+     * @param sequenceLength Length of the sequence.
+     * @return "Non-trimmed" annotations of the sequence.
+     */
+    private static List<SequenceAnnotationInterval> getNonTrimmedIntervals(List<SequenceAnnotationInterval> trimmedIntervals, int sequenceLength) {
+        List<SequenceAnnotationInterval> nonTrimmedIntervals = new ArrayList<SequenceAnnotationInterval>();
+        boolean buildingOfNonTrimmedIntervalInProgress = false;
+        int startIndexOfNonTrimmedInterval = -1;
+
+        /* Scan for and accumulate non trimmed intervals. */
+        for (int i = 1; i <= sequenceLength; i++) {
+            if (buildingOfNonTrimmedIntervalInProgress) {
+                if (isInIntervals(i, trimmedIntervals)) {
+                    nonTrimmedIntervals.add(new SequenceAnnotationInterval(startIndexOfNonTrimmedInterval, i - 1));
+                    buildingOfNonTrimmedIntervalInProgress = false;
+                }
+            } else {
+                if (!isInIntervals(i, trimmedIntervals)) {
+                    buildingOfNonTrimmedIntervalInProgress = true;
+                    startIndexOfNonTrimmedInterval = i;
+                }
+            }
+        }
+
+        /* If exists, add the non trimmed interval at the right end of the sequence. */
+        if (buildingOfNonTrimmedIntervalInProgress) {
+            nonTrimmedIntervals.add(new SequenceAnnotationInterval(startIndexOfNonTrimmedInterval, sequenceLength));
+        }
+
+        return nonTrimmedIntervals;
+    }
+
+    /**
+     * Retrieves the Trimmed annotation intervals from the supplied sequence.
+     *
+     * @param sequence Sequence.
+     * @return Trimmed annotation intervals.
+     */
+    private static List<SequenceAnnotationInterval> getTrimmedIntervals(NucleotideGraphSequenceDocument sequence) {
+        List<SequenceAnnotationInterval> trimmedIntervals = new ArrayList<SequenceAnnotationInterval>();
+
+        for (SequenceAnnotation annotation : sequence.getSequenceAnnotations()) {
+            if (annotation.getType().equals(SequenceAnnotation.TYPE_TRIMMED)) {
+                trimmedIntervals.addAll(annotation.getIntervals());
+            }
+        }
+
+        return trimmedIntervals;
+    }
+
+    /**
+     * Checks if the supplied index is within the range of any of the supplied intervals.
+     *
+     * @param index One-based index.
+     * @param intervals Intervals.
+     * @return True if the supplied index is within the range of any of the supplied intervals.
+     */
+    private static boolean isInIntervals(int index, Collection<SequenceAnnotationInterval> intervals) {
+        for (SequenceAnnotationInterval interval : intervals) {
+            if (interval.contains(index)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
