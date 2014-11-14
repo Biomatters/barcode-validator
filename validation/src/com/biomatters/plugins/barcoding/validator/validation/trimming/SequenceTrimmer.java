@@ -321,7 +321,7 @@ public class SequenceTrimmer {
     private static boolean isMismatch(char sequenceChar, char primerChar) {
         NucleotideState sequenceState = Nucleotides.getState(sequenceChar);
         NucleotideState primerState = Nucleotides.getState(primerChar);
-        if(sequenceState == null || primerState == null) {
+        if(sequenceState == null || primerState == null || sequenceState == Nucleotides.GAP_STATE || primerState == Nucleotides.GAP_STATE) {
             return true;
         }
         return !sequenceState.possiblyEqual(primerState);

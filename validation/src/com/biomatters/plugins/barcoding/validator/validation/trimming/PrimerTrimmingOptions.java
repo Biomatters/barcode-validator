@@ -74,12 +74,14 @@ public class PrimerTrimmingOptions extends Options {
         addCustomOption(new CostMatrixOption(COST_MATRIX_OPTIONS_NAME, "Cost Matrix:", true));
     }
 
+    static final double DEFAULT_GAP_OPEN = 12.0;
     private void addGapOpenPenaltyOptions() {
-        addDoubleOption(GAP_OPEN_PENALTY_OPTIONS_NAME, "Gap Open Penalty:", 12.0, 0.0, 99999.0);
+        addDoubleOption(GAP_OPEN_PENALTY_OPTIONS_NAME, "Gap Open Penalty:", DEFAULT_GAP_OPEN, 0.0, 99999.0);
     }
 
+    static final double DEFAULT_GAP_EXTEND = 3.0;
     private void addGapExtensionPenaltyOptions() {
-        addDoubleOption(GAP_EXTENSION_PENALTY_OPTIONS_NAME, "Gap Extension Penalty:", 3.0, 0.0, 99999.0);
+        addDoubleOption(GAP_EXTENSION_PENALTY_OPTIONS_NAME, "Gap Extension Penalty:", DEFAULT_GAP_EXTEND, 0.0, 99999.0);
     }
 
     private void addMaximumMismatchesOptions() {
