@@ -158,5 +158,17 @@ public class QualityValidationResult extends ValidationResultEntry {
         public void setStatus(boolean status) {
             statusCol.setData(status);
         }
+
+        public double getPassRatio() {
+            return passRatioCol.getData();
+        }
+
+        public int getFailNum() {
+            return failNumCol.getData();
+        }
+
+        public boolean getStatus() {
+            return statusCol.getData();
+        }
     }
 }

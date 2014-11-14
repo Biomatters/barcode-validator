@@ -1,6 +1,8 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
-import com.biomatters.geneious.publicapi.documents.sequence.*;
+import com.biomatters.geneious.publicapi.documents.sequence.DefaultNucleotideGraph;
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraph;
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.utilities.CharSequenceUtilities;
@@ -24,21 +26,21 @@ public class SlidingWindowValidatorTest extends Assert {
         NucleotideGraphSequenceDocument d3 = createTestDocument(q3);
         NucleotideGraphSequenceDocument d4 = createTestDocument(q4);
 
-        assertTrue(SlidingWindowValidator.validate(d1, 5, 1, 1, 19.9));
-        assertTrue(SlidingWindowValidator.validate(d1, 5, 1, 1, 20.0));
-        assertFalse(SlidingWindowValidator.validate(d1, 5, 1, 1, 20.1));
+        assertTrue(SlidingWindowValidator.validate(d1, 5, 1, 1, 19.9).getStatus());
+        assertTrue(SlidingWindowValidator.validate(d1, 5, 1, 1, 20.0).getStatus());
+        assertFalse(SlidingWindowValidator.validate(d1, 5, 1, 1, 20.1).getStatus());
 
-        assertTrue(SlidingWindowValidator.validate(d2, 5, 1, 1, 39.9));
-        assertTrue(SlidingWindowValidator.validate(d2, 5, 1, 1, 40.0));
-        assertFalse(SlidingWindowValidator.validate(d2, 5, 1, 1, 40.1));
+        assertTrue(SlidingWindowValidator.validate(d2, 5, 1, 1, 39.9).getStatus());
+        assertTrue(SlidingWindowValidator.validate(d2, 5, 1, 1, 40.0).getStatus());
+        assertFalse(SlidingWindowValidator.validate(d2, 5, 1, 1, 40.1).getStatus());
 
-        assertTrue(SlidingWindowValidator.validate(d3, 5, 1, 1, 59.9));
-        assertTrue(SlidingWindowValidator.validate(d3, 5, 1, 1, 60.0));
-        assertFalse(SlidingWindowValidator.validate(d3, 5, 1, 1, 60.1));
+        assertTrue(SlidingWindowValidator.validate(d3, 5, 1, 1, 59.9).getStatus());
+        assertTrue(SlidingWindowValidator.validate(d3, 5, 1, 1, 60.0).getStatus());
+        assertFalse(SlidingWindowValidator.validate(d3, 5, 1, 1, 60.1).getStatus());
 
-        assertTrue(SlidingWindowValidator.validate(d4, 5, 1, 1, 79.9));
-        assertTrue(SlidingWindowValidator.validate(d4, 5, 1, 1, 80.0));
-        assertFalse(SlidingWindowValidator.validate(d4, 5, 1, 1, 80.1));
+        assertTrue(SlidingWindowValidator.validate(d4, 5, 1, 1, 79.9).getStatus());
+        assertTrue(SlidingWindowValidator.validate(d4, 5, 1, 1, 80.0).getStatus());
+        assertFalse(SlidingWindowValidator.validate(d4, 5, 1, 1, 80.1).getStatus());
     }
 
     @Test
@@ -48,16 +50,16 @@ public class SlidingWindowValidatorTest extends Assert {
                 0, 1, 0, 1,
                 0, 1, 0, 1);
 
-        assertTrue(SlidingWindowValidator.validate(testDoc, 4, 2, 1, 50.0));
-        assertTrue(SlidingWindowValidator.validate(testDoc, 6, 2, 1, 50.0));
-        assertTrue(SlidingWindowValidator.validate(testDoc, 8, 4, 1, 50.0));
+        assertTrue(SlidingWindowValidator.validate(testDoc, 4, 2, 1, 50.0).getStatus());
+        assertTrue(SlidingWindowValidator.validate(testDoc, 6, 2, 1, 50.0).getStatus());
+        assertTrue(SlidingWindowValidator.validate(testDoc, 8, 4, 1, 50.0).getStatus());
     }
 
     @Test
     public void testIgnoresIncompleteWindow() throws DocumentOperationException {
         NucleotideGraphSequenceDocument testDoc = createTestDocument(0, 1, 1, 0, 0);
-        assertTrue(SlidingWindowValidator.validate(testDoc, 3, 2, 1, 30.0));
-        assertTrue(SlidingWindowValidator.validate(testDoc, 4, 2, 1, 30.0));
+        assertTrue(SlidingWindowValidator.validate(testDoc, 3, 2, 1, 30.0).getStatus());
+        assertTrue(SlidingWindowValidator.validate(testDoc, 4, 2, 1, 30.0).getStatus());
     }
 
     private static NucleotideGraphSequenceDocument createTestDocument(int... qualityArray) {
