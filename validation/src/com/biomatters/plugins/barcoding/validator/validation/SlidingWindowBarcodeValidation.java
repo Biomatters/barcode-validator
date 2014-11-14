@@ -1,7 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
-import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 
 /**
  * @author Gen Li
@@ -14,27 +13,28 @@ public class SlidingWindowBarcodeValidation  {  //remove "extends" to prevent Ba
      * @return a {@link com.biomatters.plugins.barcoding.validator.validation.ValidationResult}.
      */
     public ValidationResult validate(NucleotideGraphSequenceDocument barcodeSequence, ValidationOptions options) {
-        if (!(options instanceof SlidingWindowValidationOptions)) {
-            throw new IllegalArgumentException(
-                    "Wrong options supplied: " +
-                    "Expected: SlidingWindowValidationOptions, " +
-                    "actual: " + options.getClass().getSimpleName() + "."
-            );
-        }
-
-        SlidingWindowValidationOptions SWVOptions = (SlidingWindowValidationOptions)options;
-        try {
-            if (SlidingWindowValidator.validate(barcodeSequence,
-                                                 SWVOptions.getWindowSize(),
-                                                 SWVOptions.getStepSize(),
-                                                 SWVOptions.getMinimumQuality(),
-                                                 SWVOptions.getMinimumRatioSatisfied())) {
-                return new ValidationResult(true, null);
-            }
-            return new ValidationResult(false, "Quality too low.");
-        } catch (DocumentOperationException e) {
-            return new ValidationResult(false, "Error: " + e.getMessage());
-        }
+//        if (!(options instanceof SlidingWindowValidationOptions)) {
+//            throw new IllegalArgumentException(
+//                    "Wrong options supplied: " +
+//                    "Expected: SlidingWindowValidationOptions, " +
+//                    "actual: " + options.getClass().getSimpleName() + "."
+//            );
+//        }
+//
+//        SlidingWindowValidationOptions SWVOptions = (SlidingWindowValidationOptions)options;
+//        try {
+//            if (SlidingWindowValidator.validate(barcodeSequence,
+//                                                 SWVOptions.getWindowSize(),
+//                                                 SWVOptions.getStepSize(),
+//                                                 SWVOptions.getMinimumQuality(),
+//                                                 SWVOptions.getMinimumRatioSatisfied())) {
+//                return new ValidationResult(true, null);
+//            }
+//            return new ValidationResult(false, "Quality too low.");
+//        } catch (DocumentOperationException e) {
+//            return new ValidationResult(false, "Error: " + e.getMessage());
+//        }
+        return null;
     }
 
     /**

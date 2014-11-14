@@ -1,6 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.research.report;
 
 import com.biomatters.geneious.publicapi.components.Dialogs;
+import com.biomatters.geneious.publicapi.components.GPanel;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.URN;
@@ -9,7 +10,13 @@ import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.biomatters.plugins.barcoding.validator.output.RecordOfValidationResult;
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
 import com.biomatters.plugins.barcoding.validator.output.ValidationReportDocument;
+import com.biomatters.plugins.barcoding.validator.research.report.table.ColumnGroup;
+import com.biomatters.plugins.barcoding.validator.research.report.table.GroupableTableHeader;
+import com.biomatters.plugins.barcoding.validator.research.report.table.GroupableTableHeaderUI;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
+import com.biomatters.plugins.barcoding.validator.validation.results.LinkResultColumn;
+import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
+import com.biomatters.plugins.barcoding.validator.validation.results.ValidationResultEntry;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Collections2;
@@ -18,6 +25,13 @@ import com.google.common.collect.LinkedHashMultimap;
 import javax.annotation.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumnModel;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -85,7 +99,7 @@ public class ValidationReportViewer extends HtmlReportDocumentViewer {
 
     private static String generateHtml(ValidationReportDocument reportDocument) {
         List<ValidationOutputRecord> records = reportDocument.getRecords();
-        return getHeaderOfReport(records, reportDocument.getDescriptionOfOptions()) + getResultsTableForReport(records);
+        return getHeaderOfReport(records, reportDocument.getDescriptionOfOptions());
     }
 
     private static String getHeaderOfReport(List<ValidationOutputRecord> records, String descriptionOfOptionUsed) {
@@ -293,5 +307,176 @@ public class ValidationReportViewer extends HtmlReportDocumentViewer {
             resultString += " " + getLinkForSelectingDocuments("Generated Documents", result.getGeneratedDocuments());
         }
         return resultString;
+    }
+
+    @Override
+    public JComponent getComponent() {
+        JComponent textPane = super.getComponent();
+
+        GPanel rootPanel = new GPanel(new BorderLayout());
+        final JScrollPane scroll = new JScrollPane(rootPanel) {
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(super.getPreferredSize().width,super.getPreferredSize().height+300);
+            }
+        };
+        scroll.getViewport().setOpaque(false);
+        scroll.setOpaque(false);
+        scroll.setBorder(null);
+
+        rootPanel.add(textPane, BorderLayout.NORTH);
+        JTable table = getTable();
+        if (table != null)
+            rootPanel.add(new JScrollPane(table));
+
+        return scroll;
+    }
+
+    public JTable getTable() {
+        List<ValidationOutputRecord> records = reportDocument.getRecords();
+
+        //get data
+        List<List> rows = new ArrayList<List>();
+        int indexInTable = 0;
+        for (ValidationOutputRecord record : records) {
+            indexInTable++;
+            List row = new ArrayList();
+            AnnotatedPluginDocument document = DocumentUtilities.getDocumentByURN(record.getBarcodeSequenceUrn());
+            String label;
+            if(document == null) {
+                label = "Set " + indexInTable;
+            } else {
+                label = document.getName();
+            }
+
+            List<URN> links = new ArrayList<URN>();
+            links.add(record.getBarcodeSequenceUrn());
+            for (URN urn : record.getTraceDocumentUrns()) {
+                links.add(urn);
+            }
+            row.add(new LinkResultColumn.LinkBox(label, links));
+
+
+            label = "" + record.getTrimmedDocumentUrns().size();
+            links = record.getTrimmedDocumentUrns();
+            row.add(new LinkResultColumn.LinkBox(label, links));
+
+            label = "" + (record.getAssemblyUrn() == null ? 0 : 1);
+            links = new ArrayList<URN>();
+            links.add(record.getAssemblyUrn());
+            row.add(new LinkResultColumn.LinkBox(label, links));
+
+            for (RecordOfValidationResult result : record.getValidationResults()) {
+                ValidationResultEntry entry = result.getEntry();
+                List row1 = entry.getRow();
+                for (Object col : row1) {
+                    if (col instanceof LinkResultColumn.LinkBox) {
+                        LinkResultColumn.LinkBox col1 = (LinkResultColumn.LinkBox) col;
+                        String col1Lable = col1.getLable();
+                        URN urn = record.getTraceDocumentUrnByName(col1Lable);
+                        if (urn != null) {
+                            col1.addLink(urn);
+                            continue;
+                        }
+
+                        urn = record.getgetTrimmedDocumentUrnByName(col1Lable);
+                        if (urn != null) {
+                            col1.addLink(urn);
+                            continue;
+                        }
+                    }
+                }
+                row.addAll(row1);
+            }
+
+            rows.add(row);
+        }
+
+        //get header
+        List<String> header = new ArrayList<String>();
+        if (rows.size() == 0) {
+            //todo
+        } else {
+            header.add("Set Name");
+            header.add("# Traces");
+            header.add("# Assembled");
+            for (RecordOfValidationResult result : records.get(0).getValidationResults()) {
+                ValidationResultEntry entry = result.getEntry();
+                header.addAll(entry.getCol());
+            }
+        }
+
+        //construct table
+        String[] headers = header.toArray(new String[0]);
+        Object[][] datas = new Object[rows.size()][];
+        for (int i = 0; i < rows.size(); i++) {
+            datas[i] = rows.get(i).toArray();
+        }
+
+        DefaultTableModel dm = new DefaultTableModel(datas, headers) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                if (columnIndex >= 0 && columnIndex < getColumnCount() && getValueAt(0, columnIndex) != null) {
+                    return getValueAt(0, columnIndex).getClass();
+                } else {
+                    return Object.class;
+                }
+            }
+        };
+
+        JTable table = new JTable(dm) {
+            @Override
+            protected JTableHeader createDefaultTableHeader() {
+
+                return new GroupableTableHeader(columnModel);
+            }
+        };
+
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                Object source = e.getSource();
+                if(source instanceof JTable) {
+                    JTable table = (JTable) source;
+                    Object cell = table.getValueAt(table.getSelectedRow(), table.getSelectedColumn());
+                    if (cell instanceof LinkResultColumn.LinkBox) {
+                        ((LinkResultColumn.LinkBox)cell).openLink();
+                    }
+                }
+            }
+        });
+
+        //merge header
+        TableColumnModel cm = table.getColumnModel();
+        GroupableTableHeader head = (GroupableTableHeader) table.getTableHeader();
+        int colIndex = 3;   //since we already have 3 other columns
+        for (RecordOfValidationResult result : records.get(0).getValidationResults()) {
+            ValidationResultEntry entry = result.getEntry();
+            ColumnGroup entryGroup = new ColumnGroup(entry.getName());
+            for (ResultFact fact : entry.getResultFacts()) {
+                ColumnGroup factGroup = new ColumnGroup(fact.getFactName());
+                for (int i = 0; i < fact.getColumns().size(); i++) {
+                    factGroup.add(cm.getColumn(colIndex++));
+                }
+
+                entryGroup.add(factGroup);
+            }
+
+            head.addColumnGroup(entryGroup);
+        }
+        table.getTableHeader().setUI(new GroupableTableHeaderUI());
+        table.setAutoCreateRowSorter(true);
+
+        //set alignment to center
+        DefaultTableCellRenderer tcr = new DefaultTableCellRenderer();
+        tcr.setHorizontalAlignment(SwingConstants.CENTER);
+        table.setDefaultRenderer(Object.class, tcr);
+
+        return table;
     }
 }

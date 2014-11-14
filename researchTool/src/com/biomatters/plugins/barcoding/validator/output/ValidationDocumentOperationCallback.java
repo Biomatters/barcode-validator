@@ -62,8 +62,12 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
         for (NucleotideGraphSequenceDocument trace : traces) {
             compositeProgress.beginSubtask();
             AnnotatedPluginDocument apd = DocumentUtilities.getAnnotatedPluginDocumentThatContains(trace);
-            outputRecord.traceDocumentUrns.add(apd != null ? apd.getURN() :
-                    saveDocumentAndGetUrn(trace, compositeProgress));
+            if (apd != null) {
+                outputRecord.addTraceDocumentUrns(apd.getName(), apd.getURN());
+            } else {
+                AnnotatedPluginDocument annotatedPluginDocument = saveDocument(trace, progressListener);
+                outputRecord.addTraceDocumentUrns(annotatedPluginDocument.getName(), annotatedPluginDocument.getURN());
+            }
         }
     }
 
@@ -88,7 +92,7 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
                 throw new IllegalStateException("Saving NucleotideGraphSequenceDocument to database created " + doc.getDocumentClass().getSimpleName());
             }
             results.add((NucleotideGraphSequenceDocument)doc.getDocument());
-            outputRecord.trimmedDocumentUrns.add(doc.getURN());
+            outputRecord.getTrimmedDocumentUrns(doc.getName(), doc.getURN());
         }
         return results;
     }
@@ -115,7 +119,7 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
         }
 
         outputRecord.validationRecords.add(
-                new RecordOfValidationResult(options, validationResult.isPassed(), validationResult.getMessage(),
+                new RecordOfValidationResult(options, validationResult.isPassed(), validationResult.getMessage(), validationResult.getEntry(),
                         supplementaryDocUrns)
         );
     }

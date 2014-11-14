@@ -5,6 +5,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotation;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationInterval;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocumentWithEditableAnnotations;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
+import com.biomatters.plugins.barcoding.validator.validation.results.QualityValidationResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,11 +34,13 @@ public class SlidingWindowValidator {
      * @return Validation result.
      * @throws DocumentOperationException
      */
-    public static boolean validate(NucleotideGraphSequenceDocument sequence,
+    public static QualityValidationResult.StatsFact validate(NucleotideGraphSequenceDocument sequence,
                                    int winSize,
                                    int stepSize,
                                    int minQuality,
                                    double minRatioSatisfied) throws DocumentOperationException {
+        QualityValidationResult.StatsFact fact = new QualityValidationResult.StatsFact();
+
         if (stepSize < 1) {
             throw new DocumentOperationException("Could not validate sequence: Negative step size.");
         }
@@ -49,13 +52,18 @@ public class SlidingWindowValidator {
 
         boolean ret = true;
         SequenceAnnotation validationFailureAnnotation = new SequenceAnnotation(FAILED_REGION_NAME, FAILED_REGION_TYPE);
+
         /* Validate sequences. */
+        int total = 0;
+        int count = 0;
         try {
             for (int i = 0; i <= sequence.getSequenceLength() - winSize; i += stepSize) {
                 if (!validateQualities(getQualityWindow(sequence, i, winSize), minQuality, minRatioSatisfied)) {
                     validationFailureAnnotation.addInterval(i + 1, i + winSize);
                     ret = false;
+                    count++;
                 }
+                total++;
             }
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not validate sequence: " + e.getMessage(), e);
@@ -74,7 +82,12 @@ public class SlidingWindowValidator {
             ((SequenceDocumentWithEditableAnnotations) sequence).setAnnotations(sequenceAnnotations);
         }
 
-        return ret;
+        fact.setFailNum(count);
+        fact.setPassRatio((double)(total - count) / total);
+        fact.setStatus(ret);
+        fact.addLink(sequence.getURN());
+        fact.setName(sequence.getName());
+        return fact;
     }
 
     private static int[] getQualityWindow(NucleotideGraphSequenceDocument sequence, int startPos, int winSize)

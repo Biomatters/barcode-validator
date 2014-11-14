@@ -7,6 +7,7 @@ import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Runner;
 import com.biomatters.plugins.barcoding.validator.validation.consensus.ConsensusUtilities;
+import com.biomatters.plugins.barcoding.validator.validation.results.BarcodeValidationResult;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.PrimerTrimmingOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.SequenceTrimmer;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
@@ -111,9 +112,13 @@ public class Pipeline {
             @Override
             ValidationResult run(BarcodeValidation validation, ValidationOptions options) throws DocumentOperationException {
                 if(consensus.isEmpty()) {
-                    return new ValidationResult(false, "Assembly failed.");
+                    ValidationResult result = new ValidationResult(false, "Assembly failed.");
+                    result.setEntry(new BarcodeValidationResult());
+                    return result;
                 } else if(consensus.size() > 1) {
-                    return new ValidationResult(false, "Assembly produced more than one contig.");
+                    ValidationResult result = new ValidationResult(false, "Assembly produced more than one contig.");
+                    result.setEntry(new BarcodeValidationResult());
+                    return result;
                 }
 
                 if (validation instanceof BarcodeCompareValidation) {

@@ -3,6 +3,7 @@ package com.biomatters.plugins.barcoding.validator.validation;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.utilities.StringUtilities;
+import com.biomatters.plugins.barcoding.validator.validation.results.QualityValidationResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +24,8 @@ public class SlidingWindowTraceValidation extends TraceValidation {
      */
     @Override
     public ValidationResult validate(List<NucleotideGraphSequenceDocument> traces, ValidationOptions options) {
+        ValidationResult result = new ValidationResult(true, null);
+        QualityValidationResult entry = new QualityValidationResult();
         if (!(options instanceof SlidingWindowValidationOptions)) {
             throw new IllegalArgumentException(
                     "Wrong options supplied: " +
@@ -35,25 +38,25 @@ public class SlidingWindowTraceValidation extends TraceValidation {
         List<String> failedTraceNames = new ArrayList<String>();
 
         /* Validate traces and accumulate results. */
+        int index = 0;
         for (NucleotideGraphSequenceDocument trace : traces) {
             try {
-                if (!SlidingWindowValidator.validate(trace,
-                                                     SWVOptions.getWindowSize(),
-                                                     SWVOptions.getStepSize(),
-                                                     SWVOptions.getMinimumQuality(),
-                                                     SWVOptions.getMinimumRatioSatisfied())) {
-                    failedTraceNames.add(trace.getName());
-                }
-            } catch (DocumentOperationException e) {
-                return new ValidationResult(false, e.getMessage());
+                QualityValidationResult.StatsFact fact = SlidingWindowValidator.validate(trace,
+                                                                                         SWVOptions.getWindowSize(),
+                                                                                         SWVOptions.getStepSize(),
+                                                                                         SWVOptions.getMinimumQuality(),
+                                                                                         SWVOptions.getMinimumRatioSatisfied());
+                fact.setFactName("Stat" + ++index);
+                entry.addStatsFact(fact);
+        } catch (DocumentOperationException e) {
+                result = new ValidationResult(false, e.getMessage());
+                entry.addStatsFact(new QualityValidationResult.StatsFact());
             }
         }
 
-        if (!failedTraceNames.isEmpty()) {
-            return new ValidationResult(false, getValidationFailureMessage(failedTraceNames));
-        }
-
-        return new ValidationResult(true, null);
+        QualityValidationResult.TRACE_NUM = QualityValidationResult.TRACE_NUM > index ? QualityValidationResult.TRACE_NUM : index;
+        result.setEntry(entry);
+        return result;
     }
 
     /**

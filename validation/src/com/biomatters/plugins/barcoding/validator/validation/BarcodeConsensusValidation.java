@@ -11,6 +11,8 @@ import com.biomatters.geneious.publicapi.implementations.sequence.DefaultSequenc
 import com.biomatters.geneious.publicapi.plugin.DocumentOperation;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.PluginUtilities;
+import com.biomatters.plugins.barcoding.validator.validation.results.BarcodeValidationResult;
+import com.biomatters.plugins.barcoding.validator.validation.results.StatusFact;
 import jebl.util.ProgressListener;
 
 import java.util.HashMap;
@@ -65,6 +67,16 @@ public class BarcodeConsensusValidation extends BarcodeCompareValidation {
             }
 
             validationResult.addIntermediateDocument(interDocs.get(simi));
+
+            BarcodeValidationResult entry = new BarcodeValidationResult();
+            StatusFact fact = new StatusFact();
+            fact.setName(interDocs.get(simi).getName());
+            fact.addLink(interDocs.get(simi).getURN());
+            fact.setIdentity(simi / 100);
+            fact.setStatus(validationResult.isPassed());
+            entry.setConsensusFact(fact);
+            validationResult.setEntry(entry);
+
             return validationResult;
         } catch (DocumentOperationException e) {
             e.printStackTrace();

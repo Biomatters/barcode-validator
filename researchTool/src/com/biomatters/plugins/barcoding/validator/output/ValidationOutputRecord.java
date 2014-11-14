@@ -3,9 +3,7 @@ package com.biomatters.plugins.barcoding.validator.output;
 import com.biomatters.geneious.publicapi.documents.*;
 import org.jdom.Element;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Represents the output from running the Barcode Validator validation pipeline on a barcode sequence and it's
@@ -18,15 +16,19 @@ public class ValidationOutputRecord implements XMLSerializable {
 
     private static final String BARCODE = "barcode";
     private static final String TRACE = "trace";
+    private static final String TRACE_KEY = "traceKey";
+    private static final String TRACE_URN = "traceURN";
     private static final String TRIMMED = "trimmedTrace";
+    private static final String TRIMMED_KEY = "trimmedTraceKey";
+    private static final String TRIMMED_URN = "trimmedTraceURN";
     private static final String ASSEMBLY = "contigAssembly";
     private static final String CONSENSUS = "assemblyConsensus";
     private static final String VALIDATION_RECORD = "validationRecord";
 
     URN barcodeSequenceUrn;
-    List<URN> traceDocumentUrns = new ArrayList<URN>();
+    Map<String, URN> traceDocumentUrnsMap = new HashMap<String, URN>();
 
-    List<URN> trimmedDocumentUrns = new ArrayList<URN>();
+    Map<String, URN> trimmedDocumentUrnsMap = new HashMap<String, URN>();
     URN assemblyUrn;
     URN consensusUrn;
 
@@ -39,11 +41,15 @@ public class ValidationOutputRecord implements XMLSerializable {
         try {
             barcodeSequenceUrn = URN.fromXML(element.getChild(BARCODE));
             for (Element child : element.getChildren(TRACE)) {
-                traceDocumentUrns.add(URN.fromXML(child));
+                String key = child.getChildText(TRACE_KEY);
+                URN urn = URN.fromXML(child.getChild(TRACE_URN));
+                traceDocumentUrnsMap.put(key, urn);
             }
 
             for (Element child : element.getChildren(TRIMMED)) {
-                trimmedDocumentUrns.add(URN.fromXML(child));
+                String key = child.getChildText(TRIMMED_KEY);
+                URN urn = URN.fromXML(child.getChild(TRIMMED_URN));
+                trimmedDocumentUrnsMap.put(key, urn);
             }
             assemblyUrn = getUrnFromElement(element, ASSEMBLY);
             consensusUrn = getUrnFromElement(element, CONSENSUS);
@@ -60,9 +66,21 @@ public class ValidationOutputRecord implements XMLSerializable {
     public Element toXML() {
         Element root = new Element(XMLSerializable.ROOT_ELEMENT_NAME);
         root.addContent(barcodeSequenceUrn.toXML(BARCODE));
-        addElementsForUrnList(root, TRACE, traceDocumentUrns);
 
-        addElementsForUrnList(root, TRIMMED, trimmedDocumentUrns);
+        for (Map.Entry<String, URN> entry: traceDocumentUrnsMap.entrySet()) {
+            Element element = new Element(TRACE);
+            element.addContent(new Element(TRACE_KEY).setText(entry.getKey()));
+            element.addContent(entry.getValue().toXML(TRACE_URN));
+            root.addContent(element);
+        }
+
+        for (Map.Entry<String, URN> entry: traceDocumentUrnsMap.entrySet()) {
+            Element element = new Element(TRIMMED);
+            element.addContent(new Element(TRIMMED_KEY).setText(entry.getKey()));
+            element.addContent(entry.getValue().toXML(TRIMMED_URN));
+            root.addContent(element);
+        }
+
         addUrnToXml(root, assemblyUrn, ASSEMBLY);
         addUrnToXml(root, consensusUrn, CONSENSUS);
 
@@ -91,6 +109,15 @@ public class ValidationOutputRecord implements XMLSerializable {
     public void addElementsForUrnList(Element root, String elementName, List<URN> urnList) {
         for (URN traceDocumentUrn : urnList) {
             root.addContent(traceDocumentUrn.toXML(elementName));
+        }
+    }
+
+    public void addElementsForUrnMap(Element root, String elementName, Map<String, URN> urnMap) {
+        for (Map.Entry<String, URN> entry: urnMap.entrySet()) {
+            Element element = new Element(elementName);
+            element.addContent(new Element(TRACE_KEY).setText(entry.getKey()));
+            element.addContent(entry.getValue().toXML(TRACE_URN));
+            root.addContent(element);
         }
     }
 
@@ -124,14 +151,44 @@ public class ValidationOutputRecord implements XMLSerializable {
      * @return The {@link URN}s of the input traces.  Can be used to locate the input trace documents.
      */
     public List<URN> getTraceDocumentUrns() {
-        return Collections.unmodifiableList(traceDocumentUrns);
+        List<URN> ret = new ArrayList<URN>();
+        for (URN urn : traceDocumentUrnsMap.values()) {
+            ret.add(urn);
+        }
+
+        return Collections.unmodifiableList(ret);
     }
 
     public List<URN> getTrimmedDocumentUrns() {
-        return Collections.unmodifiableList(trimmedDocumentUrns);
+        List<URN> ret = new ArrayList<URN>();
+        for (URN urn : trimmedDocumentUrnsMap.values()) {
+            ret.add(urn);
+        }
+
+        return Collections.unmodifiableList(ret);
+    }
+
+    public URN getTraceDocumentUrnByName(String name) {
+        return traceDocumentUrnsMap.get(name);
+    }
+
+    public URN getgetTrimmedDocumentUrnByName(String name) {
+        return trimmedDocumentUrnsMap.get(name);
+    }
+
+    public void addTraceDocumentUrns(String key, URN urn) {
+        traceDocumentUrnsMap.put(key, urn);
+    }
+
+    public void getTrimmedDocumentUrns(String key, URN urn) {
+        trimmedDocumentUrnsMap.put(key, urn);
     }
 
     public List<RecordOfValidationResult> getValidationResults() {
         return validationRecords;
+    }
+
+    public URN getAssemblyUrn() {
+        return assemblyUrn;
     }
 }
