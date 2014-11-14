@@ -70,26 +70,31 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
     @Override
     public List<NucleotideGraphSequenceDocument> addTrimmedTraces(List<NucleotideGraphSequenceDocument> traces, ProgressListener progressListener) throws DocumentOperationException {
         List<NucleotideGraphSequenceDocument> results = new ArrayList<NucleotideGraphSequenceDocument>();
+        CompositeProgressListener savingProgress = new CompositeProgressListener(progressListener, 2*traces.size());
 
-        CompositeProgressListener savingProgress = new CompositeProgressListener(progressListener, 2 * traces.size());
         for (NucleotideGraphSequenceDocument trimmedTrace : traces) {
             String name = trimmedTrace.getName();
 
             savingProgress.beginSubtask();
+
             ((DefaultSequenceDocument)trimmedTrace).setName(name + " " + SequenceTrimmer.ANNOTATION_SUFFIX);
             saveDocument(trimmedTrace, savingProgress);
-            ((DefaultSequenceDocument)trimmedTrace).setName(name);
 
             savingProgress.beginSubtask();
+
             ((DefaultSequenceDocument)trimmedTrace).setName(name + " " + SequenceTrimmer.TRIMMED_SUFFIX);
             AnnotatedPluginDocument doc = saveDocument(SequenceTrimmer.trimSequenceUsingAnnotations(trimmedTrace), savingProgress);
             ((DefaultSequenceDocument)trimmedTrace).setName(name);
-            if(!NucleotideGraphSequenceDocument.class.isAssignableFrom(doc.getDocumentClass())) {
+
+            if (!NucleotideGraphSequenceDocument.class.isAssignableFrom(doc.getDocumentClass())) {
                 throw new IllegalStateException("Saving NucleotideGraphSequenceDocument to database created " + doc.getDocumentClass().getSimpleName());
             }
+
             results.add((NucleotideGraphSequenceDocument)doc.getDocument());
+
             outputRecord.trimmedDocumentUrns.add(doc.getURN());
         }
+
         return results;
     }
 
