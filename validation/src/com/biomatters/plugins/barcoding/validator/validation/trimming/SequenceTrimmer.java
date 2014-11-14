@@ -95,7 +95,17 @@ public class SequenceTrimmer {
     }
 
     /**
-     * Trims the supplied sequence using the supplied Trimmage.
+     * Trims the supplied sequence by removing regions that are annotated by Trimmed annotations.
+     *
+     * @param sequence Sequence to trim.
+     * @return Trimmed sequence.
+     */
+    public static NucleotideGraphSequenceDocument trimSequenceUsingAnnotations(NucleotideGraphSequenceDocument sequence) {
+        return (NucleotideGraphSequenceDocument)SequenceExtractionUtilities.extract(sequence, new SequenceExtractionUtilities.ExtractionOptions(getNonTrimmedIntervals(sequence)));
+    }
+
+    /**
+     * Trims the supplied sequence by using the supplied Trimmage.
      *
      * @param sequence Sequence to trim.
      * @param trimmage Bases to trim.
@@ -103,36 +113,7 @@ public class SequenceTrimmer {
      */
     static NucleotideGraphSequenceDocument trimSequenceUsingTrimmage(NucleotideGraphSequenceDocument sequence, Trimmage trimmage) {
         SequenceExtractionUtilities.ExtractionOptions options = new SequenceExtractionUtilities.ExtractionOptions(trimmage.getNonTrimmedInterval(sequence.getSequenceLength()));
-        options.setOverrideName(sequence.getName() + TRIMMED_SUFFIX);
-
-        return (NucleotideGraphSequenceDocument)SequenceExtractionUtilities.extract(sequence, options);
-    }
-
-    /**
-     * Trims the supplied sequence using Trimmed annotations that are found on the supplied sequence.
-     *
-     * @param sequence Sequence to trim.
-     * @return Trimmed sequence.
-     */
-    public static NucleotideGraphSequenceDocument trimSequenceUsingAnnotation(NucleotideGraphSequenceDocument sequence) {
-        int start = 1;
-        int end = sequence.getCharSequence().length();
-
-        for (SequenceAnnotation annotation : sequence.getSequenceAnnotations()) {
-            if (SequenceAnnotation.TYPE_TRIMMED.equals(annotation.getType())) {
-                for (SequenceAnnotationInterval interval : annotation.getIntervals()) {
-                    if (interval.getFrom() == 1) {
-                        start = start < interval.getTo() ? interval.getTo() : start;
-                    } else if (interval.getTo() == sequence.getCharSequence().length()) {
-                        end = end > interval.getFrom() ? interval.getFrom() : end;
-                    }
-                }
-            }
-        }
-
-        SequenceExtractionUtilities.ExtractionOptions options = new SequenceExtractionUtilities.ExtractionOptions(start + 1, end - 1);
-
-        options.setOverrideName(sequence.getName());
+        options.setOverrideName(sequence.getName() + " " + TRIMMED_SUFFIX);
 
         return (NucleotideGraphSequenceDocument)SequenceExtractionUtilities.extract(sequence, options);
     }
@@ -434,5 +415,85 @@ public class SequenceTrimmer {
         }
 
         return stringBuilder.toString();
+    }
+
+    /**
+     * Returns annotations that denote regions from the supplied sequence that are not annotated by Trimmed annotations.
+     *
+     * @param sequence Sequence to create annotations for.
+     * @return "Non-trimmed" annotations of the supplied sequence.
+     */
+    private static List<SequenceAnnotationInterval> getNonTrimmedIntervals(NucleotideGraphSequenceDocument sequence) {
+        return getNonTrimmedIntervals(getTrimmedIntervals(sequence), sequence.getSequenceLength());
+    }
+
+    /**
+     * Returns annotations that denote regions from a sequence that are not annotated by Trimmed annotations.
+     *
+     * @param trimmedIntervals Trimmed intervals of the sequence.
+     * @param sequenceLength Length of the sequence.
+     * @return "Non-trimmed" annotations of the sequence.
+     */
+    private static List<SequenceAnnotationInterval> getNonTrimmedIntervals(List<SequenceAnnotationInterval> trimmedIntervals, int sequenceLength) {
+        List<SequenceAnnotationInterval> nonTrimmedIntervals = new ArrayList<SequenceAnnotationInterval>();
+        boolean buildingOfNonTrimmedIntervalInProgress = false;
+        int startIndexOfNonTrimmedInterval = -1;
+
+        /* Scan for and accumulate non trimmed intervals. */
+        for (int i = 1; i <= sequenceLength; i++) {
+            if (buildingOfNonTrimmedIntervalInProgress) {
+                if (isInIntervals(i, trimmedIntervals)) {
+                    nonTrimmedIntervals.add(new SequenceAnnotationInterval(startIndexOfNonTrimmedInterval, i - 1));
+                    buildingOfNonTrimmedIntervalInProgress = false;
+                }
+            } else {
+                if (!isInIntervals(i, trimmedIntervals)) {
+                    buildingOfNonTrimmedIntervalInProgress = true;
+                    startIndexOfNonTrimmedInterval = i;
+                }
+            }
+        }
+
+        /* If exists, add the non trimmed interval at the right end of the sequence. */
+        if (buildingOfNonTrimmedIntervalInProgress) {
+            nonTrimmedIntervals.add(new SequenceAnnotationInterval(startIndexOfNonTrimmedInterval, sequenceLength));
+        }
+
+        return nonTrimmedIntervals;
+    }
+
+    /**
+     * Retrieves the Trimmed annotation intervals from the supplied sequence.
+     *
+     * @param sequence Sequence.
+     * @return Trimmed annotation intervals.
+     */
+    private static List<SequenceAnnotationInterval> getTrimmedIntervals(NucleotideGraphSequenceDocument sequence) {
+        List<SequenceAnnotationInterval> trimmedIntervals = new ArrayList<SequenceAnnotationInterval>();
+
+        for (SequenceAnnotation annotation : sequence.getSequenceAnnotations()) {
+            if (annotation.getType().equals(SequenceAnnotation.TYPE_TRIMMED)) {
+                trimmedIntervals.addAll(annotation.getIntervals());
+            }
+        }
+
+        return trimmedIntervals;
+    }
+
+    /**
+     * Checks if the supplied index is within the range of any of the supplied intervals.
+     *
+     * @param index One-based index.
+     * @param intervals Intervals.
+     * @return True if the supplied index is within the range of any of the supplied intervals.
+     */
+    private static boolean isInIntervals(int index, Collection<SequenceAnnotationInterval> intervals) {
+        for (SequenceAnnotationInterval interval : intervals) {
+            if (interval.contains(index)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
