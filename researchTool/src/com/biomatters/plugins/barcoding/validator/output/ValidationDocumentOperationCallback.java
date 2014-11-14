@@ -86,7 +86,7 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
 
             savingProgress.beginSubtask();
             ((DefaultSequenceDocument)trimmedTrace).setName(name + SequenceTrimmer.TRIMMED_SUFFIX);
-            AnnotatedPluginDocument doc = saveDocument(SequenceTrimmer.trimSequenceUsingAnnotation(trimmedTrace), savingProgress);
+            AnnotatedPluginDocument doc = saveDocument(SequenceTrimmer.trimSequenceUsingAnnotations(trimmedTrace), savingProgress);
             ((DefaultSequenceDocument)trimmedTrace).setName(name);
             if(!NucleotideGraphSequenceDocument.class.isAssignableFrom(doc.getDocumentClass())) {
                 throw new IllegalStateException("Saving NucleotideGraphSequenceDocument to database created " + doc.getDocumentClass().getSimpleName());
