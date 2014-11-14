@@ -1,10 +1,8 @@
 package com.biomatters.plugins.barcoding.validator.validation.trimming;
 
-import com.biomatters.geneious.publicapi.documents.sequence.DefaultNucleotideGraph;
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraph;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
-import com.biomatters.geneious.publicapi.utilities.CharSequenceUtilities;
-import junit.framework.TestCase;
+import com.biomatters.plugins.barcoding.validator.validation.ValidationTestUtilities;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.*;
@@ -15,26 +13,12 @@ import java.util.*;
  *          <p/>
  *          Created on 8/12/2008 1:08:53 PM
  */
-public class ErrorProbabilityTrimmerTest extends TestCase {
+public class ErrorProbabilityTrimmerTest extends Assert {
 
     private void test(int[] values, Trimmage expectedTrimmage) {
-        DefaultNucleotideGraphSequence graph = testGraph(values, null);
+        DefaultNucleotideGraphSequence graph = ValidationTestUtilities.getTestSequence(ValidationTestUtilities.getRandomString(values.length), values);
         Trimmage trimmage =  ErrorProbabilityTrimmer.getTrimmage(graph, TrimmableEnds.Both, 0.05);
         assertEquals(expectedTrimmage, trimmage);
-    }
-
-    /**
-     * @param sequence or null to generate one the same length as qualities
-     */
-    public static DefaultNucleotideGraphSequence testGraph(final int[] qualities, CharSequence sequence) {
-        if (sequence == null) {
-            sequence = CharSequenceUtilities.repeatedCharSequence("C", qualities.length);
-        }
-        if (sequence != null && qualities.length != sequence.length()) {
-            throw new IllegalArgumentException(qualities.length + " != " + sequence.length());
-        }
-        NucleotideGraph graph = new DefaultNucleotideGraph(null, null, qualities, sequence.length(), 0);
-        return new DefaultNucleotideGraphSequence("test", "", sequence, new Date(), graph);
     }
 
     @Test

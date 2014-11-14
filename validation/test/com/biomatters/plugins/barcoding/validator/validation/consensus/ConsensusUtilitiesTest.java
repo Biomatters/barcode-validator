@@ -7,6 +7,7 @@ import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleot
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.utilities.CharSequenceUtilities;
+import com.biomatters.plugins.barcoding.validator.validation.ValidationTestUtilities;
 import jebl.evolution.sequences.Nucleotides;
 import jebl.evolution.sequences.State;
 import org.junit.Assert;
@@ -35,14 +36,14 @@ public class ConsensusUtilitiesTest extends Assert {
         testSimpleConsensus("ACTG");
 
         for(int i=1; i<500; i++) {
-            testSimpleConsensus(getRandomString(i));
+            testSimpleConsensus(ValidationTestUtilities.getRandomString(i));
         }
     }
 
     @Test
     public void usesHighestQualityValue() throws DocumentOperationException {
-        DefaultNucleotideGraphSequence highQualitySeq = getTestSequenceWithConsistentQuality(getRandomString(50), 100);
-        DefaultNucleotideGraphSequence lowQualitySeq = getTestSequenceWithConsistentQuality(getRandomString(50), 20);
+        DefaultNucleotideGraphSequence highQualitySeq = ValidationTestUtilities.getTestSequenceWithConsistentQuality(ValidationTestUtilities.getRandomString(50), 100);
+        DefaultNucleotideGraphSequence lowQualitySeq = ValidationTestUtilities.getTestSequenceWithConsistentQuality(ValidationTestUtilities.getRandomString(50), 20);
         testConsensusFromSequences(highQualitySeq.getSequenceString(), null, highQualitySeq, lowQualitySeq);
 
         NucleotideGraphSequenceDocument highLowHigh = concatenate(highQualitySeq, lowQualitySeq, highQualitySeq);
@@ -54,27 +55,27 @@ public class ConsensusUtilitiesTest extends Assert {
 
     @Test
     public void ignoresGaps() throws DocumentOperationException {
-        DefaultNucleotideGraphSequence seq1 = getTestSequenceWithConsistentQuality("AC-AC", 100);
-        DefaultNucleotideGraphSequence seq2 = getTestSequenceWithConsistentQuality("TTTTT", 50);
+        DefaultNucleotideGraphSequence seq1 = ValidationTestUtilities.getTestSequenceWithConsistentQuality("AC-AC", 100);
+        DefaultNucleotideGraphSequence seq2 = ValidationTestUtilities.getTestSequenceWithConsistentQuality("TTTTT", 50);
         testConsensusFromSequences("ACTAC", new int[]{50, 50, 50, 50, 50}, seq1, seq2);
     }
 
     @Test
     public void handlesAmbiguities() throws DocumentOperationException {
-        DefaultNucleotideGraphSequence seq1 = getTestSequenceWithConsistentQuality("R", 100);
-        DefaultNucleotideGraphSequence seq2 = getTestSequenceWithConsistentQuality("A", 50);
+        DefaultNucleotideGraphSequence seq1 = ValidationTestUtilities.getTestSequenceWithConsistentQuality("R", 100);
+        DefaultNucleotideGraphSequence seq2 = ValidationTestUtilities.getTestSequenceWithConsistentQuality("A", 50);
         testConsensusFromSequences("A", new int[]{150}, seq1, seq2);
 
-        seq1 = getTestSequence("TACTRD", new int[]{11, 44, 44,1,41,33});
-        seq2 = getTestSequence("GTGAMB", new int[]{55, 20, 50,1,41,33});
+        seq1 = ValidationTestUtilities.getTestSequence("TACTRD", new int[]{11, 44, 44, 1, 41, 33});
+        seq2 = ValidationTestUtilities.getTestSequence("GTGAMB", new int[]{55, 20, 50, 1, 41, 33});
         testConsensusFromSequences("GAGWAK", new int[]{44, 24, 6, 2, 82, 66}, seq1, seq2);
     }
 
     @Test
     public void generatesAmbiguitiesWhenQualityEqual() throws DocumentOperationException {
         int qualityValue = 100;
-        DefaultNucleotideGraphSequence seq1 = getTestSequenceWithConsistentQuality("G", qualityValue);
-        DefaultNucleotideGraphSequence seq2 = getTestSequenceWithConsistentQuality("A", qualityValue);
+        DefaultNucleotideGraphSequence seq1 = ValidationTestUtilities.getTestSequenceWithConsistentQuality("G", qualityValue);
+        DefaultNucleotideGraphSequence seq2 = ValidationTestUtilities.getTestSequenceWithConsistentQuality("A", qualityValue);
         testConsensusFromSequences("R", new int[]{qualityValue*2}, seq1, seq2);
 
         List<State> states = Nucleotides.getStates();
@@ -95,19 +96,11 @@ public class ConsensusUtilitiesTest extends Assert {
             if(possibles.size() > 1) {
                 List<NucleotideGraphSequenceDocument> seqs = new ArrayList<NucleotideGraphSequenceDocument>();
                 for (State possible : possibles) {
-                    seqs.add(getTestSequenceWithConsistentQuality(possible.toString(), qualityValue));
+                    seqs.add(ValidationTestUtilities.getTestSequenceWithConsistentQuality(possible.toString(), qualityValue));
                 }
                 testConsensusFromSequences(expected, new int[]{qualityValue*seqs.size()}, seqs.toArray(new NucleotideGraphSequenceDocument[seqs.size()]));
             }
         }
-    }
-
-    private static String getRandomString(int length) {
-        StringBuilder seqBuilder = new StringBuilder(length);
-        for (int j = 0; j < length; j++) {
-            seqBuilder.append(Nucleotides.getCanonicalStates().get((int)(Math.random()*4)));
-        }
-        return seqBuilder.toString();
     }
 
     private static void testConsensusFromSequences(String expectedConsensus, int[] expectedQuality, NucleotideGraphSequenceDocument... sequences) throws DocumentOperationException {
@@ -137,8 +130,8 @@ public class ConsensusUtilitiesTest extends Assert {
 
     private static void testSimpleConsensus(String testString) throws DocumentOperationException {
         int qualityValue = 50;
-        DefaultNucleotideGraphSequence seq1 = getTestSequenceWithConsistentQuality(testString, qualityValue);
-        DefaultNucleotideGraphSequence seq2 = getTestSequenceWithConsistentQuality(testString, qualityValue);
+        DefaultNucleotideGraphSequence seq1 = ValidationTestUtilities.getTestSequenceWithConsistentQuality(testString, qualityValue);
+        DefaultNucleotideGraphSequence seq2 = ValidationTestUtilities.getTestSequenceWithConsistentQuality(testString, qualityValue);
 
         int[] qualities = new int[testString.length()];
         Arrays.fill(qualities, qualityValue*2);
@@ -146,14 +139,4 @@ public class ConsensusUtilitiesTest extends Assert {
         testConsensusFromSequences(testString, qualities, seq1, seq2);
     }
 
-    private static DefaultNucleotideGraphSequence getTestSequenceWithConsistentQuality(String charSequence, int qualityValue) {
-        int[] qualities = new int[charSequence.length()];
-        Arrays.fill(qualities, qualityValue);
-        return getTestSequence(charSequence, qualities);
-    }
-
-    private static DefaultNucleotideGraphSequence getTestSequence(String charSequence, int[] qualities) {
-        return new DefaultNucleotideGraphSequence(UUID.randomUUID().toString(), null, charSequence, new Date(),
-                new DefaultNucleotideGraph(null, null, qualities, charSequence.length(), 0));
-    }
 }
