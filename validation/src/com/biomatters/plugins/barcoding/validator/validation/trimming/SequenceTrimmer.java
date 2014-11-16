@@ -193,26 +193,32 @@ public class SequenceTrimmer {
         SequenceAnnotationInterval[] reversePrimerAlignmentFullMatchIntervals = getFullMatchIntervals(reversePrimerAlignmentResult.getIntervals(), sequenceCharSequence.length(), primerSequenceReversed.length());
 
         List<SequenceAnnotation> primerAnnotations = new ArrayList<SequenceAnnotation>();
-        int amountToTrimFromLeftEndOfSequence = getAmountToTrimByPrimer(sequenceCharSequence, primerSequence, primerAlignmentResult, primerAlignmentFullMatchIntervals, maxMismatches, minMatchLength, false);
-        if(amountToTrimFromLeftEndOfSequence > 0) {
+
+        int amountToTrimFromLeftEndOfSequence = getAmountToTrimUsingPrimer(sequenceCharSequence, primerSequence, primerAlignmentResult, primerAlignmentFullMatchIntervals, maxMismatches, minMatchLength, false);
+        if (amountToTrimFromLeftEndOfSequence > 0) {
             SequenceAnnotationInterval intervalInSeqAlignedToPrimer = getIntervalOfPrimerInSequence(
                     primer,
                     primerAlignmentFullMatchIntervals[SMITH_WATERMAN_SEQUENCE_INDEX],
-                    primerAlignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX]);
-            primerAnnotations.add(new SequenceAnnotation(primer.getName(), SequenceAnnotation.TYPE_PRIMER_BIND,
-                    intervalInSeqAlignedToPrimer));
+                    primerAlignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX]
+            );
+
+            primerAnnotations.add(new SequenceAnnotation(primer.getName(), SequenceAnnotation.TYPE_PRIMER_BIND, intervalInSeqAlignedToPrimer));
         }
-        int amountToTrimFromRightEndOfSequence = getAmountToTrimByPrimer(sequenceCharSequence, primerSequenceReversed, reversePrimerAlignmentResult, reversePrimerAlignmentFullMatchIntervals, maxMismatches, minMatchLength, true);
-        if(amountToTrimFromRightEndOfSequence > 0) {
+
+        int amountToTrimFromRightEndOfSequence = getAmountToTrimUsingPrimer(sequenceCharSequence, primerSequenceReversed, reversePrimerAlignmentResult, reversePrimerAlignmentFullMatchIntervals, maxMismatches, minMatchLength, true);
+        if (amountToTrimFromRightEndOfSequence > 0) {
             SequenceAnnotationInterval intervalInSeqAlignedToPrimer = getIntervalOfPrimerInSequence(
-                                primer,
-                                reversePrimerAlignmentFullMatchIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].reverse(),
-                                reversePrimerAlignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX]);
-            primerAnnotations.add(new SequenceAnnotation(primer.getName(), SequenceAnnotation.TYPE_PRIMER_BIND_REVERSE,
-                    intervalInSeqAlignedToPrimer));
+                    primer,
+                    reversePrimerAlignmentFullMatchIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].reverse(),
+                    reversePrimerAlignmentFullMatchIntervals[SMITH_WATERMAN_PRIMER_INDEX]
+            );
+
+            primerAnnotations.add(new SequenceAnnotation(primer.getName(), SequenceAnnotation.TYPE_PRIMER_BIND_REVERSE, intervalInSeqAlignedToPrimer));
         }
-        if(!primerAnnotations.isEmpty() && sequence instanceof EditableSequenceDocument) {
+
+        if (!primerAnnotations.isEmpty() && sequence instanceof EditableSequenceDocument) {
             primerAnnotations.addAll(sequence.getSequenceAnnotations());
+
             ((EditableSequenceDocument)sequence).setAnnotations(primerAnnotations);
         }
 
@@ -221,7 +227,8 @@ public class SequenceTrimmer {
 
     private static SequenceAnnotationInterval getIntervalOfPrimerInSequence(OligoSequenceDocument primer, SequenceAnnotationInterval sequenceOverlapInterval, SequenceAnnotationInterval primerOverlapInterval) {
         int startOfPrimerInSequence = sequenceOverlapInterval.getMinimumIndex() - (primerOverlapInterval.getMinimumIndex() - 1);
-        int endOfPrimerInSequence = sequenceOverlapInterval.getMaximumIndex() - (primer.getSequenceLength() - primerOverlapInterval.getMaximumIndex());
+        int endOfPrimerInSequence = sequenceOverlapInterval.getMaximumIndex() + (primer.getSequenceLength() - primerOverlapInterval.getMaximumIndex());
+
         return new SequenceAnnotationInterval(startOfPrimerInSequence, endOfPrimerInSequence, sequenceOverlapInterval.getDirection());
     }
 
@@ -236,13 +243,13 @@ public class SequenceTrimmer {
      * @return Amount of bases to remove from (the left end, if reversed==true, or the right end, if reverse==false, of)
      * the supplied sequence.
      */
-    private static int getAmountToTrimByPrimer(CharSequence sequence,
-                                               CharSequence primer,
-                                               SmithWaterman alignmentResult,
-                                               SequenceAnnotationInterval[] alignmentFullMatchIntervals,
-                                               int maxMismatches,
-                                               int minMatchLength,
-                                               boolean reversed) {
+    private static int getAmountToTrimUsingPrimer(CharSequence sequence,
+                                                  CharSequence primer,
+                                                  SmithWaterman alignmentResult,
+                                                  SequenceAnnotationInterval[] alignmentFullMatchIntervals,
+                                                  int maxMismatches,
+                                                  int minMatchLength,
+                                                  boolean reversed) {
         if (alignmentFullMatchIntervals[0] == null
                 || alignmentFullMatchIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].getLength() < minMatchLength
                 || hasMoreThanMaximumNumberOfMismatches(sequence, primer, alignmentResult, alignmentFullMatchIntervals, maxMismatches)) {
@@ -302,9 +309,11 @@ public class SequenceTrimmer {
     private static boolean isMismatch(char sequenceChar, char primerChar) {
         NucleotideState sequenceState = Nucleotides.getState(sequenceChar);
         NucleotideState primerState = Nucleotides.getState(primerChar);
-        if(sequenceState == null || primerState == null || sequenceState == Nucleotides.GAP_STATE || primerState == Nucleotides.GAP_STATE) {
+
+        if (sequenceState == null || primerState == null || sequenceState == Nucleotides.GAP_STATE || primerState == Nucleotides.GAP_STATE) {
             return true;
         }
+
         return !sequenceState.possiblyEqual(primerState);
     }
 
@@ -337,15 +346,13 @@ public class SequenceTrimmer {
      * @param primerLength Length of the primer of the the Smith-Waterman alignment.
      * @return Full match intervals of the Smith-Waterman alignment.
      */
-    private static SequenceAnnotationInterval[] getFullMatchIntervals(SequenceAnnotationInterval[] smithWatermanAlignmentIntervals,
-                                                                      int sequenceLength,
-                                                                      int primerLength) {
+    private static SequenceAnnotationInterval[] getFullMatchIntervals(SequenceAnnotationInterval[] smithWatermanAlignmentIntervals, int sequenceLength, int primerLength) {
         if (smithWatermanAlignmentIntervals[0] == null) {
             return smithWatermanAlignmentIntervals;
         }
 
-        int sequenceFullIntervalFrom = Math.max(1, smithWatermanAlignmentIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].getFrom() - smithWatermanAlignmentIntervals[SMITH_WATERMAN_PRIMER_INDEX].getFrom() + 1);
-        int sequenceFullIntervalTo = Math.min(sequenceLength, smithWatermanAlignmentIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].getTo() + primerLength - smithWatermanAlignmentIntervals[SMITH_WATERMAN_PRIMER_INDEX].getTo());
+        int sequenceFullIntervalFrom = Math.max(1, smithWatermanAlignmentIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].getFrom() - (smithWatermanAlignmentIntervals[SMITH_WATERMAN_PRIMER_INDEX].getFrom() - 1));
+        int sequenceFullIntervalTo = Math.min(sequenceLength, smithWatermanAlignmentIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].getTo() + (primerLength - smithWatermanAlignmentIntervals[SMITH_WATERMAN_PRIMER_INDEX].getTo()));
         int primerFullIntervalFrom = smithWatermanAlignmentIntervals[SMITH_WATERMAN_PRIMER_INDEX].getFrom() - smithWatermanAlignmentIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].getFrom() + sequenceFullIntervalFrom;
         int primerFullIntervalTo = smithWatermanAlignmentIntervals[SMITH_WATERMAN_PRIMER_INDEX].getTo() + sequenceFullIntervalTo - smithWatermanAlignmentIntervals[SMITH_WATERMAN_SEQUENCE_INDEX].getTo();
 
