@@ -42,7 +42,7 @@ public class SequenceTrimmer {
      * @param gapOpenPenalty Gap open penalty for the Smith-Waterman algorithm.
      * @param gapExtensionPenalty Gap extension penalty for the Smith-Waterman algorithm.
      * @param scores Scores matrix for the Smith-Waterman algorithm.
-     * @param addAnnotations If true, trim regions are annotated. If false, trim regions are removed.
+     * @param trimByAddingAnnotations If true, trim regions are annotated. If false, trim regions are removed.
      * @param maxMismatches Maximum number of mismatched bases that are allowed for the Smith-Waterman alignment
      *                      results.
      * @param minMatchLength Minimum number of matched bases that are allowed for the Smith-Waterman alignment results.
@@ -56,7 +56,7 @@ public class SequenceTrimmer {
                                                                                   Scores scores,
                                                                                   int maxMismatches,
                                                                                   int minMatchLength,
-                                                                                  boolean addAnnotations) {
+                                                                                  boolean trimByAddingAnnotations) {
         List<Trimmage> trimmages = new ArrayList<Trimmage>();
 
         /* Get the Trimmage that derives from running the modified Mott algorithm on the supplied sequence. */
@@ -76,7 +76,7 @@ public class SequenceTrimmer {
             maxTrimmage = new Trimmage(sequence.getSequenceLength(), 0);
         }
 
-        if (addAnnotations && sequence instanceof DefaultSequenceDocument) {
+        if (trimByAddingAnnotations && sequence instanceof DefaultSequenceDocument) {
             SequenceAnnotation annotation;
             if (maxTrimmage.trimAtStart > 0) {
                 annotation = SequenceAnnotation.createTrimAnnotation(1, maxTrimmage.trimAtStart);
@@ -360,7 +360,9 @@ public class SequenceTrimmer {
         SequenceAnnotationInterval primerIntervalInSequence = getIntervalOfPrimerInSequence(
                 primerLength,
                 smithWatermanAlignmentIntervals[SMITH_WATERMAN_SEQUENCE_INDEX],
-                smithWatermanAlignmentIntervals[SMITH_WATERMAN_PRIMER_INDEX]);
+                smithWatermanAlignmentIntervals[SMITH_WATERMAN_PRIMER_INDEX]
+        );
+
         // Need to truncate primer interval if it extends past end of sequence
         int sequenceFullIntervalFrom = Math.max(1, primerIntervalInSequence.getMinimumIndex());
         int sequenceFullIntervalTo = Math.min(sequenceLength, primerIntervalInSequence.getMaximumIndex());
