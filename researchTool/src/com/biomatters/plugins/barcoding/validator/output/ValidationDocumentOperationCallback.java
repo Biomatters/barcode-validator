@@ -65,7 +65,7 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
             if (apd != null) {
                 outputRecord.addTraceDocumentUrns(apd.getName(), apd.getURN());
             } else {
-                AnnotatedPluginDocument annotatedPluginDocument = saveDocument(trace, progressListener);
+                AnnotatedPluginDocument annotatedPluginDocument = saveDocument(trace, compositeProgress);
                 outputRecord.addTraceDocumentUrns(annotatedPluginDocument.getName(), annotatedPluginDocument.getURN());
             }
         }
