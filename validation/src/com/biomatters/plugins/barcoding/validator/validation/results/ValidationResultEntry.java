@@ -37,10 +37,12 @@ public abstract class ValidationResultEntry implements XMLSerializable {
         this.name = name;
     }
 
+    @SuppressWarnings("unused")
     public List<PluginDocument> getIntermediateDocumentsToAddToResults() {
         return Collections.unmodifiableList(intermediateDocumentsToAddToResults);
     }
 
+    @SuppressWarnings("unused")
     public void addIntermediateDocument(PluginDocument document) {
         intermediateDocumentsToAddToResults.add(document);
     }
@@ -77,6 +79,11 @@ public abstract class ValidationResultEntry implements XMLSerializable {
         }
     }
 
+    public void align(List<ValidationResultEntry> list){}
+
     public abstract List getRow();
+
+    @SuppressWarnings("unused")
     public abstract List<String> getCol();
+    public abstract List<ResultColumn> getColumns();
 }

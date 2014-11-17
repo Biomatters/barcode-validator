@@ -13,6 +13,7 @@ public class BooleanResultColumn extends ResultColumn<Boolean> {
         super(name);
     }
 
+    @SuppressWarnings("unused")
     public BooleanResultColumn(Element element) throws XMLSerializationException {
         super(element);
     }

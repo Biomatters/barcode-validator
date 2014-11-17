@@ -90,6 +90,7 @@ public class GroupableTableHeaderUI extends BasicTableHeaderUI {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void paint(Graphics g, JComponent c) {
         Rectangle clipBounds = g.getClipBounds();
         if (header.getColumnModel() == null) {
@@ -212,6 +213,7 @@ public class GroupableTableHeaderUI extends BasicTableHeaderUI {
                 cellRect.y, cellRect.width, cellRect.height, true);
     }
 
+    @SuppressWarnings("unused")
     public void setHeaderHeight(int iHeight) {
         m_height = iHeight;
     }

@@ -88,10 +88,12 @@ public class RecordOfValidationResult implements XMLSerializable {
         return passed;
     }
 
+    @SuppressWarnings("unused")
     public String getMessage() {
         return message;
     }
 
+    @SuppressWarnings("unused")
     public List<URN> getGeneratedDocuments() {
         return docs;
     }

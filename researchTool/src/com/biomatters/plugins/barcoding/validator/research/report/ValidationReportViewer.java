@@ -5,7 +5,6 @@ import com.biomatters.geneious.publicapi.components.GPanel;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.URN;
-import com.biomatters.geneious.publicapi.utilities.IconUtilities;
 import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.biomatters.plugins.barcoding.validator.output.RecordOfValidationResult;
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
@@ -15,14 +14,10 @@ import com.biomatters.plugins.barcoding.validator.research.report.table.Groupabl
 import com.biomatters.plugins.barcoding.validator.research.report.table.GroupableTableHeaderUI;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.results.LinkResultColumn;
+import com.biomatters.plugins.barcoding.validator.validation.results.ResultColumn;
 import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
 import com.biomatters.plugins.barcoding.validator.validation.results.ValidationResultEntry;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.LinkedHashMultimap;
 
-import javax.annotation.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -148,124 +143,10 @@ public class ValidationReportViewer extends HtmlReportDocumentViewer {
                 getLinkForSelectingDocuments("Select all", barcodeUrns));
     }
 
-    private static String getResultsTableForReport(List<ValidationOutputRecord> records) {
-        final ArrayListMultimap<String, BarcodeAndStatus> typeToResultsList = ArrayListMultimap.create();
-        LinkedHashMultimap<String, String> typeGroupMap = LinkedHashMultimap.create();
-        for (ValidationOutputRecord record : records) {
-            for (RecordOfValidationResult resultsForBarcode : record.getValidationResults()) {
-                ValidationOptions options = resultsForBarcode.getOptions();
-                typeToResultsList.put(options.getLabel(), new BarcodeAndStatus(getDocumentUrn(record, options), resultsForBarcode.isPassed()));
-                typeGroupMap.put(options.getGroup().getLabel(), options.getLabel());
-            }
-        }
-        if(typeToResultsList.isEmpty()) {
-            return "<font color=\"red\"><strong>WARNING</strong></font>:There were no validation tasks run.";
-        }
-
-        List<String> typeListSorted = new ArrayList<String>();
-        List<String> groupListSorted = new ArrayList<String>(typeGroupMap.keySet());
-        Collections.sort(groupListSorted);
-
-        StringBuilder builder = new StringBuilder("<h2>Results</h3><table border=\"1\">");
-        builder.append("<tr><td></td>");
-        for (String group : groupListSorted) {
-            Set<String> types = typeGroupMap.get(group);
-            builder.append("<td colspan=\"").append(types.size()).append("\">").append(group).append("</td>");
-            typeListSorted.addAll(types);
-        }
-
-        builder.append("<tr><td>Set Name</td>");
-
-        for (String label : typeListSorted) {
-            List<BarcodeAndStatus> resultsForType = typeToResultsList.get(label);
-            Collection<BarcodeAndStatus> passed = getResultsForStatus(resultsForType, true);
-            Collection<BarcodeAndStatus> failed = getResultsForStatus(resultsForType, false);
-
-            builder.append("<td>").append(label).append(" (").append(
-                    getStatusLinks(passed, "Passed")).append("/").append(
-                    getStatusLinks(failed, "Failed"))
-                    .append(")<br/><a href=\"").append(OPTION_PREFIX).append(label).append("\">[Show options]</a>").append("</td>");
-        }
-        builder.append("</tr>");
-
-        for (int i = 0; i < records.size(); i++) {
-            ValidationOutputRecord record = records.get(i);
-            appendLineForBarcode(builder, i, typeListSorted, record);
-        }
-        builder.append("</table>");
-        return builder.toString();
-    }
-
-    private static List<URN> getDocumentUrn(ValidationOutputRecord record, ValidationOptions options) {
-        switch(options.getGroup()) {
-            case TRACE_VALIDATION_GROUP:
-                return Collections.unmodifiableList(record.getTraceDocumentUrns());
-            case BARCODE_VALIDATION_GROUP:
-                return Collections.singletonList(record.getBarcodeSequenceUrn());
-            default:
-                throw new IllegalArgumentException("Can not recognize validation options : " + options.getClass());
-        }
-    }
-
+    @SuppressWarnings("unused")
     private static class BarcodeAndStatus {
         private List<URN> docsUrn;
         private boolean passed;
-
-        private BarcodeAndStatus(List<URN> docsUrn, boolean passed) {
-            this.docsUrn = docsUrn;
-            this.passed = passed;
-        }
-    }
-
-    private static void appendLineForBarcode(StringBuilder builder, int indexInTable, List<String> typeListSorted, ValidationOutputRecord record) {
-        builder.append("<tr><td>").append(getInputLink(record, indexInTable)).append("</td>");
-        Map<String, RecordOfValidationResult> recordsByName = new HashMap<String, RecordOfValidationResult>();
-        for (RecordOfValidationResult recordOfValidationResult : record.getValidationResults()) {
-           recordsByName.put(recordOfValidationResult.getOptions().getLabel(), recordOfValidationResult);
-        }
-        for (String typeIdentifier : typeListSorted) {
-            RecordOfValidationResult result = recordsByName.get(typeIdentifier);
-            builder.append("<td>");
-            if(result != null) {
-                builder.append(getResultString(result));
-            }
-            builder.append("</td>");
-        }
-        builder.append("</tr>");
-    }
-
-    private static String getInputLink(ValidationOutputRecord record, int indexInTable) {
-        StringBuilder sb = new StringBuilder();
-        AnnotatedPluginDocument document = DocumentUtilities.getDocumentByURN(record.getBarcodeSequenceUrn());
-        String label;
-        if(document == null) {
-            label = "Set " + (indexInTable+1);
-        } else {
-            label = document.getName();
-        }
-        List<URN> inputUrns = new ArrayList<URN>();
-        inputUrns.add(record.getBarcodeSequenceUrn());
-        for (URN urn : record.getTraceDocumentUrns()) {
-            inputUrns.add(urn);
-        }
-
-        sb.append(getLinkForSelectingDocuments(label, inputUrns));
-
-        List<URN> trimmedDocumentUrns = record.getTrimmedDocumentUrns();
-        if (trimmedDocumentUrns != null && trimmedDocumentUrns.size() > 0) {
-            int size = trimmedDocumentUrns.size();
-            sb.append("\t").append(getLinkForSelectingDocuments("[" + size + (size > 1 ? " Traces]" : " Trace]"), trimmedDocumentUrns));
-        }
-
-        List<URN> allLinks = new ArrayList<URN>();
-        allLinks.addAll(inputUrns);
-
-        if (trimmedDocumentUrns != null) {
-            allLinks.addAll(trimmedDocumentUrns);
-        }
-        sb.append("\t").append(getLinkForSelectingDocuments("[All]", allLinks));
-
-        return sb.toString();
     }
 
     private static String getLinkForSelectingDocuments(String label, List<URN> documentUrns) {
@@ -276,38 +157,8 @@ public class ValidationReportViewer extends HtmlReportDocumentViewer {
         return "<a href=\"" + StringUtilities.join(",", urnStrings) + "\">" + label + "</a>";
     }
 
-    private static String getStatusLinks(Collection<BarcodeAndStatus> passed, String status) {
-        if(passed.isEmpty()) {
-            return "0 " + status;
-        }
-        List<URN> urns = new ArrayList<URN>();
-        for (BarcodeAndStatus barcodeAndStatus : passed) {
-            urns.addAll(barcodeAndStatus.docsUrn);
-        }
-        return getLinkForSelectingDocuments(passed.size() + " " + status, urns);
-    }
-
-    private static Collection<BarcodeAndStatus> getResultsForStatus(Collection<BarcodeAndStatus> results, final boolean passed) {
-        return Collections2.filter(results, new Predicate<BarcodeAndStatus>() {
-            @Override
-            public boolean apply(@Nullable BarcodeAndStatus input) {
-                return input != null && input.passed == passed;
-            }
-        });
-    }
-
-    private static Icon TICK_ICON = IconUtilities.getIcons("tick16.png").getIcon16();
-    private static Icon CROSS_ICON = IconUtilities.getIcons("x16.png").getIcon16();
-
-    private static String getResultString(RecordOfValidationResult result) {
-        String resultString = "<img src=\"" + IconUtilities.createIconUrl(
-                result.isPassed() ? TICK_ICON : CROSS_ICON) + "\"></img>";
-        resultString += result.getMessage();
-        if(!result.getGeneratedDocuments().isEmpty()) {
-            resultString += " " + getLinkForSelectingDocuments("Generated Documents", result.getGeneratedDocuments());
-        }
-        return resultString;
-    }
+//    private static Icon TICK_ICON = IconUtilities.getIcons("tick16.png").getIcon16();
+//    private static Icon CROSS_ICON = IconUtilities.getIcons("x16.png").getIcon16();
 
     @Override
     public JComponent getComponent() {
@@ -332,85 +183,31 @@ public class ValidationReportViewer extends HtmlReportDocumentViewer {
         return scroll;
     }
 
+    @SuppressWarnings("unchecked")
     public JTable getTable() {
         List<ValidationOutputRecord> records = reportDocument.getRecords();
 
-        //get data
-        List<List> rows = new ArrayList<List>();
-        int indexInTable = 0;
-        for (ValidationOutputRecord record : records) {
-            indexInTable++;
-            List row = new ArrayList();
-            AnnotatedPluginDocument document = DocumentUtilities.getDocumentByURN(record.getBarcodeSequenceUrn());
-            String label;
-            if(document == null) {
-                label = "Set " + indexInTable;
-            } else {
-                label = document.getName();
-            }
-
-            List<URN> links = new ArrayList<URN>();
-            links.add(record.getBarcodeSequenceUrn());
-            for (URN urn : record.getTraceDocumentUrns()) {
-                links.add(urn);
-            }
-            row.add(new LinkResultColumn.LinkBox(label, links));
-
-
-            label = "" + record.getTrimmedDocumentUrns().size();
-            links = record.getTrimmedDocumentUrns();
-            row.add(new LinkResultColumn.LinkBox(label, links));
-
-            label = "" + (record.getAssemblyUrn() == null ? 0 : 1);
-            links = new ArrayList<URN>();
-            links.add(record.getAssemblyUrn());
-            row.add(new LinkResultColumn.LinkBox(label, links));
-
-            for (RecordOfValidationResult result : record.getValidationResults()) {
-                ValidationResultEntry entry = result.getEntry();
-                List row1 = entry.getRow();
-                for (Object col : row1) {
-                    if (col instanceof LinkResultColumn.LinkBox) {
-                        LinkResultColumn.LinkBox col1 = (LinkResultColumn.LinkBox) col;
-                        String col1Lable = col1.getLable();
-                        URN urn = record.getTraceDocumentUrnByName(col1Lable);
-                        if (urn != null) {
-                            col1.addLink(urn);
-                            continue;
-                        }
-
-                        urn = record.getgetTrimmedDocumentUrnByName(col1Lable);
-                        if (urn != null) {
-                            col1.addLink(urn);
-                            continue;
-                        }
-                    }
-                }
-                row.addAll(row1);
-            }
-
-            rows.add(row);
-        }
+        List<List<ResultColumn>> columnList = getDataModels(records);
 
         //get header
+        if (columnList.size() == 0) {
+            return null;
+        }
+
         List<String> header = new ArrayList<String>();
-        if (rows.size() == 0) {
-            //todo
-        } else {
-            header.add("Set Name");
-            header.add("# Traces");
-            header.add("# Assembled");
-            for (RecordOfValidationResult result : records.get(0).getValidationResults()) {
-                ValidationResultEntry entry = result.getEntry();
-                header.addAll(entry.getCol());
-            }
+        List<ResultColumn> resultColumns = columnList.get(0);
+        for (ResultColumn column : resultColumns) {
+            header.add(column.getName());
         }
 
         //construct table
-        String[] headers = header.toArray(new String[0]);
-        Object[][] datas = new Object[rows.size()][];
-        for (int i = 0; i < rows.size(); i++) {
-            datas[i] = rows.get(i).toArray();
+        String[] headers = header.toArray(new String[header.size()]);
+        Object[][] datas = new Object[columnList.size()][];
+        for (int i = 0; i < columnList.size(); i++) {
+            datas[i] = new Object[columnList.get(i).size()];
+            for (int j = 0; j < columnList.get(i).size(); j++) {
+                datas[i][j] = columnList.get(i).get(j).getDisplayValue();
+            }
         }
 
         DefaultTableModel dm = new DefaultTableModel(datas, headers) {
@@ -478,5 +275,119 @@ public class ValidationReportViewer extends HtmlReportDocumentViewer {
         table.setDefaultRenderer(Object.class, tcr);
 
         return table;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<List<ResultColumn>> getDataModels(List<ValidationOutputRecord> records) {
+        Map<String, List<ResultColumn>> fixedColumns = new HashMap<String, List<ResultColumn>>();
+        Map<Class, Map<String, ValidationResultEntry>> entryList = new LinkedHashMap<Class, Map<String, ValidationResultEntry>>();
+
+        int indexInTable = 0;
+        for (ValidationOutputRecord record : records) {
+            //fixed columns: such as Set Name, #Traces, #Assembled
+            indexInTable++;
+            List<ResultColumn> fixedCols = new ArrayList();
+            AnnotatedPluginDocument document = DocumentUtilities.getDocumentByURN(record.getBarcodeSequenceUrn());
+            String label;
+            if(document == null) {
+                label = "Set " + indexInTable;
+            } else {
+                label = document.getName();
+            }
+
+            List<URN> links = new ArrayList<URN>();
+            links.add(record.getBarcodeSequenceUrn());
+            for (URN urn : record.getTraceDocumentUrns()) {
+                links.add(urn);
+            }
+
+            LinkResultColumn setCol = new LinkResultColumn("Set Name");
+            setCol.setData(new LinkResultColumn.LinkBox(label, links));
+            fixedCols.add(setCol);
+
+            LinkResultColumn tracesCol = new LinkResultColumn("#Traces");
+            tracesCol.setData(new LinkResultColumn.LinkBox("" + record.getTrimmedDocumentUrns().size(), record.getTrimmedDocumentUrns()));
+            fixedCols.add(tracesCol);
+
+            LinkResultColumn assemblefCol = new LinkResultColumn("#Assembled");
+            links = new ArrayList<URN>();
+            links.add(record.getAssemblyUrn());
+            assemblefCol.setData(new LinkResultColumn.LinkBox("" + (record.getAssemblyUrn() == null ? 0 : DocumentUtilities.getDocumentByURN(record.getAssemblyUrn()).getReferencedDocuments().size() - 1), links));
+            fixedCols.add(assemblefCol);
+
+            fixedColumns.put(label, fixedCols);
+
+            populateLinks(record);
+            
+            //put entry into catalog
+            for (RecordOfValidationResult result : record.getValidationResults()) {
+                ValidationResultEntry entry = result.getEntry();
+                Map<String, ValidationResultEntry> entryMap = entryList.get(entry.getClass());
+                if (entryMap == null) {
+                    entryMap = new HashMap<String, ValidationResultEntry>();
+                    entryList.put(entry.getClass(), entryMap);
+                }
+
+                entryMap.put(label, entry);
+            }
+        }
+
+        //alignment
+        for (Map<String, ValidationResultEntry> next : entryList.values()) {
+            align(collection2List(next.values()));
+        }
+
+        //assembly
+        List<List<ResultColumn>> ret = new ArrayList<List<ResultColumn>>();
+        for (Map.Entry<String, List<ResultColumn>> entry : fixedColumns.entrySet()) {
+            String key = entry.getKey();
+            List<ResultColumn> value1 = entry.getValue();
+
+            for (Map<String, ValidationResultEntry> entryMap : entryList.values()) {
+                value1.addAll(entryMap.get(key).getColumns());
+            }
+
+            ret.add(value1);
+        }
+
+        return ret;
+    }
+
+    private void populateLinks(ValidationOutputRecord record) {
+        for (RecordOfValidationResult result : record.getValidationResults()) {
+            for (ResultColumn column : result.getEntry().getColumns()) {
+                if (column instanceof LinkResultColumn) {
+                    LinkResultColumn.LinkBox data = ((LinkResultColumn) column).getData();
+                    String col1Lable = data.getLable();
+                    URN urn = record.getTraceDocumentUrnByName(col1Lable);
+                    if (urn != null) {
+                        data.addLink(urn);
+                        continue;
+                    }
+
+                    urn = record.getgetTrimmedDocumentUrnByName(col1Lable);
+                    if (urn != null) {
+                        data.addLink(urn);
+                    }
+                }
+            }
+        }
+    }
+
+    private List<ValidationResultEntry> collection2List(Collection<ValidationResultEntry> values) {
+        List<ValidationResultEntry> ret = new ArrayList<ValidationResultEntry>();
+        for (ValidationResultEntry entry : values) {
+            ret.add(entry);
+        }
+
+        return ret;
+    }
+
+    private void align(List<ValidationResultEntry> values) {
+        if (values == null || values.size() == 0) {
+            return;
+        }
+
+        values.get(0).align(values);
     }
 }

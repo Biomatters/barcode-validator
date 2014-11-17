@@ -7,7 +7,6 @@ import java.util.Enumeration;
 import java.util.Vector;
 
 public class GroupableTableHeader extends JTableHeader {
-    private static final String uiClassID = "GroupableTableHeaderUI";
     protected Vector columnGroups = null;
 
     public GroupableTableHeader(TableColumnModel model) {
@@ -17,24 +16,12 @@ public class GroupableTableHeader extends JTableHeader {
         setRequestFocusEnabled(false);
     }
 
+    @SuppressWarnings("unchecked")
     public void addColumnGroup(ColumnGroup g) {
         if (columnGroups == null) {
-            columnGroups = new Vector();
+            columnGroups = new Vector<ColumnGroup>();
         }
         columnGroups.addElement(g);
-    }
-
-    public void clearColumnGroups() {
-        columnGroups = null;
-    }
-
-    public ColumnGroup[] getColumnGroups() {
-        ColumnGroup[] retg = null;
-        if (columnGroups.size() > 0) {
-            retg = new ColumnGroup[columnGroups.size()];
-            columnGroups.copyInto(retg);
-        }
-        return retg;
     }
 
     public Enumeration getColumnGroups(TableColumn col) {
@@ -44,7 +31,7 @@ public class GroupableTableHeader extends JTableHeader {
         Enumeration enum1 = columnGroups.elements();
         while (enum1.hasMoreElements()) {
             ColumnGroup cGroup = (ColumnGroup) enum1.nextElement();
-            Vector v_ret = (Vector) cGroup.getColumnGroups(col, new Vector());
+            Vector v_ret = (Vector) cGroup.getColumnGroups(col, new Vector<ColumnGroup>());
             if (v_ret != null) {
                 return v_ret.elements();
             }
@@ -52,6 +39,7 @@ public class GroupableTableHeader extends JTableHeader {
         return null;
     }
 
+    @SuppressWarnings("deprecation")
     public boolean isFocusTraversable() {
         return super.isFocusTraversable() && isRequestFocusEnabled();
     }

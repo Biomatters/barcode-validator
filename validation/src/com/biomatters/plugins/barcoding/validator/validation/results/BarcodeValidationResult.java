@@ -14,6 +14,7 @@ import java.util.List;
 public class BarcodeValidationResult extends ValidationResultEntry {
     private StatusFact consensusFact = new StatusFact("Consensus");
 
+    @SuppressWarnings("unused")
     public BarcodeValidationResult(Element element) throws XMLSerializationException {
         super(element);
     }
@@ -23,6 +24,7 @@ public class BarcodeValidationResult extends ValidationResultEntry {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public List getRow() {
         List<ResultColumn> columns = consensusFact.getColumns();
         List ret = new ArrayList();
@@ -43,9 +45,13 @@ public class BarcodeValidationResult extends ValidationResultEntry {
     }
 
     @Override
+    public List<ResultColumn> getColumns() {
+        return consensusFact.getColumns();
+    }
+
+    @Override
     public List<ResultFact> getResultFacts() {
-        List<ResultFact> ret = Collections.singletonList((ResultFact)consensusFact);
-        return ret;
+        return Collections.singletonList((ResultFact)consensusFact);
     }
 
     @Override

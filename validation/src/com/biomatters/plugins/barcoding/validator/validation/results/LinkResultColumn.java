@@ -49,7 +49,7 @@ public class LinkResultColumn extends ResultColumn<LinkResultColumn.LinkBox> {
 
         try {
             for (Element ele : element.getChildren(LinkBox.LINK)) {
-                links.add(URN.fromXML(element.getChild(LinkBox.LINK)));
+                links.add(URN.fromXML(ele));
             }
         } catch (MalformedURNException e) {
             throw new XMLSerializationException("Failed to de-serialize validation record: " + e.getMessage(), e);
@@ -105,7 +105,7 @@ public class LinkResultColumn extends ResultColumn<LinkResultColumn.LinkBox> {
         }
 
         public void openLink() {
-            DocumentUtilities.selectDocuments(links);
+            if (links != null) DocumentUtilities.selectDocuments(links);
         }
     }
 }

@@ -8,12 +8,12 @@ import org.jdom.Element;
  *         Created on 13/11/14 6:42 PM
  */
 public class DoubleResultColumn extends ResultColumn<Double> {
-    public static final int DISPLAY_LENGTH = 5;
 
     public DoubleResultColumn(String name) {
         super(name);
     }
 
+    @SuppressWarnings("unused")
     public DoubleResultColumn(Element element) throws XMLSerializationException {
         super(element);
     }

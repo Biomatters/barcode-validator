@@ -6,6 +6,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSeque
  * @author Gen Li
  *         Created on 29/09/14 3:03 PM
  */
+@SuppressWarnings("unused")
 public class SlidingWindowBarcodeValidation  {  //remove "extends" to prevent BarcodeValidation load it, since it is not available now
     /**
      * @param barcodeSequence The user supplied barcode.

@@ -13,6 +13,7 @@ public class IntegerResultColumn extends ResultColumn<Integer> {
         super(name);
     }
 
+    @SuppressWarnings("unused")
     public IntegerResultColumn(Element element) throws XMLSerializationException {
         super(element);
     }

@@ -108,53 +108,6 @@ public class ColumnGroup {
         return text;
     }
 
-    public boolean removeColumn(ColumnGroup ptg, TableColumn tc) {
-        boolean retFlag = false;
-        if (tc != null) {
-            for (int i = 0; i < ptg.vector.size(); i++) {
-                Object tmpObj = ptg.vector.get(i);
-                if (tmpObj instanceof ColumnGroup) {
-                    retFlag = removeColumn((ColumnGroup) tmpObj, tc);
-                    if (retFlag) {
-                        break;
-                    }
-                } else if (tmpObj instanceof TableColumn) {
-                    if (tmpObj == tc) {
-                        ptg.vector.remove(i);
-                        retFlag = true;
-                        break;
-                    }
-                }
-            }
-        }
-        return retFlag;
-    }
-
-    public boolean removeColumnGrp(ColumnGroup ptg, ColumnGroup tg) {
-        boolean retFlag = false;
-        if (tg != null) {
-            for (int i = 0; i < ptg.vector.size(); i++) {
-                Object tmpObj = ptg.vector.get(i);
-                if (tmpObj instanceof ColumnGroup) {
-                    if (tmpObj == tg) {
-                        ptg.vector.remove(i);
-                        retFlag = true;
-                        break;
-                    } else {
-                        retFlag = removeColumnGrp((ColumnGroup) tmpObj, tg);
-                        if (retFlag) {
-                            break;
-                        }
-
-                    }
-                } else if (tmpObj instanceof TableColumn) {
-                    break;
-                }
-            }
-        }
-        return retFlag;
-    }
-
     public void setColumnMargin(int margin) {
         this.margin = margin;
         Enumeration<Object> enumeration = vector.elements();
@@ -163,12 +116,6 @@ public class ColumnGroup {
             if (obj instanceof ColumnGroup) {
                 ((ColumnGroup) obj).setColumnMargin(margin);
             }
-        }
-    }
-
-    public void setHeaderRenderer(TableCellRenderer renderer) {
-        if (renderer != null) {
-            this.renderer = renderer;
         }
     }
 

@@ -43,6 +43,7 @@ public class StatusFact extends ResultFact {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void addColumns(ResultColumn column) {
         if (DOCUMENT.equals(column.getName())) {
             nameCol = (LinkResultColumn) column;

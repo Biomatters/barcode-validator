@@ -2,10 +2,8 @@ package com.biomatters.plugins.barcoding.validator.validation;
 
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
-import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.biomatters.plugins.barcoding.validator.validation.results.QualityValidationResult;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,7 +33,6 @@ public class SlidingWindowTraceValidation extends TraceValidation {
         }
 
         SlidingWindowValidationOptions SWVOptions = (SlidingWindowValidationOptions)options;
-        List<String> failedTraceNames = new ArrayList<String>();
 
         /* Validate traces and accumulate results. */
         int index = 0;
@@ -46,7 +43,7 @@ public class SlidingWindowTraceValidation extends TraceValidation {
                                                                                          SWVOptions.getStepSize(),
                                                                                          SWVOptions.getMinimumQuality(),
                                                                                          SWVOptions.getMinimumRatioSatisfied());
-                fact.setFactName("Stat" + ++index);
+                fact.setFactName("Trace " + ++index);
                 entry.addStatsFact(fact);
         } catch (DocumentOperationException e) {
                 result = new ValidationResult(false, e.getMessage());
@@ -54,7 +51,6 @@ public class SlidingWindowTraceValidation extends TraceValidation {
             }
         }
 
-        QualityValidationResult.TRACE_NUM = QualityValidationResult.TRACE_NUM > index ? QualityValidationResult.TRACE_NUM : index;
         result.setEntry(entry);
         return result;
     }
@@ -65,15 +61,5 @@ public class SlidingWindowTraceValidation extends TraceValidation {
     @Override
     public ValidationOptions getOptions() {
         return new SlidingWindowValidationOptions(SlidingWindowTraceValidation.class);
-    }
-
-    /**
-     * Returns message for when one or more traces fail validation.
-     *
-     * @param failedTraceNames Names of traces that failed validation.
-     * @return Message.
-     */
-    private static String getValidationFailureMessage(List<String> failedTraceNames) {
-        return "Failed traces: " + StringUtilities.join(", ", failedTraceNames) + ".";
     }
 }

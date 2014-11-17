@@ -37,6 +37,7 @@ public class ValidationOutputRecord implements XMLSerializable {
     ValidationOutputRecord() {
     }
 
+    @SuppressWarnings("unused")
     public ValidationOutputRecord(Element element) throws XMLSerializationException {
         try {
             barcodeSequenceUrn = URN.fromXML(element.getChild(BARCODE));
@@ -103,21 +104,6 @@ public class ValidationOutputRecord implements XMLSerializable {
     private static void addUrnToXml(Element root, URN urn, String elementName) {
         if(urn != null) {
             root.addContent(urn.toXML(elementName));
-        }
-    }
-
-    public void addElementsForUrnList(Element root, String elementName, List<URN> urnList) {
-        for (URN traceDocumentUrn : urnList) {
-            root.addContent(traceDocumentUrn.toXML(elementName));
-        }
-    }
-
-    public void addElementsForUrnMap(Element root, String elementName, Map<String, URN> urnMap) {
-        for (Map.Entry<String, URN> entry: urnMap.entrySet()) {
-            Element element = new Element(elementName);
-            element.addContent(new Element(TRACE_KEY).setText(entry.getKey()));
-            element.addContent(entry.getValue().toXML(TRACE_URN));
-            root.addContent(element);
         }
     }
 

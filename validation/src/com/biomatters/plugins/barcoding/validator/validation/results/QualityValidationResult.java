@@ -12,33 +12,28 @@ import java.util.List;
  *         Created on 11/11/14 5:11 PM
  */
 public class QualityValidationResult extends ValidationResultEntry {
-    public static int TRACE_NUM = 0;
     private List<StatsFact> traceFacts = new ArrayList<StatsFact>();
 
+    @SuppressWarnings("unused")
     protected QualityValidationResult(String name) {
         super(name);
     }
 
+    @SuppressWarnings("unused")
     public QualityValidationResult(Element element) throws XMLSerializationException {
         super(element);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public List getRow() {
         List ret = new ArrayList();
-        int count = 0;
         for (StatsFact fact : traceFacts) {
-            count++;
             for (ResultColumn column : fact.getColumns()) {
                 ret.add(column.getDisplayValue());
             }
         }
 
-        for (int i = 0; i < TRACE_NUM - count; i++) {
-            for (ResultColumn column : StatsFact.dummyFact.getColumns()) {
-                ret.add(column.getDisplayValue());
-            }
-        }
         return ret;
     }
 
@@ -50,6 +45,18 @@ public class QualityValidationResult extends ValidationResultEntry {
                 ret.add(column.getName());
             }
         }
+        return ret;
+    }
+
+    @Override
+    public List<ResultColumn> getColumns() {
+        List<ResultColumn> ret = new ArrayList<ResultColumn>();
+        for (StatsFact fact : traceFacts) {
+            for (ResultColumn column : fact.getColumns()) {
+                ret.add(column);
+            }
+        }
+
         return ret;
     }
 
@@ -74,21 +81,31 @@ public class QualityValidationResult extends ValidationResultEntry {
         traceFacts.add(fact);
     }
 
+    @Override
+    public void align(List<ValidationResultEntry> list) {
+        int max = 0;
+        for (ValidationResultEntry entry : list) {
+            if (!(entry instanceof QualityValidationResult)) continue;
+            int size = entry.getResultFacts().size();
+            max = max > size ? max : size;
+        }
+
+        for (ValidationResultEntry entry : list) {
+            if (!(entry instanceof QualityValidationResult)) continue;
+            int size = entry.getResultFacts().size();
+            for (int i = 0; i < max - size; i++) {
+                StatsFact tmp = new StatsFact();
+                tmp.setFactName("Trace " + (size + i + 1));
+                ((QualityValidationResult)entry).addStatsFact(tmp);
+            }
+        }
+    }
+
     public static class StatsFact extends ResultFact {
         public static final String TRACE_NAME = "Trace Name";
         public static final String PASS_RATIO = "Pass Ratio%";
         public static final String FAILED_NUM = "Failed Num";
         public static final String STATUS = "Status";
-
-        public static final StatsFact dummyFact;
-
-        static {
-            dummyFact = new StatsFact();
-            dummyFact.setName("-");
-            dummyFact.setFailNum(0);
-            dummyFact.setStatus(false);
-            dummyFact.setPassRatio(0);
-        }
 
         private LinkResultColumn nameCol;
         private ResultColumn<Double> passRatioCol;
@@ -97,6 +114,10 @@ public class QualityValidationResult extends ValidationResultEntry {
 
         public StatsFact() {
             this("Stat");
+            setName("-");
+            setFailNum(0);
+            setStatus(false);
+            setPassRatio(0);
         }
 
         public StatsFact(String name) {
@@ -123,6 +144,7 @@ public class QualityValidationResult extends ValidationResultEntry {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public void addColumns(ResultColumn column) {
             if (TRACE_NAME.equals(column.getName())) {
                 nameCol = (LinkResultColumn) column;
@@ -159,10 +181,12 @@ public class QualityValidationResult extends ValidationResultEntry {
             statusCol.setData(status);
         }
 
+        @SuppressWarnings("unused")
         public double getPassRatio() {
             return passRatioCol.getData();
         }
 
+        @SuppressWarnings("unused")
         public int getFailNum() {
             return failNumCol.getData();
         }
