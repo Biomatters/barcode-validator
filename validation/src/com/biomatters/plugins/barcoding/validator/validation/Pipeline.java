@@ -39,6 +39,7 @@ public class Pipeline {
 
         stepsProgress.beginSubtask("Validating Traces...");
         CompositeProgressListener traceValidationProgress = new CompositeProgressListener(stepsProgress, 3);
+        trimmedTraces = callback.addTrimmedTraces(trimmedTraces, traceValidationProgress);
 
         traceValidationProgress.beginSubtask();
         List<ValidationRun> traceValidationResults = runValidationTasks(traceValidationOptions, traceValidationProgress,
@@ -47,9 +48,6 @@ public class Pipeline {
 
         traceValidationProgress.beginSubtask();
         addValidationResultsToCallback(callback, traceValidationResults, traceValidationProgress);
-
-        trimmedTraces = callback.addTrimmedTraces(trimmedTraces, traceValidationProgress);
-
 
         stepsProgress.beginSubtask("Assembling...");
         CompositeProgressListener assembleTracesProgress = new CompositeProgressListener(stepsProgress, 3);
