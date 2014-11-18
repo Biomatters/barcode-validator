@@ -181,12 +181,7 @@ public class ValidationReportViewer extends DocumentViewer {
         JComponent textPane = getTextPane();
 
         GPanel rootPanel = new GPanel(new BorderLayout());
-        final JScrollPane scroll = new JScrollPane(rootPanel) {
-            @Override
-            public Dimension getPreferredSize() {
-                return new Dimension(super.getPreferredSize().width,super.getPreferredSize().height+300);
-            }
-        };
+        final JScrollPane scroll = new JScrollPane(rootPanel);
         scroll.getViewport().setOpaque(false);
         scroll.setOpaque(false);
         scroll.setBorder(null);
@@ -211,6 +206,9 @@ public class ValidationReportViewer extends DocumentViewer {
             });
             rootPanel.add(tableScrollPane, BorderLayout.CENTER);
         }
+        Dimension oldPrefSize = rootPanel.getPreferredSize();
+        // Add 500 px to the preferred height so users can scroll past the table
+        rootPanel.setPreferredSize(new Dimension(oldPrefSize.width, oldPrefSize.height+500));
         return scroll;
     }
 
