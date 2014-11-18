@@ -1,10 +1,15 @@
 package com.biomatters.plugins.barcoding.validator.research.report;
 
-import com.biomatters.geneious.publicapi.components.*;
+import com.biomatters.geneious.publicapi.components.GLabel;
+import com.biomatters.geneious.publicapi.components.GPanel;
+import com.biomatters.geneious.publicapi.components.GTable;
+import com.biomatters.geneious.publicapi.components.GTextPane;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.URN;
+import com.biomatters.geneious.publicapi.plugin.ActionProvider;
 import com.biomatters.geneious.publicapi.plugin.DocumentViewer;
+import com.biomatters.geneious.publicapi.plugin.GeneiousAction;
 import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
 import com.biomatters.plugins.barcoding.validator.output.ValidationReportDocument;
@@ -27,6 +32,7 @@ import java.util.List;
  */
 public class BatchValidationReportViewer extends DocumentViewer {
     private Map<URN, ValidationReportDocument> reports = new HashMap<URN, ValidationReportDocument>();
+    private JTable table = null;
 
     public BatchValidationReportViewer(AnnotatedPluginDocument[] reportApds) {
         for (AnnotatedPluginDocument reportApd : reportApds) {
@@ -117,7 +123,7 @@ public class BatchValidationReportViewer extends DocumentViewer {
             }
 
             final RowTableModel model = new RowTableModel(idsOfDifferent, rows);
-            GTable table = new GTable(model);
+            table = new GTable(model);
             table.setRowSorter(new TableRowSorter<TableModel>(model));
 
             table.addMouseListener(new MouseAdapter() {
@@ -343,5 +349,30 @@ public class BatchValidationReportViewer extends DocumentViewer {
 
         @Override
         void processClick(Row row) {}
+    }
+
+    @Override
+    public ActionProvider getActionProvider() {
+        return new ActionProvider() {
+            @Override
+            public List<GeneiousAction> getOtherActions() {
+                List<GeneiousAction> ret = new ArrayList<GeneiousAction>();
+                ret.add(new ValidationReportViewer.ExportReportAction("Export report table to csv file", table) {
+                    @Override
+                    protected List<String> getHeader() {
+                        int columnCount = table.getColumnModel().getColumnCount();
+
+                        List<String> values = new LinkedList<String>();
+                        for (int column = 0; column < columnCount; column++) {
+                            values.add(table.getColumnModel().getColumn(column).getHeaderValue().toString());
+                        }
+
+                        return values;
+                    }
+                });
+                return ret;
+            }
+        };
+
     }
 }

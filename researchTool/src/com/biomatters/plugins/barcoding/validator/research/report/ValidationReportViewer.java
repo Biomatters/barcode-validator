@@ -6,6 +6,11 @@ import com.biomatters.geneious.publicapi.components.GTable;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.URN;
+import com.biomatters.geneious.publicapi.plugin.ActionProvider;
+import com.biomatters.geneious.publicapi.plugin.GeneiousAction;
+import com.biomatters.geneious.publicapi.plugin.Options;
+import com.biomatters.geneious.publicapi.utilities.GeneralUtilities;
+import com.biomatters.geneious.publicapi.utilities.IconUtilities;
 import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.biomatters.plugins.barcoding.validator.output.RecordOfValidationResult;
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
@@ -21,15 +26,18 @@ import com.biomatters.plugins.barcoding.validator.validation.results.ValidationR
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Displays a {@link com.biomatters.plugins.barcoding.validator.output.ValidationReportDocument} in a user
@@ -45,6 +53,7 @@ import java.util.List;
  */
 public class ValidationReportViewer extends HtmlReportDocumentViewer {
     ValidationReportDocument reportDocument;
+    JTable table = null;
     public ValidationReportViewer(ValidationReportDocument reportDocument) {
         this.reportDocument = reportDocument;
     }
@@ -177,7 +186,9 @@ public class ValidationReportViewer extends HtmlReportDocumentViewer {
         scroll.setBorder(null);
 
         rootPanel.add(textPane, BorderLayout.NORTH);
-        JTable table = getTable();
+        if (table == null)
+            table = getTable();
+
         if (table != null)
             rootPanel.add(new JScrollPane(table));
 
@@ -389,5 +400,125 @@ public class ValidationReportViewer extends HtmlReportDocumentViewer {
         }
 
         values.get(0).align(values);
+    }
+
+    @Override
+    public ActionProvider getActionProvider() {
+        return new ActionProvider() {
+            @Override
+            public List<GeneiousAction> getOtherActions() {
+                List<GeneiousAction> ret = new ArrayList<GeneiousAction>();
+                ret.add(new ExportReportAction("Export report table to csv file", table));
+                return ret;
+            }
+        };
+
+    }
+
+    protected static class ExportReportAction extends GeneiousAction {
+
+        private JTable table = null;
+
+        public ExportReportAction(String name, JTable table) {
+            super(name, null, IconUtilities.getIcons("export16.png"));
+            this.table = table;
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            if (table == null) {
+                Dialogs.showMessageDialog("Can not find table");
+                return;
+            }
+
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    Options options = new Options(ValidationReportViewer.class);
+                    Options.FileSelectionOption selectionOption = options.addFileSelectionOption("targetFolder", "File to export", "", new String[0], "Browse...");
+
+                    options.setEnabled(true);
+                    Dialogs.DialogOptions dialogOptions = new Dialogs.DialogOptions(Dialogs.OK_CANCEL, "Export report table to csv file");
+                    if (Dialogs.CANCEL.equals(Dialogs.showMoreOptionsDialog(dialogOptions, options.getPanel(), options.getAdvancedPanel()))) {
+                        return;
+                    }
+
+                    File outFile = new File(selectionOption.getValue());
+                    BufferedWriter writer = null;
+                    try {
+                        writer = new BufferedWriter(new FileWriter(outFile));
+                        int columnCount = table.getColumnModel().getColumnCount();
+
+                        List<String> values = getHeader();
+                        writeRow(writer, values);
+                        int rowCount = table.getRowCount();
+                        for (int row=0; row < rowCount; row++) {
+                            values.clear();
+                            for (int column=0; column < columnCount; column++) {
+                                Object value = table.getValueAt(row, column);
+                                if (value == null) {
+                                    values.add("");
+                                } else {
+                                    values.add(stripHtmlTags(value.toString(), true));
+                                }
+                            }
+                            writeRow(writer, values);
+                        }
+                    } catch (IOException e1) {
+                        Dialogs.showMessageDialog("Failed to export table, since " + e1.getMessage());
+                    } finally {
+                        GeneralUtilities.attemptClose(writer);
+                    }
+                }
+            });
+        }
+
+        protected List<String> getHeader(){
+            int columnCount = table.getColumnModel().getColumnCount();
+            GroupableTableHeader header = (GroupableTableHeader) table.getTableHeader();
+
+            List<String> values = new LinkedList<String>();
+            for (int column = 0; column < columnCount; column++) {
+                StringBuilder sb = new StringBuilder();
+                Enumeration columnGroups = header.getColumnGroups(table.getColumnModel().getColumn(column));
+                while (columnGroups != null && columnGroups.hasMoreElements()) {
+                    sb.append(((ColumnGroup) columnGroups.nextElement()).getText()).append(" - ");
+                }
+
+                sb.append(table.getColumnModel().getColumn(column).getHeaderValue().toString());
+                values.add(sb.toString());
+            }
+
+            return values;
+        }
+
+        private void writeRow(BufferedWriter writer, List<String> values) throws IOException {
+            boolean first = true;
+            for (String value : values) {
+                if (first) {
+                    first = false;
+                } else {
+                    writer.write(",");
+                }
+                writer.write(escapeValueForCsv(value));
+            }
+            writer.newLine();
+        }
+
+        private String escapeValueForCsv(String value) {
+            value = value.replaceAll("\"", "\"\"");
+            if (value.contains("\"") || value.contains(",") || value.contains("\n")) {
+                value = "\"" + value + "\"";
+            }
+            return value;
+        }
+
+        private String stripHtmlTags(String string, boolean onlyIfStartsWithHtmlTag) {
+            if ((string == null) || "".equals(string) || (onlyIfStartsWithHtmlTag && !string.regionMatches(true, 0, "<html>", 0, 6))) {
+                return string;
+            }
+            string = Pattern.compile("</?[a-zA-Z0-9][^>]*>").matcher(string).replaceAll("");
+            string = string.replace("&gt;",">");
+            string = string.replace("&lt;","<");
+            return string;
+        }
     }
 }
