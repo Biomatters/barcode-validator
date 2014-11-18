@@ -35,11 +35,12 @@ public class Pipeline {
         CompositeProgressListener stepsProgress = new CompositeProgressListener(progressListener, 4);
 
         stepsProgress.beginSubtask("Trimming Traces");
-        List<NucleotideGraphSequenceDocument> trimmedTraces = trimTraces(traces, trimmingOptions, true, stepsProgress);
+        CompositeProgressListener trimmingProgress = new CompositeProgressListener(stepsProgress, 2);
+        List<NucleotideGraphSequenceDocument> trimmedTraces = trimTraces(traces, trimmingOptions, true, trimmingProgress);
+        trimmedTraces = callback.addTrimmedTraces(trimmedTraces, trimmingProgress);
 
         stepsProgress.beginSubtask("Validating Traces...");
-        CompositeProgressListener traceValidationProgress = new CompositeProgressListener(stepsProgress, 3);
-        trimmedTraces = callback.addTrimmedTraces(trimmedTraces, traceValidationProgress);
+        CompositeProgressListener traceValidationProgress = new CompositeProgressListener(stepsProgress, 2);
 
         traceValidationProgress.beginSubtask();
         List<ValidationRun> traceValidationResults = runValidationTasks(traceValidationOptions, traceValidationProgress,
