@@ -266,6 +266,9 @@ public class ValidationReportViewer extends DocumentViewer {
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                if(e.getButton() != MouseEvent.BUTTON1) {
+                    return;
+                }
                 Object source = e.getSource();
                 if (source instanceof JTable) {
                     JTable table = (JTable) source;
