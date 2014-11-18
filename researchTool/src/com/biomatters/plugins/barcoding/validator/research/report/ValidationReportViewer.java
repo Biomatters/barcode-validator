@@ -3,9 +3,11 @@ package com.biomatters.plugins.barcoding.validator.research.report;
 import com.biomatters.geneious.publicapi.components.Dialogs;
 import com.biomatters.geneious.publicapi.components.GPanel;
 import com.biomatters.geneious.publicapi.components.GTable;
+import com.biomatters.geneious.publicapi.components.GTextPane;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.URN;
+import com.biomatters.geneious.publicapi.plugin.DocumentViewer;
 import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.biomatters.plugins.barcoding.validator.output.RecordOfValidationResult;
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
@@ -21,13 +23,12 @@ import com.biomatters.plugins.barcoding.validator.validation.results.ValidationR
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.util.*;
 import java.util.List;
 
@@ -35,27 +36,24 @@ import java.util.List;
  * Displays a {@link com.biomatters.plugins.barcoding.validator.output.ValidationReportDocument} in a user
  * friendly manner using Java's HTML viewer.
  * <br/>
- * The view is static but does include links to input and output
+ * The view is sortable and includes links to input and output
  * {@link com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument} in Geneious.
- * <br/>
- * There are future plans to expand this to be more dynamic.  Allowing sorting and graphing of data.
  *
  * @author Matthew Cheung
  *         Created on 2/10/14 10:04 AM
  */
-public class ValidationReportViewer extends HtmlReportDocumentViewer {
+public class ValidationReportViewer extends DocumentViewer {
     ValidationReportDocument reportDocument;
     public ValidationReportViewer(ValidationReportDocument reportDocument) {
         this.reportDocument = reportDocument;
     }
 
-    @Override
     public String getHtml() {
         return generateHtml(reportDocument);
     }
 
     public static final String OPTION_PREFIX = "option:";
-    @Override
+
     public HyperlinkListener getHyperlinkListener() {
         final Map<String, ValidationOptions> optionsMap = getOptionMap(reportDocument);
         return new DocumentOpeningHyperlinkListener("ReportDocumentFactory",
@@ -161,9 +159,26 @@ public class ValidationReportViewer extends HtmlReportDocumentViewer {
 //    private static Icon TICK_ICON = IconUtilities.getIcons("tick16.png").getIcon16();
 //    private static Icon CROSS_ICON = IconUtilities.getIcons("x16.png").getIcon16();
 
+    private JTextPane getTextPane() {
+        String html = getHtml();
+        if(html == null || html.isEmpty()) {
+            return null;
+        }
+        final JTextPane textPane = new GTextPane();
+        textPane.setContentType("text/html");
+        textPane.setEditable(false);
+
+        HyperlinkListener hyperlinkListener = getHyperlinkListener();
+        if(hyperlinkListener != null) {
+            textPane.addHyperlinkListener(hyperlinkListener);
+        }
+        textPane.setText(html);
+        return textPane;
+    }
+
     @Override
     public JComponent getComponent() {
-        JComponent textPane = super.getComponent();
+        JComponent textPane = getTextPane();
 
         GPanel rootPanel = new GPanel(new BorderLayout());
         final JScrollPane scroll = new JScrollPane(rootPanel) {
@@ -178,9 +193,24 @@ public class ValidationReportViewer extends HtmlReportDocumentViewer {
 
         rootPanel.add(textPane, BorderLayout.NORTH);
         JTable table = getTable();
-        if (table != null)
-            rootPanel.add(new JScrollPane(table));
+        if (table != null) {
+            JScrollPane tableScrollPane = new JScrollPane(table,
+                    ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
+            // Set the scroll pane's preferred size to the same as the table so scroll bars are never needed
+            tableScrollPane.getViewport().setPreferredSize(table.getPreferredSize());
+
+            // Delegate our mouse wheel events on the table's scroll pane to the root one
+            tableScrollPane.addMouseWheelListener(new MouseWheelListener() {
+                @Override
+                public void mouseWheelMoved(MouseWheelEvent e) {
+                    for (MouseWheelListener mouseWheelListener : scroll.getMouseWheelListeners()) {
+                        mouseWheelListener.mouseWheelMoved(e);
+                    }
+                }
+            });
+            rootPanel.add(tableScrollPane, BorderLayout.CENTER);
+        }
         return scroll;
     }
 
