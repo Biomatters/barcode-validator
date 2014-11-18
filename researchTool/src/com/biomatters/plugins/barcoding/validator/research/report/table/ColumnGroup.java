@@ -1,8 +1,8 @@
 package com.biomatters.plugins.barcoding.validator.research.report.table;
 
+import com.sun.istack.internal.NotNull;
+
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
@@ -15,34 +15,8 @@ public class ColumnGroup {
     protected String text = null;
     private int margin = 0;
 
-    public ColumnGroup(String text) {
-        this(null, text);
-    }
-
-    public ColumnGroup(TableCellRenderer renderer, String text) {
-        if (renderer == null) {
-            this.renderer = new DefaultTableCellRenderer() {
-                private static final long serialVersionUID = 1L;
-
-                @Override
-                public Component getTableCellRendererComponent(JTable table,
-                                                               Object value, boolean isSelected, boolean hasFocus,
-                                                               int row, int column) {
-                    JTableHeader header = table.getTableHeader();
-                    if (header != null) {
-                        setForeground(header.getForeground());
-                        setBackground(header.getBackground());
-                        setFont(header.getFont());
-                    }
-                    setHorizontalAlignment(JLabel.CENTER);
-                    this.setText((value == null) ? "" : value.toString());
-                    setBorder(UIManager.getBorder("TableHeader.cellBorder"));
-                    return this;
-                }
-            };
-        } else {
-            this.renderer = renderer;
-        }
+    public ColumnGroup(String text, @NotNull TableCellRenderer renderer) {
+        this.renderer = renderer;
         this.text = text;
         vector = new Vector<Object>();
     }
@@ -72,6 +46,7 @@ public class ColumnGroup {
         return null;
     }
 
+    @NotNull
     public TableCellRenderer getHeaderRenderer() {
         return renderer;
     }

@@ -151,25 +151,8 @@ public class GroupableTableHeaderUI extends BasicTableHeaderUI {
     private void paintCell(Graphics g, Rectangle cellRect, int columnIndex) {
         TableColumn aColumn = header.getColumnModel().getColumn(columnIndex);
         TableCellRenderer renderer = aColumn.getHeaderRenderer();
-        //
-        if (renderer == null) {
-            renderer = new DefaultTableCellRenderer() {
-                @Override
-                public Component getTableCellRendererComponent(JTable table,
-                                                               Object value, boolean isSelected, boolean hasFocus,
-                                                               int row, int column) {
-                    JTableHeader header = table.getTableHeader();
-                    if (header != null) {
-                        setForeground(header.getForeground());
-                        setBackground(header.getBackground());
-                        setFont(header.getFont());
-                    }
-                    setHorizontalAlignment(JLabel.CENTER);
-                    setText((value == null) ? "" : value.toString());
-                    setBorder(UIManager.getBorder("TableHeader.cellBorder"));
-                    return this;
-                }
-            };
+        if(renderer == null) {
+            renderer = header.getDefaultRenderer();
         }
 
         String headerValue = aColumn.getHeaderValue().toString();
@@ -183,26 +166,6 @@ public class GroupableTableHeaderUI extends BasicTableHeaderUI {
 
     private void paintCell(Graphics g, Rectangle cellRect, ColumnGroup cGroup) {
         TableCellRenderer renderer = cGroup.getHeaderRenderer();
-        //
-        if (renderer == null) {
-            renderer = new DefaultTableCellRenderer() {
-                @Override
-                public Component getTableCellRendererComponent(JTable table,
-                                                               Object value, boolean isSelected, boolean hasFocus,
-                                                               int row, int column) {
-                    JTableHeader header = table.getTableHeader();
-                    if (header != null) {
-                        setForeground(header.getForeground());
-                        setBackground(header.getBackground());
-                        setFont(header.getFont());
-                    }
-                    setHorizontalAlignment(JLabel.CENTER);
-                    setText((value == null) ? "" : value.toString());
-                    setBorder(UIManager.getBorder("TableHeader.cellBorder"));
-                    return this;
-                }
-            };
-        }
 
         String headerValue = cGroup.getHeaderValue().toString();
         Component component = renderer.getTableCellRendererComponent(header

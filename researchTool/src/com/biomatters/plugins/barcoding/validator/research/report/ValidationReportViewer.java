@@ -2,6 +2,7 @@ package com.biomatters.plugins.barcoding.validator.research.report;
 
 import com.biomatters.geneious.publicapi.components.Dialogs;
 import com.biomatters.geneious.publicapi.components.GPanel;
+import com.biomatters.geneious.publicapi.components.GTable;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.URN;
@@ -22,7 +23,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -226,23 +227,23 @@ public class ValidationReportViewer extends HtmlReportDocumentViewer {
             }
         };
 
-        JTable table = new JTable(dm) {
-            @Override
-            protected JTableHeader createDefaultTableHeader() {
-
-                return new GroupableTableHeader(columnModel);
-            }
-        };
+        JTable table = new GTable(dm);
+        GroupableTableHeader head = new GroupableTableHeader(table.getTableHeader());
+        table.setTableHeader(head);
+        TableCellRenderer headerRenderer = head.getDefaultRenderer();
+        if(headerRenderer instanceof DefaultTableCellRenderer) {
+            ((DefaultTableCellRenderer) headerRenderer).setHorizontalAlignment(SwingConstants.CENTER);
+        }
 
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 Object source = e.getSource();
-                if(source instanceof JTable) {
+                if (source instanceof JTable) {
                     JTable table = (JTable) source;
                     Object cell = table.getValueAt(table.getSelectedRow(), table.getSelectedColumn());
                     if (cell instanceof LinkResultColumn.LinkBox) {
-                        ((LinkResultColumn.LinkBox)cell).openLink();
+                        ((LinkResultColumn.LinkBox) cell).openLink();
                     }
                 }
             }
@@ -250,13 +251,12 @@ public class ValidationReportViewer extends HtmlReportDocumentViewer {
 
         //merge header
         TableColumnModel cm = table.getColumnModel();
-        GroupableTableHeader head = (GroupableTableHeader) table.getTableHeader();
         int colIndex = 3;   //since we already have 3 other columns
         for (RecordOfValidationResult result : records.get(0).getValidationResults()) {
             ValidationResultEntry entry = result.getEntry();
-            ColumnGroup entryGroup = new ColumnGroup(entry.getName());
+            ColumnGroup entryGroup = new ColumnGroup(entry.getName(), headerRenderer);
             for (ResultFact fact : entry.getResultFacts()) {
-                ColumnGroup factGroup = new ColumnGroup(fact.getFactName());
+                ColumnGroup factGroup = new ColumnGroup(fact.getFactName(), headerRenderer);
                 for (int i = 0; i < fact.getColumns().size(); i++) {
                     factGroup.add(cm.getColumn(colIndex++));
                 }
