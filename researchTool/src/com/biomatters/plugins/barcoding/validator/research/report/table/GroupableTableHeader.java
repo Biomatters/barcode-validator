@@ -10,10 +10,10 @@ public class GroupableTableHeader extends JTableHeader {
 
     public GroupableTableHeader(JTableHeader originalHeader) {
         super(originalHeader.getColumnModel());
-        setDefaultRenderer(originalHeader.getDefaultRenderer());
         setUI(new GroupableTableHeaderUI());
         setReorderingAllowed(false);
         setRequestFocusEnabled(false);
+        setDefaultRenderer(originalHeader.getDefaultRenderer());
     }
 
     @SuppressWarnings("unchecked")
