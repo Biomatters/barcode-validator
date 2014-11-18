@@ -36,7 +36,9 @@ public class Pipeline {
 
         stepsProgress.beginSubtask("Trimming Traces");
         CompositeProgressListener trimmingProgress = new CompositeProgressListener(stepsProgress, 2);
+        trimmingProgress.beginSubtask();
         List<NucleotideGraphSequenceDocument> trimmedTraces = trimTraces(traces, trimmingOptions, true, trimmingProgress);
+        trimmingProgress.beginSubtask();
         trimmedTraces = callback.addTrimmedTraces(trimmedTraces, trimmingProgress);
 
         stepsProgress.beginSubtask("Validating Traces...");
