@@ -75,7 +75,7 @@ public class ValidationOutputRecord implements XMLSerializable {
             root.addContent(element);
         }
 
-        for (Map.Entry<String, URN> entry: traceDocumentUrnsMap.entrySet()) {
+        for (Map.Entry<String, URN> entry: trimmedDocumentUrnsMap.entrySet()) {
             Element element = new Element(TRIMMED);
             element.addContent(new Element(TRIMMED_KEY).setText(entry.getKey()));
             element.addContent(entry.getValue().toXML(TRIMMED_URN));
@@ -166,7 +166,7 @@ public class ValidationOutputRecord implements XMLSerializable {
         traceDocumentUrnsMap.put(key, urn);
     }
 
-    public void getTrimmedDocumentUrns(String key, URN urn) {
+    public void addTrimmedDocumentUrns(String key, URN urn) {
         trimmedDocumentUrnsMap.put(key, urn);
     }
 

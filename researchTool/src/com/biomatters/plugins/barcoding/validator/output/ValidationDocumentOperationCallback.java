@@ -91,7 +91,7 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
                 throw new IllegalStateException("Saving NucleotideGraphSequenceDocument to database created " + doc.getDocumentClass().getSimpleName());
             }
             results.add((NucleotideGraphSequenceDocument)doc.getDocument());
-            outputRecord.getTrimmedDocumentUrns(doc.getName(), doc.getURN());
+            outputRecord.addTrimmedDocumentUrns(doc.getName(), doc.getURN());
         }
         return results;
     }
