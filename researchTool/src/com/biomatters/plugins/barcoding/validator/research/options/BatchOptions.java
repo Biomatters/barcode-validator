@@ -4,7 +4,9 @@ import com.biomatters.geneious.publicapi.documents.XMLSerializable;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.Options;
 import com.google.common.collect.Sets;
+import org.virion.jam.util.SimpleListener;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -28,11 +30,26 @@ import java.util.*;
  */
 public abstract class BatchOptions<T extends Options> extends Options {
     static final String WRAPPED_OPTIONS_KEY = "child";
+    private Option<String, ? extends JComponent> stringOption;
+    private SimpleListener listener = new SimpleListener() {
+        @Override
+        public void objectChanged() {
+            int batchSize = getBatchSize();
+            stringOption.setValue("Number of parameter set is " + batchSize);
+            if (batchSize > 10000) {
+                stringOption.setWarningMessage("Geneious maybe unusable");
+            } else if (batchSize > 200) {
+                stringOption.setWarningMessage("Geneious maybe very slow");
+            }
+        }
+    };
+
     private T options;
 
     public BatchOptions(T options) {
         super(options.getClass());
         this.options = options;
+        stringOption = this.options.addLabel("");
         addFirstOptions();
         addChildOptions(WRAPPED_OPTIONS_KEY, "", null, options);
         addMinMaxOptionsAndHideOriginal(options);
@@ -45,7 +62,7 @@ public abstract class BatchOptions<T extends Options> extends Options {
      */
     protected abstract void addFirstOptions();
 
-    private static void addMinMaxOptionsAndHideOriginal(Options options) {
+    private void addMinMaxOptionsAndHideOriginal(Options options) {
         for (Options.Option option : options.getOptions()) {
             MultiValueOption multiValueOption = null;
             if(option instanceof Options.IntegerOption) {
@@ -57,6 +74,7 @@ public abstract class BatchOptions<T extends Options> extends Options {
             if(multiValueOption != null) {
                 option.setVisible(false);
                 options.addCustomOption(multiValueOption);
+                multiValueOption.addChangeListener(listener);
             }
         }
 
