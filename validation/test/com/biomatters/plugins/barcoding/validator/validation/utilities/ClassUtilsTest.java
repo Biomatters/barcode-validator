@@ -14,31 +14,31 @@ import java.util.List;
 public class ClassUtilsTest extends TestCase {
 
     public void testFindClass_null() {
-        List<Class> list = ClassUtils.findClass(null, new Class[]{BarcodeValidation.class});
+        List<Class> list = ClassUtils.findClass(null, new Class[]{Validation.class});
         assertEquals(0, list.size());
     }
 
     public void testFindClass_empty() {
-        List<Class> list = ClassUtils.findClass("", new Class[]{BarcodeValidation.class});
+        List<Class> list = ClassUtils.findClass("", new Class[]{Validation.class});
         assertEquals(0, list.size());
     }
 
     public void testFindClass_cannotFound() {
-        List<Class> list = ClassUtils.findClass("com.biomatters.plugins.barcoding.validator.validation.assembly", new Class[]{BarcodeValidation.class});
+        List<Class> list = ClassUtils.findClass("com.biomatters.plugins.barcoding.validator.validation.assembly", new Class[]{Validation.class});
         assertEquals(0, list.size());
     }
 
     public void testFindClass_packageDoseExist() {
-        List<Class> list = ClassUtils.findClass("com.biomatters.plugins.barcoding.validator.validation.nopackage", new Class[]{BarcodeValidation.class});
+        List<Class> list = ClassUtils.findClass("com.biomatters.plugins.barcoding.validator.validation.nopackage", new Class[]{Validation.class});
         assertEquals(0, list.size());
     }
 
     public void testFindClass_fromParentPackage() {
         boolean pass = false;
-        List<Class> list = ClassUtils.findClass("com.biomatters", new Class[]{BarcodeValidation.class});
+        List<Class> list = ClassUtils.findClass("com.biomatters", new Class[]{Validation.class});
 
         for (Class cl : list) {
-            if (cl.equals(BarcodeConsensusValidation.class)) {
+            if (cl.equals(ConsensusValidation.class)) {
                 pass = true;
             }
         }
@@ -47,9 +47,9 @@ public class ClassUtilsTest extends TestCase {
 
     public void testFindClass() {
         boolean pass = false;
-        List<Class> list = ClassUtils.findClass("com.biomatters.plugins.barcoding.validator.validation", new Class[]{BarcodeValidation.class});
+        List<Class> list = ClassUtils.findClass("com.biomatters.plugins.barcoding.validator.validation", new Class[]{Validation.class});
         for (Class cl : list) {
-            if (cl.equals(BarcodeConsensusValidation.class)) {
+            if (cl.equals(ConsensusValidation.class)) {
                 pass = true;
             }
         }
@@ -57,9 +57,9 @@ public class ClassUtilsTest extends TestCase {
         assertTrue(pass);
 
         pass =false;
-        list = ClassUtils.findClass("com.biomatters.plugins.barcoding.validator.validation", new Class[]{TraceValidation.class});
+        list = ClassUtils.findClass("com.biomatters.plugins.barcoding.validator.validation", new Class[]{Validation.class});
         for (Class cl : list) {
-            if (cl.equals(SlidingWindowTraceValidation.class)) {
+            if (cl.equals(SlidingWindowValidation.class)) {
                 pass = true;
             }
         }
@@ -70,7 +70,7 @@ public class ClassUtilsTest extends TestCase {
         int count = 0;
         List<Class> list = ClassUtils.findClass("com.biomatters", new Class[]{Validation.class});
         for (Class cl : list) {
-            if (cl.equals(BarcodeConsensusValidation.class) || cl.equals(SlidingWindowTraceValidation.class)) {
+            if (cl.equals(ConsensusValidation.class) || cl.equals(SlidingWindowValidation.class)) {
                 count++;
             }
 
@@ -81,9 +81,9 @@ public class ClassUtilsTest extends TestCase {
 
     public void testFindClass_multipleSuper() {
         boolean pass = false;
-        List<Class> list = ClassUtils.findClass("com.biomatters", new Class[]{Validation.class, BarcodeValidation.class});
+        List<Class> list = ClassUtils.findClass("com.biomatters", new Class[]{Validation.class, Validation.class});
         for (Class cl : list) {
-            if (cl.equals(BarcodeConsensusValidation.class)) {
+            if (cl.equals(ConsensusValidation.class)) {
                 pass = true;
             }
         }

@@ -64,7 +64,7 @@ public class SlidingWindowValidationOptions extends ValidationOptions {
     }
 
     /**
-     * @return The identifier of the option.
+     * @return Identifier of the SlidingWindowValidationOptions.
      */
     @Override
     public String getIdentifier() {
@@ -72,7 +72,7 @@ public class SlidingWindowValidationOptions extends ValidationOptions {
     }
 
     /**
-     * @return A label associated with the option.
+     * @return Label for the SlidingWindowValidationOptions.
      */
     @Override
     public String getLabel() {
@@ -80,15 +80,10 @@ public class SlidingWindowValidationOptions extends ValidationOptions {
     }
 
     /**
-     * @return A description of the option.
+     * @return Description of the SlidingWindowValidationOptions.
      */
     @Override
     public String getDescription() {
         return DESCRIPTION;
-    }
-
-    @Override
-    public ValidationGroup getGroup() {
-        return ValidationGroup.TRACE_VALIDATION_GROUP;
     }
 }

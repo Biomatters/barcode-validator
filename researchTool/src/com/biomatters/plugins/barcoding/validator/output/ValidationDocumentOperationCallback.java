@@ -107,20 +107,20 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
     }
 
     @Override
-    public void addValidationResult(ValidationOptions options, ValidationResult validationResult, ProgressListener progressListener) throws DocumentOperationException {
-        List<PluginDocument> docsToAddToResults = validationResult.getIntermediateDocumentsToAddToResults();
-        CompositeProgressListener resultAddingProgress = new CompositeProgressListener(progressListener, docsToAddToResults.size());
+    public void addValidationResults(ValidationOptions options, List<ValidationResult> validationResults, ProgressListener progressListener) throws DocumentOperationException {
+        CompositeProgressListener resultAddingProgress = new CompositeProgressListener(progressListener, validationResults.size());
 
-        List<URN> supplementaryDocUrns = new ArrayList<URN>();
-        for (PluginDocument docToAdd : docsToAddToResults) {
+        for (ValidationResult validationResult : validationResults) {
             resultAddingProgress.beginSubtask();
-            supplementaryDocUrns.add(saveDocumentAndGetUrn(docToAdd, resultAddingProgress));
-        }
 
-        outputRecord.validationRecords.add(
-                new RecordOfValidationResult(options, validationResult.isPassed(), validationResult.getMessage(), validationResult.getEntry(),
-                        supplementaryDocUrns)
-        );
+            List<URN> supplementaryDocUrns = new ArrayList<URN>();
+
+            for (PluginDocument docToAdd : validationResult.getIntermediateDocuments()) {
+                supplementaryDocUrns.add(saveDocumentAndGetUrn(docToAdd, ProgressListener.EMPTY));
+            }
+
+            outputRecord.validationRecords.add(new RecordOfValidationResult(options, validationResult.isPassed(), validationResult.getMessage(), validationResult.getEntry(), supplementaryDocUrns));
+        }
     }
 
     public ValidationOutputRecord getRecord() {

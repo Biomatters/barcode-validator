@@ -107,30 +107,45 @@ public class QualityValidationResult extends ValidationResultEntry {
         public static final String FAILED_NUM = "Failed Num";
         public static final String STATUS = "Status";
 
+        public static final String DEFAULT_NAME = "Stat";
+
         private LinkResultColumn nameCol;
         private ResultColumn<Double> passRatioCol;
         private ResultColumn<Integer> failNumCol;
         private ResultColumn<Boolean> statusCol;
 
         public StatsFact() {
-            this("Stat");
+            this(DEFAULT_NAME);
+
+            initColumns();
+
             setName("-");
             setFailNum(0);
             setStatus(false);
             setPassRatio(0);
         }
 
-        public StatsFact(String name) {
-            super(name);
-            nameCol = new LinkResultColumn(TRACE_NAME);
-            passRatioCol = new DoubleResultColumn(PASS_RATIO);
-            failNumCol = new IntegerResultColumn(FAILED_NUM);
-            statusCol = new BooleanResultColumn(STATUS);
+        public StatsFact(String factName) {
+            super(DEFAULT_NAME);
+
+            initColumns();
 
             setName("None");
             setPassRatio(0);
             setFailNum(-1);
             setStatus(false);
+        }
+
+        public StatsFact(String name, boolean status, int failNum, double passRatio, List<URN> links) {
+            super("Stat");
+
+            initColumns();
+
+            setName(name);
+            setStatus(status);
+            setFailNum(failNum);
+            setPassRatio(passRatio);
+            setLinks(links);
         }
 
         @Override
@@ -193,6 +208,13 @@ public class QualityValidationResult extends ValidationResultEntry {
 
         public boolean getStatus() {
             return statusCol.getData();
+        }
+
+        private void initColumns() {
+            nameCol = new LinkResultColumn(TRACE_NAME);
+            passRatioCol = new DoubleResultColumn(PASS_RATIO);
+            failNumCol = new IntegerResultColumn(FAILED_NUM);
+            statusCol = new BooleanResultColumn(STATUS);
         }
     }
 }

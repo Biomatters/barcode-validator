@@ -23,19 +23,19 @@ import java.util.Map;
  * @author Frank Lee
  * Created by frank on 2/10/14.
  */
-public class BarcodeConsensusValidation extends BarcodeCompareValidation {
+public class ConsensusValidation extends SequenceCompareValidation {
     private static final String MUSCLE_OPERATION_ID = "MUSCLE";
     @Override
     public ValidationOptions getOptions() {
-        return new BarcodeConsensusValidationOptions(BarcodeConsensusValidation.class);
+        return new ConsensusValidationOptions(ConsensusValidation.class);
     }
 
     @Override
     public ValidationResult validate(SequenceDocument originalSequence, SequenceDocument generatedSequence, ValidationOptions options) {
         DocumentOperation alignmentOperation = PluginUtilities.getAlignmentOperation(MUSCLE_OPERATION_ID, SequenceDocument.Alphabet.NUCLEOTIDE);
-        AnnotatedPluginDocument origianlDoc = DocumentUtilities.getAnnotatedPluginDocumentThatContains(originalSequence);
-        if (origianlDoc == null) {
-            origianlDoc = DocumentUtilities.createAnnotatedPluginDocument(originalSequence);
+        AnnotatedPluginDocument originalDoc = DocumentUtilities.getAnnotatedPluginDocumentThatContains(originalSequence);
+        if (originalDoc == null) {
+            originalDoc = DocumentUtilities.createAnnotatedPluginDocument(originalSequence);
         }
 
         AnnotatedPluginDocument generatedDoc = DocumentUtilities.getAnnotatedPluginDocumentThatContains(generatedSequence);
@@ -50,11 +50,11 @@ public class BarcodeConsensusValidation extends BarcodeCompareValidation {
         }
 
         try {
-            BarcodeConsensusValidationOptions opt = (BarcodeConsensusValidationOptions) options;
+            ConsensusValidationOptions opt = (ConsensusValidationOptions) options;
             Map<Float, PluginDocument> interDocs = new HashMap<Float, PluginDocument>();
             float matches = opt.getMatches();
-            float simi1 = getSimilarity(alignmentOperation, origianlDoc, generatedDoc, interDocs);
-            float simi2 = getSimilarity(alignmentOperation, origianlDoc, reversedGeneratedDoc, interDocs);
+            float simi1 = getSimilarity(alignmentOperation, originalDoc, generatedDoc, interDocs);
+            float simi2 = getSimilarity(alignmentOperation, originalDoc, reversedGeneratedDoc, interDocs);
             float simi = simi1 > simi2 ? simi1 : simi2;
 
             ValidationResult validationResult;

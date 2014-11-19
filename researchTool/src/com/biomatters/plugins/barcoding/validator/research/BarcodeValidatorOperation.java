@@ -207,8 +207,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
     private static void runPipelineWithOptions(String setName, String subSubFolderSeparator, Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces, OperationCallback operationCallback, BarcodeValidatorOptions barcodeValidatorOptions, ProgressListener progressListener) throws DocumentOperationException {
         TrimmingOptions trimmingOptions = barcodeValidatorOptions.getTrimmingOptions();
         CAP3Options CAP3Options = barcodeValidatorOptions.getAssemblyOptions();
-        Map<String, ValidationOptions> traceValidationOptions = barcodeValidatorOptions.getTraceValidationOptions();
-        Map<String, ValidationOptions> barcodeValidationOptions = barcodeValidatorOptions.getBarcodeValidationOptions();
+        Map<String, ValidationOptions> validationOptions = barcodeValidatorOptions.getValidationOptions();
 
         List<ValidationOutputRecord> outputs = new ArrayList<ValidationOutputRecord>();
         CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, suppliedBarcodesToSuppliedTraces.size()+1);
@@ -229,7 +228,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             setSubFolder(operationCallback, setName + subSubFolderSeparator + barcodeName);
 
             pipelineProgress.beginSubtask();
-            Pipeline.runValidationPipeline(barcode, traces, trimmingOptions, CAP3Options, traceValidationOptions, barcodeValidationOptions, callback, pipelineProgress);
+            Pipeline.runValidationPipeline(barcode, traces, trimmingOptions, CAP3Options, validationOptions, callback, pipelineProgress);
             setSubFolder(operationCallback, setName);
             outputs.add(callback.getRecord());
         }

@@ -17,7 +17,7 @@ public class ValidationResult {
 
     private boolean passed;
     private String message;
-    private List<PluginDocument> intermediateDocumentsToAddToResults = new ArrayList<PluginDocument>();
+    private List<PluginDocument> intermediateDocuments = new ArrayList<PluginDocument>();
 
     private ValidationResultEntry entry;
 
@@ -60,15 +60,15 @@ public class ValidationResult {
      * @return any {@link com.biomatters.geneious.publicapi.documents.PluginDocument} generated during the validation
      * process that should be returned to the user.
      */
-    public List<PluginDocument> getIntermediateDocumentsToAddToResults() {
-        return Collections.unmodifiableList(intermediateDocumentsToAddToResults);
+    public List<PluginDocument> getIntermediateDocuments() {
+        return Collections.unmodifiableList(intermediateDocuments);
     }
 
     /**
      *
-     * @param document to be returned from {@link #getIntermediateDocumentsToAddToResults()}
+     * @param document to be returned from {@link #getIntermediateDocuments()}
      */
     public void addIntermediateDocument(PluginDocument document) {
-        intermediateDocumentsToAddToResults.add(document);
+        intermediateDocuments.add(document);
     }
 }
