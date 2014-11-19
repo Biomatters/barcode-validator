@@ -39,10 +39,11 @@ public class ClassUtils {
             Enumeration<URL> resources = Thread.currentThread().getContextClassLoader().getResources(path);
             while (resources.hasMoreElements()) {
                 URL resource = resources.nextElement();
+                String resourcePath = replaceASCIISpacesWithNormalSpaces(resource.getPath());
                 if ("jar".equals(resource.getProtocol())) {
-                    files.addAll(findClassesFromJar(resource.getPath()));
+                    files.addAll(findClassesFromJar(resourcePath));
                 } else if ("file".equals(resource.getProtocol())) {
-                    files.addAll(findClassesFromFile(new File(resource.getPath()), packageName));
+                    files.addAll(findClassesFromFile(new File(resourcePath), packageName));
                 }
             }
 
@@ -124,5 +125,9 @@ public class ClassUtils {
             }
         }
         return classes;
+    }
+
+    private static String replaceASCIISpacesWithNormalSpaces(String path) {
+        return path.replace("%20", " ");
     }
 }

@@ -7,7 +7,6 @@ import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Runner;
 import com.biomatters.plugins.barcoding.validator.validation.consensus.ConsensusUtilities;
-import com.biomatters.plugins.barcoding.validator.validation.results.BarcodeValidationResult;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.PrimerTrimmingOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.SequenceTrimmer;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
@@ -28,46 +27,37 @@ public class Pipeline {
                                              List<NucleotideGraphSequenceDocument> traces,
                                              TrimmingOptions trimmingOptions,
                                              CAP3Options CAP3Options,
-                                             Map<String, ValidationOptions> traceValidationOptions,
-                                             Map<String, ValidationOptions> barcodeValidationOptions,
+                                             Map<String, ValidationOptions> validationOptions,
                                              ValidationCallback callback,
                                              ProgressListener progressListener) throws DocumentOperationException {
-        CompositeProgressListener stepsProgress = new CompositeProgressListener(progressListener, 4);
+        CompositeProgressListener stepsProgress = new CompositeProgressListener(progressListener, 3);
 
-        stepsProgress.beginSubtask("Trimming Traces");
+        stepsProgress.beginSubtask("Trimming traces...");
+
         CompositeProgressListener trimmingProgress = new CompositeProgressListener(stepsProgress, 2);
         trimmingProgress.beginSubtask();
         List<NucleotideGraphSequenceDocument> trimmedTraces = trimTraces(traces, trimmingOptions, true, trimmingProgress);
         trimmingProgress.beginSubtask();
         trimmedTraces = callback.addTrimmedTraces(trimmedTraces, trimmingProgress);
 
-        stepsProgress.beginSubtask("Validating Traces...");
-        CompositeProgressListener traceValidationProgress = new CompositeProgressListener(stepsProgress, 2);
+        stepsProgress.beginSubtask("Assembling traces...");
 
-        traceValidationProgress.beginSubtask();
-        List<ValidationRun> traceValidationResults = runValidationTasks(traceValidationOptions, traceValidationProgress,
-                TraceValidation.getTraceValidations(), createTraceValiationRunnerForTraces(trimmedTraces)
-        );
-
-        traceValidationProgress.beginSubtask();
-        addValidationResultsToCallback(callback, traceValidationResults, traceValidationProgress);
-
-        stepsProgress.beginSubtask("Assembling...");
         CompositeProgressListener assembleTracesProgress = new CompositeProgressListener(stepsProgress, 3);
         assembleTracesProgress.beginSubtask();
-        List<SequenceAlignmentDocument> contigs = assembleTraces(
-                trimmedTraces, CAP3Options, barcode.getName(), assembleTracesProgress);
+        List<SequenceAlignmentDocument> contigs = assembleTraces(trimmedTraces, CAP3Options, barcode.getName(), assembleTracesProgress);
         assembleTracesProgress.beginSubtask();
-        if(!contigs.isEmpty()) {
+        if (!contigs.isEmpty()) {
             CompositeProgressListener progressForAddingAssembly = new CompositeProgressListener(assembleTracesProgress, contigs.size());
+
             for (SequenceAlignmentDocument contig : contigs) {
                 progressForAddingAssembly.beginSubtask();
+
                 callback.addAssembly(contig, progressForAddingAssembly);
             }
         }
         assembleTracesProgress.beginSubtask();
-        List<NucleotideSequenceDocument> consensusSequences = new ArrayList<NucleotideSequenceDocument>();
-        if(!contigs.isEmpty()) {
+        List<NucleotideGraphSequenceDocument> consensusSequences = new ArrayList<NucleotideGraphSequenceDocument>();
+        if (!contigs.isEmpty()) {
             CompositeProgressListener progressForEachContig = new CompositeProgressListener(assembleTracesProgress, contigs.size());
 
             for (SequenceAlignmentDocument contig : contigs) {
@@ -76,71 +66,114 @@ public class Pipeline {
                 CompositeProgressListener progressForEachConsensusStep = new CompositeProgressListener(progressForEachContig, 2);
 
                 progressForEachConsensusStep.beginSubtask();
+
                 NucleotideGraphSequenceDocument consensus = ConsensusUtilities.getConsensus(contig);
-                List<NucleotideGraphSequenceDocument> resultConsusList = trimTraces(
-                        Collections.singletonList(consensus), trimmingOptions, true, progressForEachConsensusStep);
-                assert resultConsusList.size() == 1;
-                NucleotideGraphSequenceDocument retConsus = resultConsusList.get(0);
+                List<NucleotideGraphSequenceDocument> resultConsensusList = trimTraces(Collections.singletonList(consensus), trimmingOptions, true, progressForEachConsensusStep);
+                assert resultConsensusList.size() == 1;
+                NucleotideGraphSequenceDocument retConsus = resultConsensusList.get(0);
 
                 progressForEachConsensusStep.beginSubtask();
+
                 callback.addConsensus(retConsus, progressForEachConsensusStep);
                 consensusSequences.add(retConsus);
             }
         }
 
-        stepsProgress.beginSubtask("Validating Barcode Sequences...");
-        CompositeProgressListener validateBarcodeProgress = new CompositeProgressListener(stepsProgress, 2);
-        validateBarcodeProgress.beginSubtask();
-        List<ValidationRun> barcodeValidationResults = runValidationTasks(barcodeValidationOptions, validateBarcodeProgress,
-                BarcodeValidation.getBarcodeValidations(), createBarcodeValidationRunnerForInput(barcode, consensusSequences)
+        stepsProgress.beginSubtask("Validating trimmed traces and the generated consensus...");
+
+        List<Validation> validations = Validation.getValidations();
+        List<SingleSequenceValidation> singleSequenceValidations = new ArrayList<SingleSequenceValidation>();
+        List<SequenceCompareValidation> sequenceCompareValidations = new ArrayList<SequenceCompareValidation>();
+        for (Validation validation : validations) {
+            if (validation instanceof SingleSequenceValidation) {
+                singleSequenceValidations.add((SingleSequenceValidation)validation);
+            } else if (validation instanceof SequenceCompareValidation) {
+                sequenceCompareValidations.add((SequenceCompareValidation)validation);
+            } else {
+                throw new DocumentOperationException("Unsupported validation procedure: " + validation.getClass().getSimpleName());
+            }
+        }
+        CompositeProgressListener validationProgress = new CompositeProgressListener(stepsProgress, 2);
+        validationProgress.beginSubtask("Validating trimmed traces");
+        addValidationResultsToCallback(
+                callback,
+                runValidationTasks(
+                        singleSequenceValidations,
+                        createSingleSequenceValidationRunner(trimmedTraces),
+                        validationOptions,
+                        validationProgress
+                ),
+                validationProgress
         );
-        validateBarcodeProgress.beginSubtask();
-        addValidationResultsToCallback(callback, barcodeValidationResults, validateBarcodeProgress);
+        addValidationResultsToCallback(
+                callback,
+                runValidationTasks(
+                        sequenceCompareValidations,
+                        createSequenceCompareValidationRunner(trimmedTraces, barcode),
+                        validationOptions,
+                        validationProgress
+                ),
+                validationProgress
+        );
+        validationProgress.beginSubtask("Validating the generated consensus");
+        addValidationResultsToCallback(
+                callback,
+                runValidationTasks(
+                        singleSequenceValidations,
+                        createSingleSequenceValidationRunner(consensusSequences),
+                        validationOptions,
+                        validationProgress
+                ),
+                validationProgress
+        );
+        addValidationResultsToCallback(
+                callback,
+                runValidationTasks(
+                    sequenceCompareValidations,
+                    createSequenceCompareValidationRunner(consensusSequences, barcode),
+                    validationOptions,
+                    validationProgress
+                ),
+                validationProgress
+        );
     }
 
-    private static ValidationRunner<TraceValidation> createTraceValiationRunnerForTraces(final List<NucleotideGraphSequenceDocument> trimmedTraces) {
-        return new ValidationRunner<TraceValidation>() {
+    private static ValidationRunner<SingleSequenceValidation> createSingleSequenceValidationRunner(final List<NucleotideGraphSequenceDocument> sequences) {
+        return new ValidationRunner<SingleSequenceValidation>() {
             @Override
-            ValidationResult run(TraceValidation validation, ValidationOptions options) throws DocumentOperationException {
-                return validation.validate(trimmedTraces, options);
+            List<ValidationResult> run(SingleSequenceValidation validation, ValidationOptions options) throws DocumentOperationException {
+                List<ValidationResult> validationResults = new ArrayList<ValidationResult>();
+                for (NucleotideGraphSequenceDocument sequence : sequences) {
+                    validationResults.add(validation.validate(sequence, options));
+                }
+
+                return validationResults;
             }
         };
     }
 
-    private static ValidationRunner<BarcodeValidation> createBarcodeValidationRunnerForInput(final NucleotideSequenceDocument barcode,
-                                                                                             final List<NucleotideSequenceDocument> consensus) {
-        return new ValidationRunner<BarcodeValidation>() {
+    private static ValidationRunner<SequenceCompareValidation> createSequenceCompareValidationRunner(final List<NucleotideGraphSequenceDocument> sequences, final NucleotideSequenceDocument referenceSequence) {
+        return new ValidationRunner<SequenceCompareValidation>() {
             @Override
-            ValidationResult run(BarcodeValidation validation, ValidationOptions options) throws DocumentOperationException {
-                if(consensus.isEmpty()) {
-                    ValidationResult result = new ValidationResult(false, "Assembly failed.");
-                    result.setEntry(new BarcodeValidationResult());
-                    return result;
-                } else if(consensus.size() > 1) {
-                    ValidationResult result = new ValidationResult(false, "Assembly produced more than one contig.");
-                    result.setEntry(new BarcodeValidationResult());
-                    return result;
+            List<ValidationResult> run(SequenceCompareValidation validation, ValidationOptions options) throws DocumentOperationException {
+                List<ValidationResult> validationResults = new ArrayList<ValidationResult>();
+
+                for (NucleotideSequenceDocument sequence : sequences) {
+                     validationResults.add(validation.validate(sequence, referenceSequence, options));
                 }
 
-                if (validation instanceof BarcodeCompareValidation) {
-                    return ((BarcodeCompareValidation) validation).validate(barcode, consensus.get(0), options);
-                } else if(validation instanceof SingleBarcodeValidaton) {
-                    throw new DocumentOperationException("Single barcode validation not implemented yet");
-                } else {
-                    throw new DocumentOperationException("Invalid validation options.");
-                }
+                return validationResults;
             }
         };
     }
 
-    private static void addValidationResultsToCallback(ValidationCallback callback,
-                                                       List<ValidationRun> runs,
-                                                       ProgressListener progressListener) throws DocumentOperationException {
+    private static void addValidationResultsToCallback(ValidationCallback callback, List<ValidationRun> runs, ProgressListener progressListener) throws DocumentOperationException {
         CompositeProgressListener addTraceValidationResultsProgress = new CompositeProgressListener(progressListener, runs.size());
 
         for (ValidationRun run : runs) {
             addTraceValidationResultsProgress.beginSubtask();
-            callback.addValidationResult(run.options, run.result, addTraceValidationResultsProgress);
+
+            callback.addValidationResults(run.options, run.results, addTraceValidationResultsProgress);
         }
     }
 
@@ -149,29 +182,30 @@ public class Pipeline {
      * {@link ValidationRunner}
      * and {@link ValidationOptions}
      *
-     * @param options Map of {@link ValidationOptions#getIdentifier()} to
-     * {@link ValidationOptions} of tasks to run.
+     * @param options Map of {@link ValidationOptions#getIdentifier()} to {@link ValidationOptions} of tasks to run.
      * @param progressListener to report progress to
-     * @return a list of {@link ValidationRun}
-     * describing each run of the specified {@link Validation}s.
+     * @return {@link ValidationRun}s that describe the runs of the supplied {@link Validation}s.
      *
      * @throws com.biomatters.geneious.publicapi.plugin.DocumentOperationException if a problem occurs during validation
      */
-    private static <T extends Validation> List<ValidationRun> runValidationTasks(Map<String, ValidationOptions> options,
-                                                                                 ProgressListener progressListener,
-                                                                                 List<T> validationTasks,
-                                                                                 ValidationRunner<T> runner) throws DocumentOperationException {
+    private static <T extends Validation> List<ValidationRun> runValidationTasks(List<T> validationTasks,
+                                                                                 ValidationRunner<T> runner,
+                                                                                 Map<String, ValidationOptions> options,
+                                                                                 ProgressListener progressListener) throws DocumentOperationException {
         List<ValidationRun> result = new ArrayList<ValidationRun>();
         CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, validationTasks.size());
 
         for (T validation : validationTasks) {
             validationProgress.beginSubtask();
+
             ValidationOptions templateOptionsForValidation = validation.getOptions();
+
             ValidationOptions optionsToRunWith = options.get(templateOptionsForValidation.getIdentifier());
+
             if (optionsToRunWith == null) {
-                throw new DocumentOperationException("Could not find validation module for identifier: '" +
-                        templateOptionsForValidation.getIdentifier() + "'.");
+                throw new DocumentOperationException("Could not find validation module for identifier: '" + templateOptionsForValidation.getIdentifier() + "'.");
             }
+
             result.add(new ValidationRun(optionsToRunWith, runner.run(validation, optionsToRunWith)));
         }
 
@@ -187,25 +221,26 @@ public class Pipeline {
 
     private static List<NucleotideGraphSequenceDocument> trimTraces(List<NucleotideGraphSequenceDocument> traces,
                                                                     TrimmingOptions options,
-                                                                    boolean addAnnotation,
+                                                                    boolean trimByAddingAnnotation,
                                                                     ProgressListener progressListener) throws DocumentOperationException {
         List<NucleotideGraphSequenceDocument> trimmedTraces = new ArrayList<NucleotideGraphSequenceDocument>();
-        CompositeProgressListener trimmingProgress = new CompositeProgressListener(progressListener, traces.size());
-
         PrimerTrimmingOptions primerTrimmingOptions = options.getPrimerTrimmingOptions();
+        CompositeProgressListener trimmingProgress = new CompositeProgressListener(progressListener, traces.size());
 
         for (NucleotideGraphSequenceDocument trace : traces) {
             trimmingProgress.beginSubtask("Trimming " + trace.getName());
 
-            trimmedTraces.add(SequenceTrimmer.trimSequenceByQualityAndPrimers(trace,
-                                                                              options.getQualityTrimmingOptions().getErrorProbabilityLimit(),
-                                                                              primerTrimmingOptions.getPrimers(),
-                                                                              (float)primerTrimmingOptions.getGapOptionPenalty(),
-                                                                              (float)primerTrimmingOptions.getGapExtensionPenalty(),
-                                                                              primerTrimmingOptions.getScores(),
-                                                                              primerTrimmingOptions.getMaximumMismatches(),
-                                                                              primerTrimmingOptions.getMinimumMatchLength(),
-                                                                              addAnnotation));
+            trimmedTraces.add(SequenceTrimmer.trimSequenceByQualityAndPrimers(
+                    trace,
+                    options.getQualityTrimmingOptions().getErrorProbabilityLimit(),
+                    primerTrimmingOptions.getPrimers(),
+                    (float)primerTrimmingOptions.getGapOptionPenalty(),
+                    (float)primerTrimmingOptions.getGapExtensionPenalty(),
+                    primerTrimmingOptions.getScores(),
+                    primerTrimmingOptions.getMaximumMismatches(),
+                    primerTrimmingOptions.getMinimumMatchLength(),
+                    trimByAddingAnnotation)
+            );
         }
 
         return trimmedTraces;
@@ -224,16 +259,16 @@ public class Pipeline {
          * @return a {@link ValidationResult}
          * @throws com.biomatters.geneious.publicapi.plugin.DocumentOperationException
          */
-        abstract ValidationResult run(T validation, ValidationOptions options) throws DocumentOperationException;
+        abstract List<ValidationResult> run(T validation, ValidationOptions options) throws DocumentOperationException;
     }
 
     private static class ValidationRun {
         private ValidationOptions options;
-        private ValidationResult result;
+        private List<ValidationResult> results;
 
-        private ValidationRun(ValidationOptions options, ValidationResult result) {
+        private ValidationRun(ValidationOptions options, List<ValidationResult> results) {
             this.options = options;
-            this.result = result;
+            this.results = results;
         }
     }
 }

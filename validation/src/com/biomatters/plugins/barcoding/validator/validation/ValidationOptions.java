@@ -5,17 +5,18 @@ import com.biomatters.geneious.publicapi.plugin.Options;
 import org.jdom.Element;
 
 /**
- * Options used to run {@link com.biomatters.plugins.barcoding.validator.validation.Validation} tasks.
- * <br/><br/>
- * All implementing subclasses must support serialization to and from XML
- * using {@link com.biomatters.geneious.publicapi.documents.XMLSerializer}.  The easiest way to achieve this is to:
+ * Options used to run {@link com.biomatters.plugins.barcoding.validator.validation.Validation} tasks. <br/><br/>
+ * Subclasses are required to support serialization to and from XML using
+ * {@link com.biomatters.geneious.publicapi.documents.XMLSerializer}. The easiest way to achieve this is to:
  * <ul>
  *     <li>
  *         Avoid storing internal state outside of the
  *         {@link com.biomatters.geneious.publicapi.documents.XMLSerializable#toXML()}
  *         {@link com.biomatters.geneious.publicapi.documents.XMLSerializable#fromXML(org.jdom.Element)} methods.
  *     </li>
- *     <li>Implement a constructor that takes an {@link org.jdom.Element} and calls super({@link org.jdom.Element})</li>
+ *     <li>
+ *         Implement a constructor that takes a {@link org.jdom.Element} and that calls super({@link org.jdom.Element})
+ *     </li>
  * </ul>
  *
  * @author Gen Li
@@ -31,23 +32,17 @@ public abstract class ValidationOptions extends Options {
         super(cls);
     }
     /**
-     * @return The option's identifier.
+     * @return Identifier of the Options.
      */
     public abstract String getIdentifier();
 
     /**
-     * @return A label associated with the option.
+     * @return Label for the Options.
      */
     public abstract String getLabel();
 
     /**
-     * @return A description of the option.
+     * @return Description of the ValidationOptions.
      */
     public abstract String getDescription();
-
-    /**
-     * @return The {@link ValidationGroup}
-     * this options belongs to
-     */
-    public abstract ValidationGroup getGroup();
 }

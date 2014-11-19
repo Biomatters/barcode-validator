@@ -9,7 +9,7 @@ import java.util.Arrays;
  * @author Frank Lee
  * Created by frank on 2/10/14.
  */
-public class BarcodeConsensusValidationOptions extends ValidationOptions {
+public class ConsensusValidationOptions extends ValidationOptions {
 
     private static final String IDENTIFIER  = "BarcodeConsensusValidationOptions";
     private static final String LABEL       = "FASTA check";
@@ -18,11 +18,11 @@ public class BarcodeConsensusValidationOptions extends ValidationOptions {
     private static final String MATCHES       = "matches";
 
     @SuppressWarnings("UnusedDeclaration")
-    public BarcodeConsensusValidationOptions(Element element) throws XMLSerializationException {
+    public ConsensusValidationOptions(Element element) throws XMLSerializationException {
         super(element);
     }
 
-    public BarcodeConsensusValidationOptions(Class cls) {
+    public ConsensusValidationOptions(Class cls) {
         super(cls);
         OptionValue exactValue = new OptionValue("100", "an exact match");
         OptionValue ninetyPercentValue = new OptionValue("90", "90% similar");
@@ -45,11 +45,6 @@ public class BarcodeConsensusValidationOptions extends ValidationOptions {
     @Override
     public String getDescription() {
         return DESCRIPTION;
-    }
-
-    @Override
-    public ValidationGroup getGroup() {
-        return ValidationGroup.BARCODE_VALIDATION_GROUP;
     }
 
     public float getMatches() {

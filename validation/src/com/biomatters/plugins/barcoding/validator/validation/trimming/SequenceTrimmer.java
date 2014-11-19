@@ -23,11 +23,11 @@ import java.util.*;
  *         Created on 9/09/14 11:03 AM
  */
 public class SequenceTrimmer {
+    public static final String ANNOTATION_SUFFIX = "trims annotated";
+    public static final String TRIMMED_SUFFIX    = "trimmed";
+    
     private static final int SMITH_WATERMAN_SEQUENCE_INDEX = 0;
     private static final int SMITH_WATERMAN_PRIMER_INDEX   = 1;
-
-    public static final String ANNOTATION_SUFFIX = "trims annotated";
-    public static final String TRIMMED_SUFFIX = "trimmed";
 
     private SequenceTrimmer() {
     }
@@ -101,7 +101,13 @@ public class SequenceTrimmer {
      * @return Trimmed sequence.
      */
     public static NucleotideGraphSequenceDocument trimSequenceUsingAnnotations(NucleotideGraphSequenceDocument sequence) {
-        return (NucleotideGraphSequenceDocument)SequenceExtractionUtilities.extract(sequence, new SequenceExtractionUtilities.ExtractionOptions(getNonTrimmedIntervals(sequence)));
+        List<SequenceAnnotationInterval> nonTrimmedIntervals = getNonTrimmedIntervals(sequence);
+
+        if (nonTrimmedIntervals.isEmpty()) {
+            return (NucleotideGraphSequenceDocument)SequenceExtractionUtilities.extract(sequence, new SequenceExtractionUtilities.ExtractionOptions(1, sequence.getSequenceLength()));
+        } else {
+            return (NucleotideGraphSequenceDocument)SequenceExtractionUtilities.extract(sequence, new SequenceExtractionUtilities.ExtractionOptions(nonTrimmedIntervals));
+        }
     }
 
     /**
