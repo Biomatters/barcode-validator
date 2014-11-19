@@ -496,6 +496,8 @@ public class ValidationReportViewer extends DocumentViewer {
                             }
                             writeRow(writer, values);
                         }
+
+                        Dialogs.showMessageDialog("Table is exported to " + selectionOption.getValue() + " successfully.");
                     } catch (IOException e1) {
                         Dialogs.showMessageDialog("Failed to export table, since " + e1.getMessage());
                     } finally {
