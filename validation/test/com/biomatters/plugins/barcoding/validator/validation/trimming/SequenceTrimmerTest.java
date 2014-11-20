@@ -15,6 +15,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Gen Li
@@ -267,7 +268,8 @@ public class SequenceTrimmerTest extends Assert {
                 new CostMatrixOption("Scores", "Scores", true).getDefaultValue().getScores(),
                 maxMismatches,
                 minMatchLength,
-                false
+                false,
+                new AtomicBoolean(false)
         );
 
         assertEquals(expectedTrimmedSequence, trimmedSequence.getSequenceString());

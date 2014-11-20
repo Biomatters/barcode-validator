@@ -15,6 +15,7 @@ import jebl.evolution.sequences.Nucleotides;
 import jebl.util.ProgressListener;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Static methods for trimming sequences. Non-instantiable.
@@ -56,7 +57,8 @@ public class SequenceTrimmer {
                                                                                   Scores scores,
                                                                                   int maxMismatches,
                                                                                   int minMatchLength,
-                                                                                  boolean trimByAddingAnnotations) {
+                                                                                  boolean trimByAddingAnnotations,
+                                                                                  AtomicBoolean hasPrimerTrimmed) {
         List<Trimmage> trimmages = new ArrayList<Trimmage>();
 
         /* Get the Trimmage that derives from running the modified Mott algorithm on the supplied sequence. */
@@ -66,7 +68,11 @@ public class SequenceTrimmer {
          * Smith-Waterman algorithm.
          */
         for (OligoSequenceDocument primer : primers) {
-            trimmages.add(getTrimmageForPrimerTrimming(sequence, primer, gapOpenPenalty, gapExtensionPenalty, scores, maxMismatches, minMatchLength));
+            Trimmage trimmageForPrimerTrimming = getTrimmageForPrimerTrimming(sequence, primer, gapOpenPenalty, gapExtensionPenalty, scores, maxMismatches, minMatchLength);
+            if (trimmageForPrimerTrimming.trimAtStart + trimmageForPrimerTrimming.trimAtEnd > 0) {
+                hasPrimerTrimmed.set(true);
+            }
+            trimmages.add(trimmageForPrimerTrimming);
         }
 
         /* Calculate the maximization of the Trimmages. */

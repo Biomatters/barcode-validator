@@ -36,21 +36,29 @@ public class ValidationReportDocument implements PluginDocument {
     }
 
     private static String generateDescriptionFromOptions(BarcodeValidatorOptions options) {
-        return "The following trimming and assembly parameters were used.<br>" +
-               "<br>" +
-               "<u>Trimming by quality</u><br>" +
-               "Error Probability Limit = " + options.getTrimmingOptions().getQualityTrimmingOptions().getErrorProbabilityLimit() + "<br>" +
-               "<br>" +
-               "<u>Trimming by primers</u><br>" +
-               "Max Mismatches = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getMaximumMismatches() + "<br>" +
-               "Min Match Length = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getMinimumMatchLength() + "<br>" +
-               "Score Matrix " + options.getTrimmingOptions().getPrimerTrimmingOptions().getScores().getName() + "<br>" +
-               "Gap Option Penalty = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getGapOptionPenalty() + "<br>" +
-               "Gap Extension Penalty = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getGapExtensionPenalty() + "<br>" +
-               "<br>"+
-               "<u>Assembly</u><br>" +
-               "Min Overlap Length = " + options.getAssemblyOptions().getMinOverlapLength() + "<br>" +
-               "Min Overlap Identity = " + options.getAssemblyOptions().getMinOverlapIdentity();
+        StringBuilder sb = new StringBuilder();
+        sb.append("The following trimming and assembly parameters were used.<br>")
+          .append("<br>")
+          .append("<u>Trimming by quality</u><br>")
+          .append("Error Probability Limit = ").append(options.getTrimmingOptions().getQualityTrimmingOptions().getErrorProbabilityLimit())
+          .append("<br>")
+          .append("<br>")
+          .append("<u>Trimming by primers</u><br>");
+
+         if (options.getTrimmingOptions().getPrimerTrimmingOptions().getHasPrimerTrimmered().get()) {
+               sb.append("Max Mismatches = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getMaximumMismatches()).append("<br>")
+                 .append("Min Match Length = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getMinimumMatchLength()).append("<br>")
+                 .append("Score Matrix ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getScores().getName()).append("<br>")
+                 .append("Gap Option Penalty = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getGapOptionPenalty()).append("<br>")
+                 .append("Gap Extension Penalty = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getGapExtensionPenalty()).append("<br>")
+                 .append("<br>");
+        }
+
+        sb.append("<u>Assembly</u><br>")
+               .append("Min Overlap Length = ").append(options.getAssemblyOptions().getMinOverlapLength()).append("<br>")
+               .append("Min Overlap Identity = ").append(options.getAssemblyOptions().getMinOverlapIdentity());
+
+        return sb.toString();
     }
 
     @SuppressWarnings("UnusedDeclaration")
