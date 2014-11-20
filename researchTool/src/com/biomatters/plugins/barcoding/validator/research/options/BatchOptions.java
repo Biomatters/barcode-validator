@@ -30,29 +30,31 @@ import java.util.*;
  */
 public abstract class BatchOptions<T extends Options> extends Options {
     static final String WRAPPED_OPTIONS_KEY = "child";
-    private Option<String, ? extends JComponent> stringOption;
-    private SimpleListener listener = new SimpleListener() {
-        @Override
-        public void objectChanged() {
-            int batchSize = getBatchSize();
-            stringOption.setValue("Number of parameter set is " + batchSize);
-            if (batchSize > 10000) {
-                stringOption.setWarningMessage("Geneious maybe unusable");
-            } else if (batchSize > 200) {
-                stringOption.setWarningMessage("Geneious maybe very slow");
-            }
-        }
-    };
+    private Option<String, ? extends JComponent> numParametersLabel;
 
     private T options;
 
     public BatchOptions(T options) {
         super(options.getClass());
         this.options = options;
-        stringOption = this.options.addLabel("");
+        numParametersLabel = this.options.addLabel("");
         addFirstOptions();
         addChildOptions(WRAPPED_OPTIONS_KEY, "", null, options);
-        addMinMaxOptionsAndHideOriginal(options);
+        SimpleListener listener = new SimpleListener() {
+            @Override
+            public void objectChanged() {
+                int batchSize = getBatchSize();
+                numParametersLabel.setValue("Total number of parameter sets: " + batchSize);
+                if (batchSize > 10000) {
+                    numParametersLabel.setWarningMessage("Too many results can cause Geneious to become unusable");
+                } else if (batchSize > 500) {
+                    numParametersLabel.setWarningMessage("A lot of results will cause Geneious to slow down");
+                } else {
+                    numParametersLabel.setWarningMessage(null);
+                }
+            }
+        };
+        addMinMaxOptionsAndHideOriginal(options, listener);
     }
 
     /**
@@ -62,7 +64,7 @@ public abstract class BatchOptions<T extends Options> extends Options {
      */
     protected abstract void addFirstOptions();
 
-    private void addMinMaxOptionsAndHideOriginal(Options options) {
+    private static void addMinMaxOptionsAndHideOriginal(Options options, SimpleListener listener) {
         for (Options.Option option : options.getOptions()) {
             MultiValueOption multiValueOption = null;
             if(option instanceof Options.IntegerOption) {
@@ -79,7 +81,7 @@ public abstract class BatchOptions<T extends Options> extends Options {
         }
 
         for (Options childOptions : options.getChildOptions().values()) {
-            addMinMaxOptionsAndHideOriginal(childOptions);
+            addMinMaxOptionsAndHideOriginal(childOptions, listener);
         }
     }
 
