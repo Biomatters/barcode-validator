@@ -91,4 +91,14 @@ public class PrimerTrimmingOptions extends Options {
     private void addMinimumMatchLengthOptions() {
         addIntegerOption(MINIMUM_MATCH_LENGTH_OPTIONS_NAME, "Minimum Match Length", 15, 1, Integer.MAX_VALUE);
     }
+
+    public boolean getHasPrimerTrimmered() {
+        try {
+            return getPrimers().size() > 0;
+        } catch (DocumentOperationException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 }

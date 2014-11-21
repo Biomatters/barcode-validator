@@ -96,7 +96,7 @@ public class Pipeline {
                 throw new DocumentOperationException("Unsupported validation procedure: " + validation.getClass().getSimpleName());
             }
         }
-        CompositeProgressListener validationProgress = new CompositeProgressListener(stepsProgress, 2);
+        CompositeProgressListener validationProgress = new CompositeProgressListener(stepsProgress, 4);
         validationProgress.beginSubtask("Validating trimmed traces");
         addValidationResultsToCallback(
                 callback,
@@ -108,6 +108,7 @@ public class Pipeline {
                 ),
                 validationProgress
         );
+        validationProgress.beginSubtask("Validating trimmed traces with barcode");
         addValidationResultsToCallback(
                 callback,
                 runValidationTasks(
@@ -129,6 +130,7 @@ public class Pipeline {
                 ),
                 validationProgress
         );
+        validationProgress.beginSubtask("Validating the generated consensus with barcode");
         addValidationResultsToCallback(
                 callback,
                 runValidationTasks(
