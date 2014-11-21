@@ -38,7 +38,7 @@ public class ClassUtilsTest extends TestCase {
         List<Class> list = ClassUtils.findClass("com.biomatters", new Class[]{Validation.class});
 
         for (Class cl : list) {
-            if (cl.equals(ConsensusValidation.class)) {
+            if (cl.equals(MuscleAlignmentValidation.class)) {
                 pass = true;
             }
         }
@@ -49,7 +49,7 @@ public class ClassUtilsTest extends TestCase {
         boolean pass = false;
         List<Class> list = ClassUtils.findClass("com.biomatters.plugins.barcoding.validator.validation", new Class[]{Validation.class});
         for (Class cl : list) {
-            if (cl.equals(ConsensusValidation.class)) {
+            if (cl.equals(MuscleAlignmentValidation.class)) {
                 pass = true;
             }
         }
@@ -59,7 +59,7 @@ public class ClassUtilsTest extends TestCase {
         pass =false;
         list = ClassUtils.findClass("com.biomatters.plugins.barcoding.validator.validation", new Class[]{Validation.class});
         for (Class cl : list) {
-            if (cl.equals(SlidingWindowValidation.class)) {
+            if (cl.equals(SlidingWindowQualityValidation.class)) {
                 pass = true;
             }
         }
@@ -70,7 +70,7 @@ public class ClassUtilsTest extends TestCase {
         int count = 0;
         List<Class> list = ClassUtils.findClass("com.biomatters", new Class[]{Validation.class});
         for (Class cl : list) {
-            if (cl.equals(ConsensusValidation.class) || cl.equals(SlidingWindowValidation.class)) {
+            if (cl.equals(MuscleAlignmentValidation.class) || cl.equals(SlidingWindowQualityValidation.class)) {
                 count++;
             }
 
@@ -83,7 +83,7 @@ public class ClassUtilsTest extends TestCase {
         boolean pass = false;
         List<Class> list = ClassUtils.findClass("com.biomatters", new Class[]{Validation.class, Validation.class});
         for (Class cl : list) {
-            if (cl.equals(ConsensusValidation.class)) {
+            if (cl.equals(MuscleAlignmentValidation.class)) {
                 pass = true;
             }
         }

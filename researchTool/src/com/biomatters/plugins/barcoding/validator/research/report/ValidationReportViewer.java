@@ -403,7 +403,7 @@ public class ValidationReportViewer extends DocumentViewer {
             for (ResultColumn column : result.getEntry().getColumns()) {
                 if (column instanceof LinkResultColumn) {
                     LinkResultColumn.LinkBox data = ((LinkResultColumn) column).getData();
-                    String col1Lable = data.getLable();
+                    String col1Lable = data.getLabel();
                     URN urn = record.getTraceDocumentUrnByName(col1Lable);
                     if (urn != null) {
                         data.addLink(urn);

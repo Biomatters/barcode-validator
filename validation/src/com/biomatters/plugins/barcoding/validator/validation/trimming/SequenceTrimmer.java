@@ -23,8 +23,8 @@ import java.util.*;
  *         Created on 9/09/14 11:03 AM
  */
 public class SequenceTrimmer {
-    public static final String ANNOTATION_SUFFIX = "trims annotated";
-    public static final String TRIMMED_SUFFIX    = "trimmed";
+    public static final String ANNOTATION_SUFFIX = "(trims annotated)";
+    public static final String TRIMMED_SUFFIX    = "(trimmed)";
     
     private static final int SMITH_WATERMAN_SEQUENCE_INDEX = 0;
     private static final int SMITH_WATERMAN_PRIMER_INDEX   = 1;

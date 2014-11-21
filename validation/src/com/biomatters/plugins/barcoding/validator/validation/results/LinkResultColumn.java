@@ -31,7 +31,7 @@ public class LinkResultColumn extends ResultColumn<LinkResultColumn.LinkBox> {
         Element root = new Element(XMLSerializable.ROOT_ELEMENT_NAME);
         root.addContent(new Element(NAME).setText(getName()));
         if (data != null) {
-            root.addContent(new Element(LinkBox.LABLE).setText(data.getLable()));
+            root.addContent(new Element(LinkBox.LABEL).setText(data.getLabel()));
             List<URN> links = data.getLinks();
             for (URN link : links) {
                 if (link != null) root.addContent(link.toXML(LinkBox.LINK));
@@ -44,7 +44,7 @@ public class LinkResultColumn extends ResultColumn<LinkResultColumn.LinkBox> {
     @Override
     public void fromXML(Element element) throws XMLSerializationException {
         name = element.getChildText(NAME);
-        String lable = element.getChildText(LinkBox.LABLE);
+        String lable = element.getChildText(LinkBox.LABEL);
         ArrayList<URN> links = new ArrayList<URN>();
 
         try {
@@ -65,25 +65,26 @@ public class LinkResultColumn extends ResultColumn<LinkResultColumn.LinkBox> {
     }
 
     public static class LinkBox {
-        protected static final String LABLE = "lable";
+        protected static final String LABEL = "label";
         protected static final String LINK = "link";
 
-        private String lable;
+        private String label;
         private List<URN> links;
 
-        public LinkBox(String lable, List<URN> links) {
-            this.lable = lable;
+        public LinkBox(String label, List<URN> links) {
+            this.label = label;
             this.links = links;
         }
 
-        public LinkBox(){}
-
-        public String getLable() {
-            return lable;
+        public LinkBox() {
         }
 
-        public void setLable(String lable) {
-            this.lable = lable;
+        public String getLabel() {
+            return label;
+        }
+
+        public void setLabel(String label) {
+            this.label = label;
         }
 
         public List<URN> getLinks() {
@@ -91,7 +92,7 @@ public class LinkResultColumn extends ResultColumn<LinkResultColumn.LinkBox> {
             return links;
         }
 
-        public void setLink(List<URN> links) {
+        public void setLinks(List<URN> links) {
             this.links = links;
         }
 
@@ -101,7 +102,7 @@ public class LinkResultColumn extends ResultColumn<LinkResultColumn.LinkBox> {
 
         @Override
         public String toString() {
-            return lable;
+            return label;
         }
 
         public void openLink() {

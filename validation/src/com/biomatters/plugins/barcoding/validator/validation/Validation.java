@@ -1,14 +1,13 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
 import com.biomatters.geneious.publicapi.components.Dialogs;
+import com.biomatters.plugins.barcoding.validator.validation.results.ValidationResultEntry;
 import com.biomatters.plugins.barcoding.validator.validation.utilities.ClassUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Super class for validation tasks.
- *
  * @author Gen Li
  *         Created on 29/09/14 2:47 PM
  */
@@ -38,8 +37,7 @@ public abstract class Validation {
         return validations;
     }
 
-    /**
-     * @return The matching options of .
-     */
     public abstract ValidationOptions getOptions();
+
+    public abstract ValidationResultEntry getValidationResultEntry();
 }

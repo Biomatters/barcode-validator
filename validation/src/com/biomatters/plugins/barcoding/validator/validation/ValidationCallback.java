@@ -24,5 +24,5 @@ public interface ValidationCallback {
     public List<NucleotideGraphSequenceDocument> addTrimmedTraces(List<NucleotideGraphSequenceDocument> traces, ProgressListener progressListener) throws DocumentOperationException;
     public void addAssembly(SequenceAlignmentDocument contigAssembly, ProgressListener progressListener) throws DocumentOperationException;
     public void addConsensus(SequenceDocument consensusSequence, ProgressListener progressListener) throws DocumentOperationException;
-    public void addValidationResults(ValidationOptions options, List<ValidationResult> validationResults, ProgressListener progressListener) throws DocumentOperationException;
+    public void addValidationResult(ValidationOptions options, ValidationResult validationResult, ProgressListener progressListener) throws DocumentOperationException;
 }

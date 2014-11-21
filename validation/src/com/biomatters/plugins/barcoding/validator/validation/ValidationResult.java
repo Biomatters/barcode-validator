@@ -39,6 +39,9 @@ public class ValidationResult {
         this.message = message;
     }
 
+    public void setPassed(boolean passed) {
+        this.passed = passed;
+    }
     /**
      *
      * @return true if the validation passed.  False if not.
@@ -47,6 +50,10 @@ public class ValidationResult {
         return passed;
     }
 
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
     /**
      *
      * @return The reason why the validation failed.  Or null if the validation succeeded.

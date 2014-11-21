@@ -4,9 +4,12 @@ import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSeque
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
+import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Runner;
 import com.biomatters.plugins.barcoding.validator.validation.consensus.ConsensusUtilities;
+import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
+import com.biomatters.plugins.barcoding.validator.validation.results.ValidationResultEntry;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.PrimerTrimmingOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.SequenceTrimmer;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
@@ -141,13 +144,29 @@ public class Pipeline {
     private static ValidationRunner<SingleSequenceValidation> createSingleSequenceValidationRunner(final List<NucleotideGraphSequenceDocument> sequences) {
         return new ValidationRunner<SingleSequenceValidation>() {
             @Override
-            List<ValidationResult> run(SingleSequenceValidation validation, ValidationOptions options) throws DocumentOperationException {
-                List<ValidationResult> validationResults = new ArrayList<ValidationResult>();
+            ValidationResult run(SingleSequenceValidation validation, ValidationOptions options) throws DocumentOperationException {
+                ValidationResult result = new ValidationResult(true, "");
+                ValidationResultEntry validationResultEntry = validation.getValidationResultEntry();
+                List<String> failedSequenceNames = new ArrayList<String>();
+
                 for (NucleotideGraphSequenceDocument sequence : sequences) {
-                    validationResults.add(validation.validate(sequence, options));
+                    ResultFact sequenceValidationResult = validation.validate(sequence, options);
+
+                    if (!sequenceValidationResult.getPass()) {
+                        failedSequenceNames.add(sequence.getName());
+                    }
+
+                    validationResultEntry.addResultFact(sequenceValidationResult);
                 }
 
-                return validationResults;
+                if (!failedSequenceNames.isEmpty()) {
+                    result.setPassed(false);
+                    result.setMessage(constructValidationFailureMessage(failedSequenceNames));
+                }
+
+                result.setEntry(validationResultEntry);
+
+                return result;
             }
         };
     }
@@ -155,14 +174,29 @@ public class Pipeline {
     private static ValidationRunner<SequenceCompareValidation> createSequenceCompareValidationRunner(final List<NucleotideGraphSequenceDocument> sequences, final NucleotideSequenceDocument referenceSequence) {
         return new ValidationRunner<SequenceCompareValidation>() {
             @Override
-            List<ValidationResult> run(SequenceCompareValidation validation, ValidationOptions options) throws DocumentOperationException {
-                List<ValidationResult> validationResults = new ArrayList<ValidationResult>();
+            ValidationResult run(SequenceCompareValidation validation, ValidationOptions options) throws DocumentOperationException {
+                ValidationResult result = new ValidationResult(true, "");
+                ValidationResultEntry validationResultEntry = validation.getValidationResultEntry();
+                List<String> failedSequenceNames = new ArrayList<String>();
 
                 for (NucleotideSequenceDocument sequence : sequences) {
-                     validationResults.add(validation.validate(sequence, referenceSequence, options));
+                    ResultFact sequenceValidationResult = validation.validate(sequence, referenceSequence, options);
+
+                    if (!sequenceValidationResult.getPass()) {
+                        failedSequenceNames.add(sequence.getName());
+                    }
+
+                    validationResultEntry.addResultFact(sequenceValidationResult);
                 }
 
-                return validationResults;
+                if (!failedSequenceNames.isEmpty()) {
+                    result.setPassed(false);
+                    result.setMessage(constructValidationFailureMessage(failedSequenceNames));
+                }
+
+                result.setEntry(validationResultEntry);
+
+                return result;
             }
         };
     }
@@ -173,7 +207,7 @@ public class Pipeline {
         for (ValidationRun run : runs) {
             addTraceValidationResultsProgress.beginSubtask();
 
-            callback.addValidationResults(run.options, run.results, addTraceValidationResultsProgress);
+            callback.addValidationResult(run.options, run.result, addTraceValidationResultsProgress);
         }
     }
 
@@ -259,16 +293,20 @@ public class Pipeline {
          * @return a {@link ValidationResult}
          * @throws com.biomatters.geneious.publicapi.plugin.DocumentOperationException
          */
-        abstract List<ValidationResult> run(T validation, ValidationOptions options) throws DocumentOperationException;
+        abstract ValidationResult run(T validation, ValidationOptions options) throws DocumentOperationException;
     }
 
     private static class ValidationRun {
         private ValidationOptions options;
-        private List<ValidationResult> results;
+        private ValidationResult result;
 
-        private ValidationRun(ValidationOptions options, List<ValidationResult> results) {
+        private ValidationRun(ValidationOptions options, ValidationResult result) {
             this.options = options;
-            this.results = results;
+            this.result = result;
         }
+    }
+
+    private static String constructValidationFailureMessage(List<String> failedSequenceNames) {
+        return "Failed sequences: " + StringUtilities.join(",", failedSequenceNames) + ".";
     }
 }

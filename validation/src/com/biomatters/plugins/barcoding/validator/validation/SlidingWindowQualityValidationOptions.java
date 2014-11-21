@@ -7,27 +7,27 @@ import org.jdom.Element;
  * @author Gen Li
  *         Created on 26/09/14 9:42 AM
  */
-public class SlidingWindowValidationOptions extends ValidationOptions {
-    private static final String IDENTIFIER  = "slidingWindowValiator";
+public class SlidingWindowQualityValidationOptions extends ValidationOptions {
+    private static final String IDENTIFIER  = "slidingWindowValidation";
     private static final String LABEL       = "Quality (Sliding Window)";
     private static final String DESCRIPTION = "Validate sequence quality using sliding window approach.";
 
-    private static final String WINDOW_SIZE_OPTION_NAME             = "windowSize";
-    private static final String STEP_SIZE_OPTION_NAME               = "stepSize";
-    private static final String MINIMUM_QUALITY_OPTION_NAME         = "minimumQuality";
-    private static final String MINIMUM_RATIO_SATISFIED_OPTION_NAME = "minimumRatioSatisfied";
+    private static final String WINDOW_SIZE_OPTION_NAME                = "windowSize";
+    private static final String STEP_SIZE_OPTION_NAME                  = "stepSize";
+    private static final String MINIMUM_QUALITY_OPTION_NAME            = "minimumQuality";
+    private static final String MINIMUM_SATISFACTION_RATIO_OPTION_NAME = "minSatisfactionRatio";
 
-    public SlidingWindowValidationOptions(Class cls) {
+    public SlidingWindowQualityValidationOptions(Class cls) {
         super(cls);
 
         addWindowSizeOption();
         addStepSizeOption();
         addMinimumQualityOption();
-        addMinimumRatioSatisfiedOption();
+        addMinimumSatisfactionRatioOption();
     }
 
     @SuppressWarnings("UnusedDeclaration")
-    public SlidingWindowValidationOptions(Element element) throws XMLSerializationException {
+    public SlidingWindowQualityValidationOptions(Element element) throws XMLSerializationException {
         super(element);
     }
 
@@ -43,8 +43,8 @@ public class SlidingWindowValidationOptions extends ValidationOptions {
         return ((IntegerOption)getOption(MINIMUM_QUALITY_OPTION_NAME)).getValue();
     }
 
-    public double getMinimumRatioSatisfied() {
-        return ((DoubleOption)getOption(MINIMUM_RATIO_SATISFIED_OPTION_NAME)).getValue();
+    public double getMinimumSatisfactionRatio() {
+        return ((DoubleOption)getOption(MINIMUM_SATISFACTION_RATIO_OPTION_NAME)).getValue();
     }
 
     private void addWindowSizeOption() {
@@ -59,8 +59,8 @@ public class SlidingWindowValidationOptions extends ValidationOptions {
         addIntegerOption(MINIMUM_QUALITY_OPTION_NAME, "Minimum Quality:", 40, 1, Integer.MAX_VALUE);
     }
 
-    private void addMinimumRatioSatisfiedOption() {
-        addDoubleOption(MINIMUM_RATIO_SATISFIED_OPTION_NAME, "Minimum Ratio Satisfied:", 80.0, 0.0, 100.0).setUnits("%");
+    private void addMinimumSatisfactionRatioOption() {
+        addDoubleOption(MINIMUM_SATISFACTION_RATIO_OPTION_NAME, "Minimum Satisfaction Ratio:", 80.0, 0.0, 100.0).setUnits("%");
     }
 
     /**

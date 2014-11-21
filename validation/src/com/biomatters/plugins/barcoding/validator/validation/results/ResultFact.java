@@ -15,25 +15,28 @@ public abstract class ResultFact implements XMLSerializable {
     public static final String NAME = "name";
     public static final String RESULT_COLUMN = "resultColumn";
 
-    private String name;
+    private String factName;
 
     public ResultFact() {
     }
 
-    public ResultFact(String name) {
-        this.name = name;
+    public ResultFact(String factName) {
+        setFactName(factName);
     }
 
     public String getFactName() {
-        return name;
+        return factName;
     }
 
-    public void setFactName(String name) {
-        this.name = name;
+    public void setFactName(String factName) {
+        this.factName = factName;
     }
 
     public abstract List<ResultColumn> getColumns();
-    public abstract void addColumns(ResultColumn column);
+    public abstract void addColumn(ResultColumn column);
+
+    public abstract boolean getPass();
+    public abstract void setPass(boolean pass);
 
     @SuppressWarnings("UnusedDeclaration")
     public ResultFact(Element element) throws XMLSerializationException {
@@ -41,7 +44,7 @@ public abstract class ResultFact implements XMLSerializable {
         setFactName(nameString);
 
         for (Element colElement : element.getChildren(RESULT_COLUMN)) {
-            addColumns(XMLSerializer.classFromXML(colElement, ResultColumn.class));
+            addColumn(XMLSerializer.classFromXML(colElement, ResultColumn.class));
         }
     }
 
@@ -63,7 +66,7 @@ public abstract class ResultFact implements XMLSerializable {
         setFactName(nameString);
 
         for (Element colElement : element.getChildren(RESULT_COLUMN)) {
-            addColumns(XMLSerializer.classFromXML(colElement, ResultColumn.class));
+            addColumn(XMLSerializer.classFromXML(colElement, ResultColumn.class));
         }
     }
 }
