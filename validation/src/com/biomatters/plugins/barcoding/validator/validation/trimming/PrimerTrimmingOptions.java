@@ -10,7 +10,6 @@ import jebl.evolution.align.scores.Scores;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Gen Li
@@ -23,8 +22,6 @@ public class PrimerTrimmingOptions extends Options {
     private static final String COST_MATRIX_OPTIONS_NAME           = "costMatrix";
     private static final String MAXIMUM_MISMATCHES_OPTIONS_NAME    = "maximumMismatches";
     private static final String MINIMUM_MATCH_LENGTH_OPTIONS_NAME  = "minimumMatchLength";
-
-    private AtomicBoolean hasPrimerTrimmered = new AtomicBoolean(false);
 
     public PrimerTrimmingOptions(Class cls) {
         super(cls);
@@ -95,8 +92,13 @@ public class PrimerTrimmingOptions extends Options {
         addIntegerOption(MINIMUM_MATCH_LENGTH_OPTIONS_NAME, "Minimum Match Length", 15, 1, Integer.MAX_VALUE);
     }
 
-    public AtomicBoolean getHasPrimerTrimmered() {
-        return hasPrimerTrimmered;
+    public boolean getHasPrimerTrimmered() {
+        try {
+            return getPrimers().size() > 0;
+        } catch (DocumentOperationException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
 }

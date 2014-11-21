@@ -241,8 +241,7 @@ public class Pipeline {
                     primerTrimmingOptions.getScores(),
                     primerTrimmingOptions.getMaximumMismatches(),
                     primerTrimmingOptions.getMinimumMatchLength(),
-                    trimByAddingAnnotation,
-                    primerTrimmingOptions.getHasPrimerTrimmered())
+                    trimByAddingAnnotation)
             );
         }
 

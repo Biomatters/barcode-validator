@@ -42,15 +42,15 @@ public class ValidationReportDocument implements PluginDocument {
           .append("<u>Trimming by quality</u><br>")
           .append("Error Probability Limit = ").append(options.getTrimmingOptions().getQualityTrimmingOptions().getErrorProbabilityLimit())
           .append("<br>")
-          .append("<br>")
-          .append("<u>Trimming by primers</u><br>");
+          .append("<br>");
 
-         if (options.getTrimmingOptions().getPrimerTrimmingOptions().getHasPrimerTrimmered().get()) {
-               sb.append("Max Mismatches = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getMaximumMismatches()).append("<br>")
+         if (options.getTrimmingOptions().getPrimerTrimmingOptions().getHasPrimerTrimmered()) {
+               sb.append("<u>Trimming by primers</u><br>")
+                 .append("Max Mismatches = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getMaximumMismatches()).append("<br>")
                  .append("Min Match Length = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getMinimumMatchLength()).append("<br>")
                  .append("Score Matrix ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getScores().getName()).append("<br>")
                  .append("Gap Option Penalty = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getGapOptionPenalty()).append("<br>")
-                 .append("Gap Extension Penalty = " + options.getTrimmingOptions().getPrimerTrimmingOptions().getGapExtensionPenalty()).append("<br>")
+                 .append("Gap Extension Penalty = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getGapExtensionPenalty()).append("<br>")
                  .append("<br>");
         }
 
