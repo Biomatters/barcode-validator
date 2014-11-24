@@ -64,7 +64,7 @@ public class ValidationOutputRecord implements XMLSerializable {
 
             for (Element recordElement : element.getChildren(VALIDATION_RESULT)) {
                 addValidationResult(XMLSerializer.classFromXML(recordElement, RecordOfValidationResult.class));
-            };
+            }
         } catch (MalformedURNException e) {
             throw new XMLSerializationException("Could not de-serialize validation record: " + e.getMessage(), e);
         }
@@ -250,11 +250,11 @@ public class ValidationOutputRecord implements XMLSerializable {
         LinkResultColumn assemblefCol = new LinkResultColumn("Number of traces not used");
         if (urn.equals(consensusUrn)) {
             List<URN> links = new ArrayList<URN>();
-            Set<URN> assemblys = DocumentUtilities.getDocumentByURN(getAssemblyUrn()).getReferencedDocuments();
+            Set<URN> assembles = DocumentUtilities.getDocumentByURN(getAssemblyUrn()).getReferencedDocuments();
 
-            if (assemblys != null) {
+            if (assembles != null) {
                 for (URN urn2 : getTrimmedDocumentUrns()) {
-                    if (!assemblys.contains(urn2)) {
+                    if (!assembles.contains(urn2)) {
                         links.add(urn2);
                     }
                 }
@@ -262,7 +262,6 @@ public class ValidationOutputRecord implements XMLSerializable {
                 links.addAll(getTrimmedDocumentUrns());
             }
 
-            int num = getAssemblyUrn() == null ? 0 : DocumentUtilities.getDocumentByURN(getAssemblyUrn()).getReferencedDocuments().size() - 1;
             assemblefCol.setData(new LinkResultColumn.LinkBox("" + links.size(), links));
         } else {
             assemblefCol.setData(new LinkResultColumn.LinkBox("", null));
@@ -320,7 +319,6 @@ public class ValidationOutputRecord implements XMLSerializable {
     public Map<Integer, ValidationOptions> getColunmOptionsMap(boolean refresh) {
         if (colunmOptionsMap == null || refresh) {
             colunmOptionsMap = new HashMap<Integer, ValidationOptions>();
-            URN urn = getTrimmedDocumentUrns().get(0);
             List<ResultColumn> fixedColumns = getFixedColumns(getOneURN());
             int i = fixedColumns.size();
 
@@ -340,7 +338,7 @@ public class ValidationOutputRecord implements XMLSerializable {
 
     public URN getOneURN() {
         Set<URN> doclist = getDoclist();
-        assert doclist != null || doclist.size() > 0;
+        assert doclist != null && doclist.size() > 0;
         return doclist.iterator().next();
     }
 }

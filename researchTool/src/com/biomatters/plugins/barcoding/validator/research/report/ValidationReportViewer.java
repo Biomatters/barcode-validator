@@ -150,12 +150,6 @@ public class ValidationReportViewer extends DocumentViewer {
                 getLinkForSelectingDocuments("Select all", barcodeUrns));
     }
 
-    @SuppressWarnings("unused")
-    private static class BarcodeAndStatus {
-        private List<URN> docsUrn;
-        private boolean passed;
-    }
-
     private static String getLinkForSelectingDocuments(String label, List<URN> documentUrns) {
         List<String> urnStrings = new ArrayList<String>();
         for (URN inputUrn : documentUrns) {
@@ -220,7 +214,6 @@ public class ValidationReportViewer extends DocumentViewer {
         return scroll;
     }
 
-    @SuppressWarnings("unchecked")
     public JTable getTable() {
         List<ValidationOutputRecord> records = reportDocument.getRecords();
 
@@ -236,7 +229,7 @@ public class ValidationReportViewer extends DocumentViewer {
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if(e.getButton() != MouseEvent.BUTTON1) {
+                if (e.getButton() != MouseEvent.BUTTON1) {
                     return;
                 }
                 Object source = e.getSource();
@@ -259,14 +252,13 @@ public class ValidationReportViewer extends DocumentViewer {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int index = table.getColumnModel().getColumnIndexAtX(e.getX());
-
-                if (e.getY() <= groupableTableHeaderUI.getHeaderHeight() / 2) {
-                    tableModel.displayOptions(index);
-                } else {
+                if (index < tableModel.getFixedColumnLength() || e.getY() > groupableTableHeaderUI.getHeaderHeight() / 2) {
                     tableModel.sortByColumn(index);
                     tableModel.updateTable();
                     table.revalidate();
                     table.repaint();
+                } else {
+                    tableModel.displayOptions(index);
                 }
             }
         });
@@ -469,6 +461,7 @@ public class ValidationReportViewer extends DocumentViewer {
             return data.get(0).get(column).getName();
         }
 
+        @SuppressWarnings("unchecked")
         public void sortByColumn(final int index){
             direct *= -1;
             Collections.sort(records, new Comparator<ValidationOutputRecord>() {
@@ -492,7 +485,7 @@ public class ValidationReportViewer extends DocumentViewer {
                     ResultColumn rightCol = rightCols.get(index);
 
                     if (leftCol.getData() instanceof Comparable) {
-                        return ((Comparable)leftCol.getData()).compareTo(rightCol.getData()) * direct;
+                        return ((Comparable) leftCol.getData()).compareTo(rightCol.getData()) * direct;
                     } else {
                         return 0;
                     }
@@ -521,6 +514,12 @@ public class ValidationReportViewer extends DocumentViewer {
             assert colunmOptionsMap != null;
 
             return colunmOptionsMap.get(columnIndex);
+        }
+
+        public int getFixedColumnLength() {
+            assert records != null && records.size() > 0;
+            ValidationOutputRecord record = records.get(0);
+            return record.getFixedColumns(record.getOneURN()).size();
         }
     }
 }

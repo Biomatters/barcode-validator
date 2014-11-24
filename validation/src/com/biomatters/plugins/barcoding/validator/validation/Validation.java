@@ -1,7 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
 import com.biomatters.geneious.publicapi.components.Dialogs;
-import com.biomatters.plugins.barcoding.validator.validation.results.ValidationResultEntry;
 import com.biomatters.plugins.barcoding.validator.validation.utilities.ClassUtils;
 
 import java.util.ArrayList;
@@ -38,6 +37,4 @@ public abstract class Validation {
     }
 
     public abstract ValidationOptions getOptions();
-
-    public abstract ValidationResultEntry getValidationResultEntry();
 }

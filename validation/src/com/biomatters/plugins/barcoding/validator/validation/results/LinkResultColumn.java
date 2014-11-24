@@ -102,10 +102,6 @@ public class LinkResultColumn extends ResultColumn<LinkResultColumn.LinkBox> {
             this.links = links;
         }
 
-        public void addLink(URN link) {
-            getLinks().add(link);
-        }
-
         @Override
         public String toString() {
             return "<html><a href=\"" + links + "\">" + label + "</a></html>";

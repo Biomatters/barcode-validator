@@ -5,8 +5,13 @@ import javax.swing.table.TableColumn;
 import java.util.Enumeration;
 import java.util.Vector;
 
+/**
+ *
+ * @author Frank Lee
+ *         Created on 12/11/14 3:57 PM
+ */
 public class GroupableTableHeader extends JTableHeader {
-    protected Vector columnGroups = null;
+    protected Vector<ColumnGroup> columnGroups = null;
 
     public GroupableTableHeader(JTableHeader originalHeader) {
         super(originalHeader.getColumnModel());
@@ -16,7 +21,6 @@ public class GroupableTableHeader extends JTableHeader {
         setDefaultRenderer(originalHeader.getDefaultRenderer());
     }
 
-    @SuppressWarnings("unchecked")
     public void addColumnGroup(ColumnGroup g) {
         if (columnGroups == null) {
             columnGroups = new Vector<ColumnGroup>();

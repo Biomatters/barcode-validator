@@ -7,7 +7,11 @@ import java.awt.*;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
-
+/**
+ * GroupableTableHeaderUI is used to create top level header column for {@link com.biomatters.plugins.barcoding.validator.research.report.table.ColumnGroup}
+ * @author Frank Lee
+ *         Created on 12/11/14 3:57 PM
+ */
 public class GroupableTableHeaderUI extends BasicTableHeaderUI {
     private int m_height;
 
@@ -90,7 +94,6 @@ public class GroupableTableHeaderUI extends BasicTableHeaderUI {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void paint(Graphics g, JComponent c) {
         Rectangle clipBounds = g.getClipBounds();
         if (header.getColumnModel() == null) {
@@ -100,7 +103,7 @@ public class GroupableTableHeaderUI extends BasicTableHeaderUI {
         int column = 0;
         Dimension size = header.getSize();
         Rectangle cellRect = new Rectangle(0, 0, size.width, size.height);
-        Hashtable h = new Hashtable();
+        Hashtable<ColumnGroup, Rectangle> h = new Hashtable<ColumnGroup, Rectangle>();
         int columnMargin = header.getColumnModel().getColumnMargin();
         Enumeration enumeration = header.getColumnModel().getColumns();
         while (enumeration.hasMoreElements()) {
@@ -113,7 +116,7 @@ public class GroupableTableHeaderUI extends BasicTableHeaderUI {
                 int groupHeight = 0;
                 while (cGroups.hasMoreElements()) {
                     ColumnGroup cGroup = (ColumnGroup) cGroups.nextElement();
-                    Rectangle groupRect = (Rectangle) h.get(cGroup);
+                    Rectangle groupRect = h.get(cGroup);
                     if (groupRect == null) {
                         groupRect = new Rectangle(cellRect);
                         Dimension d = cGroup.getSize(header.getTable());

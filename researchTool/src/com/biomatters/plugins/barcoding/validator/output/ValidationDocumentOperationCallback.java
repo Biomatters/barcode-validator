@@ -117,14 +117,8 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
 
     @Override
     public void addValidationResult(ValidationOptions options, ValidationResult validationResult, ProgressListener progressListener) throws DocumentOperationException {
-        List<URN> supplementaryDocUrns = new ArrayList<URN>();
-
-        for (PluginDocument docToAdd : validationResult.getIntermediateDocuments()) {
-            supplementaryDocUrns.add(saveDocumentAndGetUrn(docToAdd, ProgressListener.EMPTY));
-        }
-
         for (ResultFact fact : validationResult.getFacts()) {
-            outputRecord.addValidationResult(new RecordOfValidationResult(options, validationResult.isPassed(), validationResult.getMessage(), fact, supplementaryDocUrns));
+            outputRecord.addValidationResult(new RecordOfValidationResult(options, validationResult.isPassed(), fact));
         }
     }
 

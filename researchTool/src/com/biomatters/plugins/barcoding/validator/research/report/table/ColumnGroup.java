@@ -11,7 +11,7 @@ import java.util.Vector;
 
 /**
  * @author Frank Lee
- *         Created on 12/111/14 3:57 PM
+ *         Created on 12/11/14 3:57 PM
  */
 
 public class ColumnGroup {

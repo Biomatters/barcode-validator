@@ -1,12 +1,11 @@
 package com.biomatters.plugins.barcoding.validator.output;
 
-import com.biomatters.geneious.publicapi.documents.*;
+import com.biomatters.geneious.publicapi.documents.XMLSerializable;
+import com.biomatters.geneious.publicapi.documents.XMLSerializationException;
+import com.biomatters.geneious.publicapi.documents.XMLSerializer;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
 import org.jdom.Element;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Represents a record of the results of a {@link com.biomatters.plugins.barcoding.validator.validation.Validation} task.
@@ -21,23 +20,17 @@ public class RecordOfValidationResult implements XMLSerializable {
     private ValidationOptions options;
 
     private boolean passed;
-    private String message;
     private ResultFact fact;
-    private List<URN> docs = new ArrayList<URN>();
 
-    public RecordOfValidationResult(ValidationOptions options, boolean passed, String message, ResultFact fact, List<URN> docs) {
+    public RecordOfValidationResult(ValidationOptions options, boolean passed, ResultFact fact) {
         this.options = options;
         this.passed = passed;
-        this.message = message;
         this.fact = fact;
-        this.docs = docs;
     }
 
     private static final String OPTIONS = "optionValues";
 
     private static final String PASSED = "passed";
-    private static final String MESSAGE = "message";
-    private static final String DOCS = "doc";
     private static final String FACT = "fact";
 
     @SuppressWarnings("UnusedDeclaration")
@@ -49,21 +42,12 @@ public class RecordOfValidationResult implements XMLSerializable {
         options = XMLSerializer.classFromXML(optionsElement, ValidationOptions.class);
         String passedString = element.getChildText(PASSED);
         passed = Boolean.valueOf(passedString);
-        message = element.getChildText(MESSAGE);
 
         Element entryElement = element.getChild(FACT);
         if(entryElement == null) {
             throw new XMLSerializationException("Required " + FACT + " child element missing from element.");
         }
         fact = XMLSerializer.classFromXML(entryElement, ResultFact.class);
-
-        for (Element docElement : element.getChildren(DOCS)) {
-            try {
-                docs.add(URN.fromXML(docElement));
-            } catch (MalformedURNException e) {
-                throw new XMLSerializationException("Failed to de-serialize validation record: " + e.getMessage(), e);
-            }
-        }
     }
 
     @Override
@@ -71,11 +55,7 @@ public class RecordOfValidationResult implements XMLSerializable {
         Element root = new Element(XMLSerializable.ROOT_ELEMENT_NAME);
         root.addContent(XMLSerializer.classToXML(OPTIONS, options));
         root.addContent(new Element(PASSED).setText(Boolean.toString(passed)));
-        root.addContent(new Element(MESSAGE).setText(message));
         root.addContent(XMLSerializer.classToXML(FACT, fact));
-        for (URN doc : docs) {
-            root.addContent(doc.toXML(DOCS));
-        }
         return root;
     }
 
@@ -86,16 +66,6 @@ public class RecordOfValidationResult implements XMLSerializable {
 
     public boolean isPassed() {
         return passed;
-    }
-
-    @SuppressWarnings("unused")
-    public String getMessage() {
-        return message;
-    }
-
-    @SuppressWarnings("unused")
-    public List<URN> getGeneratedDocuments() {
-        return docs;
     }
 
     public ValidationOptions getOptions() {

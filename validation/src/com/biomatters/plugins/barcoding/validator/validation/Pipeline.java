@@ -182,7 +182,7 @@ public class Pipeline {
 
                 for (NucleotideSequenceDocument sequence : sequences) {
                     ResultFact sequenceValidationResult = validation.validate(sequence, referenceSequence, options);
-                    URN urNofSequence = callback.getURNofSequence((NucleotideGraphSequenceDocument) sequence);
+                    URN urNofSequence = callback.getURNofSequence(sequence);
                     assert urNofSequence != null;
 
                     sequenceValidationResult.setTargetURN(urNofSequence);

@@ -1,6 +1,9 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
-import com.biomatters.geneious.publicapi.documents.*;
+import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
+import com.biomatters.geneious.publicapi.documents.DocumentField;
+import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
+import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.Percentage;
 import com.biomatters.geneious.publicapi.implementations.SequenceExtractionUtilities;
@@ -8,10 +11,8 @@ import com.biomatters.geneious.publicapi.implementations.sequence.DefaultSequenc
 import com.biomatters.geneious.publicapi.plugin.DocumentOperation;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.PluginUtilities;
-import com.biomatters.plugins.barcoding.validator.validation.results.MuscleAlignmentValidationResultEntry;
 import com.biomatters.plugins.barcoding.validator.validation.results.MuscleAlignmentValidationResultFact;
 import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
-import com.biomatters.plugins.barcoding.validator.validation.results.ValidationResultEntry;
 import jebl.util.ProgressListener;
 
 import java.util.Collections;
@@ -55,7 +56,7 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
         sequenceReversedDocument.setName(sequenceName + " (reversed)");
 
         MuscleAlignmentValidationResultFact result = new MuscleAlignmentValidationResultFact(
-                sequenceName, sequenceName, Collections.singletonList(sequence.getURN()), false, 0.0, "", Collections.<URN>emptyList(), "", sequenceReversedDocument.getDocumentOrNull()
+                false, 0.0, "", Collections.<URN>emptyList(), ""
         );
 
         try {
@@ -86,11 +87,6 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
     @Override
     public ValidationOptions getOptions() {
         return new MuscleAlignmentValidationOptions(MuscleAlignmentValidation.class);
-    }
-
-    @Override
-    public ValidationResultEntry getValidationResultEntry() {
-        return new MuscleAlignmentValidationResultEntry();
     }
 
     private float getSimilarity(DocumentOperation alignmentOperation,

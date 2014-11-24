@@ -5,6 +5,7 @@ import com.biomatters.geneious.publicapi.documents.XMLSerializationException;
 import org.jdom.Element;
 
 /**
+ * ResultColumn<T> is used to hold one measure of validation result
  * @author Frank Lee
  *         Created on 12/11/14 12:19 PM
  */

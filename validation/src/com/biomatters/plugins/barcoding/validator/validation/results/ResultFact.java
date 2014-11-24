@@ -6,6 +6,8 @@ import org.jdom.Element;
 import java.util.List;
 
 /**
+ * ResultFact is used hold the validation result which is represent by a list of {@link com.biomatters.plugins.barcoding.validator.validation.results.ResultColumn}
+ *
  * @author Frank Lee
  *         Created on 11/11/14 5:00 PM
  */
@@ -36,22 +38,10 @@ public abstract class ResultFact implements XMLSerializable {
     public abstract void addColumn(ResultColumn column);
 
     public abstract boolean getPass();
-    public abstract void setPass(boolean pass);
 
     @SuppressWarnings("UnusedDeclaration")
     public ResultFact(Element element) throws XMLSerializationException {
-        String nameString = element.getChildText(NAME);
-        setFactName(nameString);
-
-        for (Element colElement : element.getChildren(RESULT_COLUMN)) {
-            addColumn(XMLSerializer.classFromXML(colElement, ResultColumn.class));
-        }
-
-        try {
-            targetURN = URN.fromXML(element.getChild(TARGET_URN));
-        } catch (MalformedURNException e) {
-            e.printStackTrace();
-        }
+        fromXML(element);
     }
 
     public URN getTargetURN() {
@@ -63,7 +53,6 @@ public abstract class ResultFact implements XMLSerializable {
     }
 
     @Override
-
     public Element toXML() {
         Element root = new Element(XMLSerializable.ROOT_ELEMENT_NAME);
         root.addContent(new Element(NAME).setText(getFactName()));
@@ -83,6 +72,12 @@ public abstract class ResultFact implements XMLSerializable {
 
         for (Element colElement : element.getChildren(RESULT_COLUMN)) {
             addColumn(XMLSerializer.classFromXML(colElement, ResultColumn.class));
+        }
+
+        try {
+            targetURN = URN.fromXML(element.getChild(TARGET_URN));
+        } catch (MalformedURNException e) {
+            e.printStackTrace();
         }
     }
 }

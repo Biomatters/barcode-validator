@@ -5,12 +5,9 @@ import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotation;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationInterval;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocumentWithEditableAnnotations;
 import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
-import com.biomatters.plugins.barcoding.validator.validation.results.SlidingWindowQualityValidationResultEntry;
 import com.biomatters.plugins.barcoding.validator.validation.results.SlidingWindowQualityValidationResultFact;
-import com.biomatters.plugins.barcoding.validator.validation.results.ValidationResultEntry;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -50,11 +47,6 @@ public class SlidingWindowQualityValidation extends SingleSequenceValidation {
         return new SlidingWindowQualityValidationOptions(SlidingWindowQualityValidation.class);
     }
 
-    @Override
-    public ValidationResultEntry getValidationResultEntry() {
-        return new SlidingWindowQualityValidationResultEntry();
-    }
-
     ResultFact validate(NucleotideGraphSequenceDocument sequence, int winSize, int stepSize, int minimumQuality, double minimumSatisfactionRatio) {
         if (stepSize < 1) {
             throw new IllegalArgumentException("Could not validate sequence: Negative step size.");
@@ -68,13 +60,12 @@ public class SlidingWindowQualityValidation extends SingleSequenceValidation {
             );
         }
 
-        String sequenceName = sequence.getName();
         int sequenceLength = sequence.getSequenceLength();
         SequenceAnnotation validationFailureAnnotation = new SequenceAnnotation("Validation Failure", "Insufficient Quality");
         int numberOfFailedWindows = 0;
 
         SlidingWindowQualityValidationResultFact result = new SlidingWindowQualityValidationResultFact(
-                sequenceName, sequenceName, Collections.singletonList(sequence.getURN()), false, sequenceLength, 0, ""
+                false, sequenceLength, 0, ""
         );
 
         /* Validate sequence. */
