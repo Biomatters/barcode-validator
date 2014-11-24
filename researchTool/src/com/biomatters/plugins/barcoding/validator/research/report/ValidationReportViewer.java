@@ -25,10 +25,7 @@ import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.BufferedWriter;
@@ -219,6 +216,23 @@ public class ValidationReportViewer extends DocumentViewer {
 
         final ValidationReportTableModel tableModel = new ValidationReportTableModel(records);
         final JTable table = new GTable(tableModel);
+        table.setDefaultRenderer(ResultColumn.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                return super.getTableCellRendererComponent(table, ((ResultColumn) value).getDisplayValue(), isSelected, hasFocus, row, column);
+            }
+        });
+
+
+        TableRowSorter<ValidationReportTableModel> sorter = new TableRowSorter<ValidationReportTableModel>(tableModel);
+        for (int i = 0; i < table.getColumnCount(); i++) {
+            Class<?> columnClass = table.getColumnClass(i);
+            if(CellValue.class.isAssignableFrom(columnClass)) {
+                sorter.setComparator(i, getCellValueComparator(CellValue.class));
+            }
+        }
+        table.setRowSorter(sorter);
+
         GroupableTableHeader head = new GroupableTableHeader(table.getTableHeader());
         table.setTableHeader(head);
         TableCellRenderer headerRenderer = head.getDefaultRenderer();
@@ -252,23 +266,24 @@ public class ValidationReportViewer extends DocumentViewer {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int index = table.getColumnModel().getColumnIndexAtX(e.getX());
-                if (index < tableModel.getFixedColumnLength() || e.getY() > groupableTableHeaderUI.getHeaderHeight() / 2) {
-                    tableModel.sortByColumn(index);
-                    tableModel.updateTable();
-                    table.revalidate();
-                    table.repaint();
-                } else {
+                if (index >= tableModel.getFixedColumnLength() && e.getY() <= groupableTableHeaderUI.getHeaderHeight() / 2) {
                     tableModel.displayOptions(index);
                 }
             }
         });
 
-        //set alignment to center
-        DefaultTableCellRenderer tcr = new DefaultTableCellRenderer();
-        tcr.setHorizontalAlignment(SwingConstants.CENTER);
-        table.setDefaultRenderer(Object.class, tcr);
-
         return table;
+    }
+
+    private static <T extends Comparable<T>> Comparator getCellValueComparator(
+            // There is a warning that we don't use the class.  But we need this parameter at compile time to type the generic
+            @SuppressWarnings("UnusedParameters") Class<T> columnClass) {
+        return new Comparator<CellValue<T>>() {
+            @Override
+            public int compare(CellValue<T> o1, CellValue<T> o2) {
+                return o1.compareTo(o2);
+            }
+        };
     }
 
     private void mergeHeaer(JTable table, ValidationOutputRecord record) {
@@ -350,6 +365,9 @@ public class ValidationReportViewer extends DocumentViewer {
                             values.clear();
                             for (int column=0; column < columnCount; column++) {
                                 Object value = table.getValueAt(row, column);
+                                if(value instanceof ResultColumn) {
+                                    value = ((ResultColumn)value).getDisplayValue();
+                                }
                                 if (value == null) {
                                     values.add("");
                                 } else {
@@ -420,10 +438,41 @@ public class ValidationReportViewer extends DocumentViewer {
         }
     }
 
+    /**
+     * A value in the table model that is aware of it's index and the value associated with the consensus
+     * @param <T> Type of the data contained in a cell.  Corresponds to the {@link com.biomatters.plugins.barcoding.validator.validation.results.ResultColumn} type.
+     */
+    private static class CellValue<T extends Comparable<T>> implements Comparable<CellValue<T>> {
+
+        private ResultColumn<T> consensusValue;
+        private Integer index;
+        private ResultColumn<T> value;
+
+        public CellValue(ResultColumn<T> consensusValue, ResultColumn<T> value, Integer index) {
+            this.consensusValue = consensusValue;
+            this.value = value;
+            this.index = index;
+        }
+
+        @Override
+        public String toString() {
+            return value.getDisplayValue().toString();
+        }
+
+        @Override
+        public int compareTo(CellValue<T> o) {
+            int consensusCompareResult = consensusValue.getData().compareTo(o.consensusValue.getData());
+            if(consensusCompareResult == 0) {
+                return index.compareTo(o.index);
+            } else {
+                return consensusCompareResult;
+            }
+        }
+    }
+
     public static class ValidationReportTableModel extends AbstractTableModel {
-        private int direct = -1;
         private List<ValidationOutputRecord> records;
-        private List<List<ResultColumn>> data = new ArrayList<List<ResultColumn>>();
+        private List<List<CellValue<?>>> data = new ArrayList<List<CellValue<?>>>();
 
         public ValidationReportTableModel(List<ValidationOutputRecord> records) {
             this.records = new ArrayList<ValidationOutputRecord>();
@@ -433,11 +482,34 @@ public class ValidationReportViewer extends DocumentViewer {
             updateTable();
         }
 
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            return CellValue.class;
+        }
+
         public void updateTable() {
-            data = new ArrayList<List<ResultColumn>>();
+            data = new ArrayList<List<CellValue<?>>>();
             for (ValidationOutputRecord record : records) {
-                data.addAll(record.exportTable());
+                List<ResultColumn> firstRow = null;
+                for (List<ResultColumn> resultColumns : record.exportTable()) {
+                    if(firstRow == null) {
+                        firstRow = resultColumns;
+                    }
+                    List<CellValue<?>> values = new ArrayList<CellValue<?>>();
+                    for(int columnIndex=0; columnIndex<resultColumns.size(); columnIndex++) {
+                        CellValue<?> cellValue = getCellValue(firstRow.get(columnIndex), resultColumns.get(columnIndex), columnIndex);
+                        values.add(cellValue);
+                    }
+                    data.add(values);
+                }
             }
+        }
+
+        private <T extends Comparable<T>> CellValue getCellValue(ResultColumn<T> firstRowValue, ResultColumn currentRowValue, int columnIndex) {
+            // Have to cast because getClass() actually returns Class<? extends ResultColumn> due to type erasure :(
+            //noinspection unchecked
+            Class<ResultColumn<T>> firstRowClass = (Class<ResultColumn<T>>) firstRowValue.getClass();
+            return new CellValue<T>(firstRowClass.cast(firstRowValue), firstRowClass.cast(currentRowValue), columnIndex);
         }
 
         @Override
@@ -455,8 +527,9 @@ public class ValidationReportViewer extends DocumentViewer {
         }
 
         @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            return data.get(rowIndex).get(columnIndex).getDisplayValue();
+        public CellValue getValueAt(int rowIndex, int columnIndex) {
+            // Return an Object that has Group - > Values
+            return data.get(rowIndex).get(columnIndex);
         }
 
         @Override
@@ -465,39 +538,7 @@ public class ValidationReportViewer extends DocumentViewer {
                 return super.getColumnName(column);
             }
 
-            return data.get(0).get(column).getName();
-        }
-
-        @SuppressWarnings("unchecked")
-        public void sortByColumn(final int index){
-            direct *= -1;
-            Collections.sort(records, new Comparator<ValidationOutputRecord>() {
-                @Override
-                public int compare(ValidationOutputRecord o1, ValidationOutputRecord o2) {
-                    List<List<ResultColumn>> left = o1.exportTable();
-                    List<List<ResultColumn>> right = o2.exportTable();
-
-                    if (left.size() == 0) {
-                        return right.size() == 0 ? 0 : -1;
-                    }
-
-                    if (right.size() == 0) {
-                        return 1;
-                    }
-
-                    List<ResultColumn> leftCols = left.get(0);
-                    List<ResultColumn> rightCols = right.get(0);
-
-                    ResultColumn leftCol = leftCols.get(index);
-                    ResultColumn rightCol = rightCols.get(index);
-
-                    if (leftCol.getData() instanceof Comparable) {
-                        return ((Comparable) leftCol.getData()).compareTo(rightCol.getData()) * direct;
-                    } else {
-                        return 0;
-                    }
-                }
-            });
+            return data.get(0).get(column).value.getName();
         }
 
         public void displayOptions(int columnIndex) {
