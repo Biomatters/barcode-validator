@@ -9,6 +9,11 @@ import java.awt.*;
 import java.util.Enumeration;
 import java.util.Vector;
 
+/**
+ * @author Frank Lee
+ *         Created on 12/111/14 3:57 PM
+ */
+
 public class ColumnGroup {
     protected TableCellRenderer renderer = null;
     protected Vector<Object> vector = null;
@@ -65,13 +70,21 @@ public class ColumnGroup {
         return renderer;
     }
 
+    /**
+    * Now we have at most two level header, and only validation entry has sub columns, so here we make validation entry like hyper link, so that user can click it to get options
+    */
     public Object getHeaderValue() {
-        return text;
+        if (vector != null && vector.size() > 0) {
+            return "<html><a href=\"\">" + text + "</a></html>";
+        } else {
+            return text;
+        }
     }
 
     public int getSize() {
         return vector == null ? 0 : vector.size();
     }
+
 
     public Dimension getSize(JTable table) {
         Component comp = renderer.getTableCellRendererComponent(table,
