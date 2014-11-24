@@ -327,7 +327,7 @@ public class ValidationReportViewer extends DocumentViewer {
                     Options.StringOption filenameOption = options.addStringOption("filename", "Filename:", "report.csv", "Name of CSV file");
 
                     options.setEnabled(true);
-                    if (!Dialogs.showOptionsDialog(options, "Export report table to csv file", true)) {
+                    if (!Dialogs.showOptionsDialog(options, "Export report table to csv file", false)) {
                         return;
                     }
 
