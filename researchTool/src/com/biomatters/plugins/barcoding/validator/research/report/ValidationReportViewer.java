@@ -25,6 +25,7 @@ import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -262,17 +263,34 @@ public class ValidationReportViewer extends DocumentViewer {
         table.getTableHeader().setUI(groupableTableHeaderUI);
         table.setAutoCreateRowSorter(false);
 
-        table.getTableHeader().addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int index = table.getColumnModel().getColumnIndexAtX(e.getX());
-                if (index >= tableModel.getFixedColumnLength() && e.getY() <= groupableTableHeaderUI.getHeaderHeight() / 2) {
-                    tableModel.displayOptions(index);
-                }
+        MouseListener[] mouseListeners = head.getMouseListeners();
+        MouseListener originalHeaderMouseListener = null;
+        for (final MouseListener mouseListener : mouseListeners) {
+            if(mouseListener instanceof BasicTableHeaderUI.MouseInputHandler) {
+                originalHeaderMouseListener = mouseListener;
             }
-        });
+        }
+        if(originalHeaderMouseListener != null) {
+            head.removeMouseListener(originalHeaderMouseListener);
+            MouseAdapter wrapper = wrapMouseListenerForHeader(tableModel, table, groupableTableHeaderUI, originalHeaderMouseListener);
+            head.addMouseListener(wrapper);
+        }
 
         return table;
+    }
+
+    private MouseAdapter wrapMouseListenerForHeader(final ValidationReportTableModel tableModel, final JTable table, final GroupableTableHeaderUI groupableTableHeaderUI, final MouseListener originalHeaderMouseListener) {
+        return new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    int column = table.columnAtPoint(e.getPoint());
+                    if (column >= tableModel.getFixedColumnLength() && e.getY() <= groupableTableHeaderUI.getHeaderHeight() / 2) {
+                        tableModel.displayOptions(column);
+                    } else {
+                        originalHeaderMouseListener.mouseClicked(e);
+                    }
+                }
+            };
     }
 
     private static <T extends Comparable<T>> Comparator getCellValueComparator(
