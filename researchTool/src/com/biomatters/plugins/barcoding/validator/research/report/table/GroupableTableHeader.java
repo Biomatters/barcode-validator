@@ -24,6 +24,12 @@ public class GroupableTableHeader extends JTableHeader {
         columnGroups.addElement(g);
     }
 
+    /**
+     * get the path to specify column in this group
+     *
+     * @param col the column to be targeted
+     * @return {@link java.util.Enumeration}
+     */
     public Enumeration getColumnGroups(TableColumn col) {
         if (columnGroups == null) {
             return null;

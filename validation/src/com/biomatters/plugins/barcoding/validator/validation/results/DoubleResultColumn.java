@@ -25,6 +25,6 @@ public class DoubleResultColumn extends ResultColumn<Double> {
 
     @Override
     public Object getDisplayValue() {
-        return data * 100;
+        return Double.parseDouble(String.format("%.2f",data));
     }
 }

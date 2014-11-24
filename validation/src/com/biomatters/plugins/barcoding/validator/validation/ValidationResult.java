@@ -1,7 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
 import com.biomatters.geneious.publicapi.documents.PluginDocument;
-import com.biomatters.plugins.barcoding.validator.validation.results.ValidationResultEntry;
+import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,14 +19,18 @@ public class ValidationResult {
     private String message;
     private List<PluginDocument> intermediateDocuments = new ArrayList<PluginDocument>();
 
-    private ValidationResultEntry entry;
+    private List<ResultFact> facts = new ArrayList<ResultFact>();
 
-    public ValidationResultEntry getEntry() {
-        return entry;
+    public List<ResultFact> getFacts() {
+        return facts;
     }
 
-    public void setEntry(ValidationResultEntry entry) {
-        this.entry = entry;
+    public void setFacts(List<ResultFact> facts) {
+        this.facts = facts;
+    }
+
+    public void addFact(ResultFact fact) {
+        facts.add(fact);
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
+import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
@@ -9,7 +10,6 @@ import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Option
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Runner;
 import com.biomatters.plugins.barcoding.validator.validation.consensus.ConsensusUtilities;
 import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
-import com.biomatters.plugins.barcoding.validator.validation.results.ValidationResultEntry;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.PrimerTrimmingOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.SequenceTrimmer;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
@@ -102,7 +102,7 @@ public class Pipeline {
                 callback,
                 runValidationTasks(
                         singleSequenceValidations,
-                        createSingleSequenceValidationRunner(trimmedTraces),
+                        createSingleSequenceValidationRunner(trimmedTraces, callback),
                         validationOptions,
                         validationProgress
                 ),
@@ -113,7 +113,7 @@ public class Pipeline {
                 callback,
                 runValidationTasks(
                         sequenceCompareValidations,
-                        createSequenceCompareValidationRunner(trimmedTraces, barcode),
+                        createSequenceCompareValidationRunner(trimmedTraces, barcode, callback),
                         validationOptions,
                         validationProgress
                 ),
@@ -124,7 +124,7 @@ public class Pipeline {
                 callback,
                 runValidationTasks(
                         singleSequenceValidations,
-                        createSingleSequenceValidationRunner(consensusSequences),
+                        createSingleSequenceValidationRunner(consensusSequences, callback),
                         validationOptions,
                         validationProgress
                 ),
@@ -135,7 +135,7 @@ public class Pipeline {
                 callback,
                 runValidationTasks(
                     sequenceCompareValidations,
-                    createSequenceCompareValidationRunner(consensusSequences, barcode),
+                    createSequenceCompareValidationRunner(consensusSequences, barcode, callback),
                     validationOptions,
                     validationProgress
                 ),
@@ -143,60 +143,61 @@ public class Pipeline {
         );
     }
 
-    private static ValidationRunner<SingleSequenceValidation> createSingleSequenceValidationRunner(final List<NucleotideGraphSequenceDocument> sequences) {
+    private static ValidationRunner<SingleSequenceValidation> createSingleSequenceValidationRunner(final List<NucleotideGraphSequenceDocument> sequences, final ValidationCallback callback) {
         return new ValidationRunner<SingleSequenceValidation>() {
             @Override
             ValidationResult run(SingleSequenceValidation validation, ValidationOptions options) throws DocumentOperationException {
                 ValidationResult result = new ValidationResult(true, "");
-                ValidationResultEntry validationResultEntry = validation.getValidationResultEntry();
                 List<String> failedSequenceNames = new ArrayList<String>();
 
                 for (NucleotideGraphSequenceDocument sequence : sequences) {
                     ResultFact sequenceValidationResult = validation.validate(sequence, options);
+                    URN urNofSequence = callback.getURNofSequence(sequence);
+                    assert urNofSequence != null;
+                    sequenceValidationResult.setTargetURN(urNofSequence);
 
                     if (!sequenceValidationResult.getPass()) {
                         failedSequenceNames.add(sequence.getName());
                     }
 
-                    validationResultEntry.addResultFact(sequenceValidationResult);
+                    result.addFact(sequenceValidationResult);
                 }
 
                 if (!failedSequenceNames.isEmpty()) {
                     result.setPassed(false);
                     result.setMessage(constructValidationFailureMessage(failedSequenceNames));
                 }
-
-                result.setEntry(validationResultEntry);
 
                 return result;
             }
         };
     }
 
-    private static ValidationRunner<SequenceCompareValidation> createSequenceCompareValidationRunner(final List<NucleotideGraphSequenceDocument> sequences, final NucleotideSequenceDocument referenceSequence) {
+    private static ValidationRunner<SequenceCompareValidation> createSequenceCompareValidationRunner(final List<NucleotideGraphSequenceDocument> sequences, final NucleotideSequenceDocument referenceSequence, final ValidationCallback callback) {
         return new ValidationRunner<SequenceCompareValidation>() {
             @Override
             ValidationResult run(SequenceCompareValidation validation, ValidationOptions options) throws DocumentOperationException {
                 ValidationResult result = new ValidationResult(true, "");
-                ValidationResultEntry validationResultEntry = validation.getValidationResultEntry();
                 List<String> failedSequenceNames = new ArrayList<String>();
 
                 for (NucleotideSequenceDocument sequence : sequences) {
                     ResultFact sequenceValidationResult = validation.validate(sequence, referenceSequence, options);
+                    URN urNofSequence = callback.getURNofSequence((NucleotideGraphSequenceDocument) sequence);
+                    assert urNofSequence != null;
+
+                    sequenceValidationResult.setTargetURN(urNofSequence);
 
                     if (!sequenceValidationResult.getPass()) {
                         failedSequenceNames.add(sequence.getName());
                     }
 
-                    validationResultEntry.addResultFact(sequenceValidationResult);
+                    result.addFact(sequenceValidationResult);
                 }
 
                 if (!failedSequenceNames.isEmpty()) {
                     result.setPassed(false);
                     result.setMessage(constructValidationFailureMessage(failedSequenceNames));
                 }
-
-                result.setEntry(validationResultEntry);
 
                 return result;
             }

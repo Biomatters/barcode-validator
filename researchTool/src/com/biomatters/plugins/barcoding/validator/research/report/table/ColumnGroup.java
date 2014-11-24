@@ -15,18 +15,32 @@ public class ColumnGroup {
     protected String text = null;
     private int margin = 0;
 
+    /**
+     * @param text The name of this group which will show in the merged cell
+     * @param renderer the render used to render cell
+     */
     public ColumnGroup(String text, @NotNull TableCellRenderer renderer) {
         this.renderer = renderer;
         this.text = text;
         vector = new Vector<Object>();
     }
 
+    /**
+     * @param obj such element of this group, it should be {@link com.biomatters.plugins.barcoding.validator.research.report.table.ColumnGroup} or {@link javax.swing.table.TableColumn}
+     */
     public void add(Object obj) {
         if (obj == null)
             return;
         vector.addElement(obj);
     }
 
+
+    /**
+     * get the path to specify column
+     * @param column the column to be found
+     * @param group the {@link java.util.Vector} used to record path
+     * @return the {@link java.util.Vector} containing the path, or null if it can not in this group
+     */
     public Vector<ColumnGroup> getColumnGroups(TableColumn column, Vector<ColumnGroup> group) {
         group.addElement(this);
         if (vector.contains(column))

@@ -5,6 +5,7 @@ import org.jdom.Element;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author Frank Lee
@@ -42,7 +43,7 @@ public class LinkResultColumn extends ResultColumn<LinkResultColumn.LinkBox> {
     }
 
     @Override
-    public void fromXML(Element element) throws XMLSerializationException {
+    public void fromXML(Element element) throws XMLSerializationException  {
         name = element.getChildText(NAME);
         String lable = element.getChildText(LinkBox.LABEL);
         ArrayList<URN> links = new ArrayList<URN>();
@@ -64,7 +65,12 @@ public class LinkResultColumn extends ResultColumn<LinkResultColumn.LinkBox> {
         return data;
     }
 
-    public static class LinkBox {
+    public static boolean isNumeric(String str){
+        Pattern pattern = Pattern.compile("[0-9]+");
+        return pattern.matcher(str).matches();
+    }
+
+    public static class LinkBox implements Comparable<LinkBox> {
         protected static final String LABEL = "label";
         protected static final String LINK = "link";
 
@@ -102,11 +108,20 @@ public class LinkResultColumn extends ResultColumn<LinkResultColumn.LinkBox> {
 
         @Override
         public String toString() {
-            return label;
+            return "<html><a href=\"" + links + "\">" + label + "</a></html>";
         }
 
         public void openLink() {
             if (links != null) DocumentUtilities.selectDocuments(links);
+        }
+
+        @Override
+        public int compareTo(LinkBox o) {
+            if (isNumeric(label) && isNumeric(o.getLabel())) {
+                return Integer.parseInt(label) - Integer.parseInt(o.getLabel());
+            }
+
+            return label.compareTo(o.getLabel());
         }
     }
 }

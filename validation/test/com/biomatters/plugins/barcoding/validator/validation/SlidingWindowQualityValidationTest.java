@@ -6,7 +6,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSeque
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.utilities.CharSequenceUtilities;
-import com.biomatters.plugins.barcoding.validator.validation.results.SlidingWindowQualityValidationResultEntry;
+import com.biomatters.plugins.barcoding.validator.validation.results.SlidingWindowQualityValidationResultFact;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -27,21 +27,21 @@ public class SlidingWindowQualityValidationTest extends Assert {
         NucleotideGraphSequenceDocument d3 = createTestDocument(q3);
         NucleotideGraphSequenceDocument d4 = createTestDocument(q4);
 
-        assertTrue(((SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(d1, 5, 1, 1, 19.9))).getPass());
-        assertTrue(((SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(d1, 5, 1, 1, 20.0))).getPass());
-        assertFalse(((SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact) (new SlidingWindowQualityValidation().validate(d1, 5, 1, 1, 20.1))).getPass());
+        assertTrue(((SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(d1, 5, 1, 1, 19.9))).getPass());
+        assertTrue(((SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(d1, 5, 1, 1, 20.0))).getPass());
+        assertFalse(((SlidingWindowQualityValidationResultFact) (new SlidingWindowQualityValidation().validate(d1, 5, 1, 1, 20.1))).getPass());
 
-        assertTrue(((SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(d2, 5, 1, 1, 39.9))).getPass());
-        assertTrue(((SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(d2, 5, 1, 1, 40.0))).getPass());
-        assertFalse(((SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact) (new SlidingWindowQualityValidation().validate(d2, 5, 1, 1, 40.1))).getPass());
+        assertTrue(((SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(d2, 5, 1, 1, 39.9))).getPass());
+        assertTrue(((SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(d2, 5, 1, 1, 40.0))).getPass());
+        assertFalse(((SlidingWindowQualityValidationResultFact) (new SlidingWindowQualityValidation().validate(d2, 5, 1, 1, 40.1))).getPass());
 
-        assertTrue(((SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(d3, 5, 1, 1, 59.9))).getPass());
-        assertTrue(((SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(d3, 5, 1, 1, 60.0))).getPass());
-        assertFalse(((SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact) (new SlidingWindowQualityValidation().validate(d3, 5, 1, 1, 60.1))).getPass());
+        assertTrue(((SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(d3, 5, 1, 1, 59.9))).getPass());
+        assertTrue(((SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(d3, 5, 1, 1, 60.0))).getPass());
+        assertFalse(((SlidingWindowQualityValidationResultFact) (new SlidingWindowQualityValidation().validate(d3, 5, 1, 1, 60.1))).getPass());
 
-        assertTrue(((SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(d4, 5, 1, 1, 79.9))).getPass());
-        assertTrue(((SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(d4, 5, 1, 1, 80.0))).getPass());
-        assertFalse(((SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact) (new SlidingWindowQualityValidation().validate(d4, 5, 1, 1, 80.1))).getPass());
+        assertTrue(((SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(d4, 5, 1, 1, 79.9))).getPass());
+        assertTrue(((SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(d4, 5, 1, 1, 80.0))).getPass());
+        assertFalse(((SlidingWindowQualityValidationResultFact) (new SlidingWindowQualityValidation().validate(d4, 5, 1, 1, 80.1))).getPass());
     }
 
     @Test
@@ -52,17 +52,17 @@ public class SlidingWindowQualityValidationTest extends Assert {
                 0, 1, 0, 1
         );
 
-        assertTrue(((SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(testDoc, 4, 2, 1, 50.0))).getPass());
-        assertTrue(((SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(testDoc, 6, 2, 1, 50.0))).getPass());
-        assertTrue(((SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(testDoc, 8, 4, 1, 50.0))).getPass());
+        assertTrue(((SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(testDoc, 4, 2, 1, 50.0))).getPass());
+        assertTrue(((SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(testDoc, 6, 2, 1, 50.0))).getPass());
+        assertTrue(((SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(testDoc, 8, 4, 1, 50.0))).getPass());
     }
 
     @Test
     public void testIgnoresIncompleteWindow() throws DocumentOperationException {
         NucleotideGraphSequenceDocument testDoc = createTestDocument(0, 1, 1, 0, 0);
 
-        assertTrue(((SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(testDoc, 3, 2, 1, 30.0))).getPass());
-        assertTrue(((SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(testDoc, 4, 2, 1, 30.0))).getPass());
+        assertTrue(((SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(testDoc, 3, 2, 1, 30.0))).getPass());
+        assertTrue(((SlidingWindowQualityValidationResultFact)(new SlidingWindowQualityValidation().validate(testDoc, 4, 2, 1, 30.0))).getPass());
     }
 
     private static NucleotideGraphSequenceDocument createTestDocument(int... qualityArray) {

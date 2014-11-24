@@ -9,11 +9,15 @@ import com.biomatters.geneious.publicapi.plugin.DocumentOperation;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.PluginUtilities;
 import com.biomatters.plugins.barcoding.validator.validation.results.MuscleAlignmentValidationResultEntry;
+import com.biomatters.plugins.barcoding.validator.validation.results.MuscleAlignmentValidationResultFact;
 import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
 import com.biomatters.plugins.barcoding.validator.validation.results.ValidationResultEntry;
 import jebl.util.ProgressListener;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Frank Lee
@@ -36,7 +40,7 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
         DocumentOperation alignmentOperation = PluginUtilities.getAlignmentOperation(MUSCLE_OPERATION_ID, SequenceDocument.Alphabet.NUCLEOTIDE);
         String sequenceName = sequence.getName();
         float minimumSimilarity = muscleAlignmentValidationOptions.getMinimumSimilarity();
-        Map<Float, PluginDocument> similarityToIntermediateDocument = new HashMap<Float, PluginDocument>();
+        Map<Float, AnnotatedPluginDocument> similarityToIntermediateDocument = new HashMap<Float, AnnotatedPluginDocument>();
 
         AnnotatedPluginDocument sequenceDocument = DocumentUtilities.getAnnotatedPluginDocumentThatContains(sequence);
         if (sequenceDocument == null) {
@@ -50,7 +54,7 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
         AnnotatedPluginDocument sequenceReversedDocument = DocumentUtilities.createAnnotatedPluginDocument(sequenceReversed);
         sequenceReversedDocument.setName(sequenceName + " (reversed)");
 
-        MuscleAlignmentValidationResultEntry.MuscleAlignmentValidationResultFact result = new MuscleAlignmentValidationResultEntry.MuscleAlignmentValidationResultFact(
+        MuscleAlignmentValidationResultFact result = new MuscleAlignmentValidationResultFact(
                 sequenceName, sequenceName, Collections.singletonList(sequence.getURN()), false, 0.0, "", Collections.<URN>emptyList(), "", sequenceReversedDocument.getDocumentOrNull()
         );
 
@@ -59,7 +63,7 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
             float similarityBetweenSequenceOneReversedAndSequenceTwo = getSimilarity(alignmentOperation, sequenceDocument, sequenceReversedDocument, similarityToIntermediateDocument);
 
             float similarityOfAlignment = Math.max(similarityBetweenSequenceOneAndSequenceTwo, similarityBetweenSequenceOneReversedAndSequenceTwo);
-            PluginDocument alignmentDocument = similarityToIntermediateDocument.get(similarityOfAlignment);
+            AnnotatedPluginDocument alignmentDocument = similarityToIntermediateDocument.get(similarityOfAlignment);
 
             result.setSimilarity(similarityOfAlignment);
             result.setAlignmentName(alignmentDocument.getName());
@@ -92,7 +96,7 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
     private float getSimilarity(DocumentOperation alignmentOperation,
                                 AnnotatedPluginDocument sequenceOneDocument,
                                 AnnotatedPluginDocument sequenceTwoDocument,
-                                Map<Float, PluginDocument> similarityToIntermediateDocument) throws DocumentOperationException {
+                                Map<Float, AnnotatedPluginDocument> similarityToIntermediateDocument) throws DocumentOperationException {
         List<AnnotatedPluginDocument> annotatedPluginDocuments = alignmentOperation.performOperation(ProgressListener.EMPTY, alignmentOperation.getOptions(sequenceOneDocument, sequenceTwoDocument), sequenceOneDocument, sequenceTwoDocument);
 
         if (annotatedPluginDocuments == null || annotatedPluginDocuments.size() == 0) {
@@ -106,7 +110,7 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
 
         float similarity = ((Percentage)alignmentDocument.getFieldValue(DocumentField.ALIGNMENT_SIMILARITY.getCode())).floatValue();
 
-        similarityToIntermediateDocument.put(similarity, alignmentDocument.getDocumentOrNull());
+        similarityToIntermediateDocument.put(similarity, alignmentDocument);
 
         return similarity;
     }

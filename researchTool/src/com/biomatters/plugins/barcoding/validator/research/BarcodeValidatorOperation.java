@@ -228,6 +228,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             setSubFolder(operationCallback, setName + subSubFolderSeparator + barcodeName);
 
             pipelineProgress.beginSubtask();
+            callback.getRecord().setSetName(setName);
             Pipeline.runValidationPipeline(barcode, traces, trimmingOptions, CAP3Options, validationOptions, callback, pipelineProgress);
             setSubFolder(operationCallback, setName);
             outputs.add(callback.getRecord());

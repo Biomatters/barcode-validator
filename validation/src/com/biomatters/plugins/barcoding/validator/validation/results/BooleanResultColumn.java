@@ -7,7 +7,7 @@ import org.jdom.Element;
  * @author Frank Lee
  *         Created on 13/11/14 6:42 PM
  */
-public class BooleanResultColumn extends ResultColumn<Boolean> {
+public class BooleanResultColumn extends ResultColumn<Boolean>  {
 
     public BooleanResultColumn(String name) {
         super(name);

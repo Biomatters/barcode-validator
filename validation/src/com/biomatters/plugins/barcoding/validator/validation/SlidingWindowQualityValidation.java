@@ -6,6 +6,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationIn
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocumentWithEditableAnnotations;
 import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
 import com.biomatters.plugins.barcoding.validator.validation.results.SlidingWindowQualityValidationResultEntry;
+import com.biomatters.plugins.barcoding.validator.validation.results.SlidingWindowQualityValidationResultFact;
 import com.biomatters.plugins.barcoding.validator.validation.results.ValidationResultEntry;
 
 import java.util.ArrayList;
@@ -72,7 +73,7 @@ public class SlidingWindowQualityValidation extends SingleSequenceValidation {
         SequenceAnnotation validationFailureAnnotation = new SequenceAnnotation("Validation Failure", "Insufficient Quality");
         int numberOfFailedWindows = 0;
 
-        SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact result = new SlidingWindowQualityValidationResultEntry.SlidingWindowQualityValidationResultFact(
+        SlidingWindowQualityValidationResultFact result = new SlidingWindowQualityValidationResultFact(
                 sequenceName, sequenceName, Collections.singletonList(sequence.getURN()), false, sequenceLength, 0, ""
         );
 
@@ -85,6 +86,7 @@ public class SlidingWindowQualityValidation extends SingleSequenceValidation {
             }
         }
 
+        result.setTotalNumberOfWindows(sequenceLength - winSize + 1);
         result.setNumberOfFailedWindows(numberOfFailedWindows);
 
         if (numberOfFailedWindows == 0) {
@@ -105,6 +107,8 @@ public class SlidingWindowQualityValidation extends SingleSequenceValidation {
             ((SequenceDocumentWithEditableAnnotations)sequence).setAnnotations(sequenceAnnotations);
 
             result.setPass(true);
+        } else {
+            result.setPass(false);
         }
 
         return result;

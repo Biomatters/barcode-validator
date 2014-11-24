@@ -2,7 +2,7 @@ package com.biomatters.plugins.barcoding.validator.output;
 
 import com.biomatters.geneious.publicapi.documents.*;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
-import com.biomatters.plugins.barcoding.validator.validation.results.ValidationResultEntry;
+import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
 import org.jdom.Element;
 
 import java.util.ArrayList;
@@ -22,14 +22,14 @@ public class RecordOfValidationResult implements XMLSerializable {
 
     private boolean passed;
     private String message;
-    private ValidationResultEntry entry;
+    private ResultFact fact;
     private List<URN> docs = new ArrayList<URN>();
 
-    public RecordOfValidationResult(ValidationOptions options, boolean passed, String message, ValidationResultEntry entry, List<URN> docs) {
+    public RecordOfValidationResult(ValidationOptions options, boolean passed, String message, ResultFact fact, List<URN> docs) {
         this.options = options;
         this.passed = passed;
         this.message = message;
-        this.entry = entry;
+        this.fact = fact;
         this.docs = docs;
     }
 
@@ -38,7 +38,7 @@ public class RecordOfValidationResult implements XMLSerializable {
     private static final String PASSED = "passed";
     private static final String MESSAGE = "message";
     private static final String DOCS = "doc";
-    private static final String ENTRY = "entry";
+    private static final String FACT = "fact";
 
     @SuppressWarnings("UnusedDeclaration")
     public RecordOfValidationResult(Element element) throws XMLSerializationException {
@@ -51,11 +51,11 @@ public class RecordOfValidationResult implements XMLSerializable {
         passed = Boolean.valueOf(passedString);
         message = element.getChildText(MESSAGE);
 
-        Element entryElement = element.getChild(ENTRY);
+        Element entryElement = element.getChild(FACT);
         if(entryElement == null) {
-            throw new XMLSerializationException("Required " + ENTRY + " child element missing from element.");
+            throw new XMLSerializationException("Required " + FACT + " child element missing from element.");
         }
-        entry = XMLSerializer.classFromXML(entryElement, ValidationResultEntry.class);
+        fact = XMLSerializer.classFromXML(entryElement, ResultFact.class);
 
         for (Element docElement : element.getChildren(DOCS)) {
             try {
@@ -72,7 +72,7 @@ public class RecordOfValidationResult implements XMLSerializable {
         root.addContent(XMLSerializer.classToXML(OPTIONS, options));
         root.addContent(new Element(PASSED).setText(Boolean.toString(passed)));
         root.addContent(new Element(MESSAGE).setText(message));
-        root.addContent(XMLSerializer.classToXML(ENTRY, entry));
+        root.addContent(XMLSerializer.classToXML(FACT, fact));
         for (URN doc : docs) {
             root.addContent(doc.toXML(DOCS));
         }
@@ -102,7 +102,7 @@ public class RecordOfValidationResult implements XMLSerializable {
         return options;
     }
 
-    public ValidationResultEntry getEntry() {
-        return entry;
+    public ResultFact getFact() {
+        return fact;
     }
 }

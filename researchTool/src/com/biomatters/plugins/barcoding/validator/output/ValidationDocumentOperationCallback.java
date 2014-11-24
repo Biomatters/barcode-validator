@@ -14,12 +14,15 @@ import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationCallback;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationResult;
+import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.SequenceTrimmer;
 import jebl.util.CompositeProgressListener;
 import jebl.util.ProgressListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A {@link com.biomatters.plugins.barcoding.validator.validation.ValidationCallback} that adds results to
@@ -30,6 +33,8 @@ import java.util.List;
  *         Created on 30/09/14 4:17 PM
  */
 public class ValidationDocumentOperationCallback implements ValidationCallback {
+
+    public Map<PluginDocument, URN> sequenceURNMap = new HashMap<PluginDocument, URN>();
 
     private DocumentOperation.OperationCallback operationCallback;
     private boolean selectResultDocs = false;
@@ -90,7 +95,10 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
             if(!NucleotideGraphSequenceDocument.class.isAssignableFrom(doc.getDocumentClass())) {
                 throw new IllegalStateException("Saving NucleotideGraphSequenceDocument to database created " + doc.getDocumentClass().getSimpleName());
             }
-            results.add((NucleotideGraphSequenceDocument)doc.getDocument());
+
+            NucleotideGraphSequenceDocument document = (NucleotideGraphSequenceDocument) doc.getDocument();
+            results.add(document);
+            sequenceURNMap.put(document, doc.getURN());
             outputRecord.addTrimmedDocumentUrns(doc.getName(), doc.getURN());
         }
         return results;
@@ -104,6 +112,7 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
     @Override
     public void addConsensus(SequenceDocument consensusSequence, ProgressListener progressListener) throws DocumentOperationException {
         outputRecord.consensusUrn = saveDocumentAndGetUrn(consensusSequence, progressListener);
+        sequenceURNMap.put(consensusSequence, outputRecord.consensusUrn);
     }
 
     @Override
@@ -114,11 +123,17 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
             supplementaryDocUrns.add(saveDocumentAndGetUrn(docToAdd, ProgressListener.EMPTY));
         }
 
-        outputRecord.validationRecords.add(new RecordOfValidationResult(options, validationResult.isPassed(), validationResult.getMessage(), validationResult.getEntry(), supplementaryDocUrns));
+        for (ResultFact fact : validationResult.getFacts()) {
+            outputRecord.addValidationResult(new RecordOfValidationResult(options, validationResult.isPassed(), validationResult.getMessage(), fact, supplementaryDocUrns));
+        }
     }
 
 
     public ValidationOutputRecord getRecord() {
         return outputRecord;
+    }
+
+    public URN getURNofSequence(PluginDocument sequence) {
+        return sequenceURNMap.get(sequence);
     }
 }

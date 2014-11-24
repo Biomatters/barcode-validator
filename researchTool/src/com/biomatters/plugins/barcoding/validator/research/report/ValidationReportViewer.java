@@ -4,8 +4,6 @@ import com.biomatters.geneious.publicapi.components.Dialogs;
 import com.biomatters.geneious.publicapi.components.GPanel;
 import com.biomatters.geneious.publicapi.components.GTable;
 import com.biomatters.geneious.publicapi.components.GTextPane;
-import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
-import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.plugin.ActionProvider;
 import com.biomatters.geneious.publicapi.plugin.DocumentViewer;
@@ -24,12 +22,11 @@ import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.results.LinkResultColumn;
 import com.biomatters.plugins.barcoding.validator.validation.results.ResultColumn;
 import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
-import com.biomatters.plugins.barcoding.validator.validation.results.ValidationResultEntry;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
@@ -167,9 +164,6 @@ public class ValidationReportViewer extends DocumentViewer {
         return "<a href=\"" + StringUtilities.join(",", urnStrings) + "\">" + label + "</a>";
     }
 
-//    private static Icon TICK_ICON = IconUtilities.getIcons("tick16.png").getIcon16();
-//    private static Icon CROSS_ICON = IconUtilities.getIcons("x16.png").getIcon16();
-
     private JTextPane getTextPane() {
         String html = getHtml();
         if(html == null || html.isEmpty()) {
@@ -222,7 +216,7 @@ public class ValidationReportViewer extends DocumentViewer {
         }
         Dimension oldPrefSize = rootPanel.getPreferredSize();
         // Add 500 px to the preferred height so users can scroll past the table
-        rootPanel.setPreferredSize(new Dimension(oldPrefSize.width, oldPrefSize.height+500));
+        rootPanel.setPreferredSize(new Dimension(oldPrefSize.width, oldPrefSize.height + 500));
         return scroll;
     }
 
@@ -230,46 +224,8 @@ public class ValidationReportViewer extends DocumentViewer {
     public JTable getTable() {
         List<ValidationOutputRecord> records = reportDocument.getRecords();
 
-        List<List<ResultColumn>> columnList = getDataModels(records);
-
-        //get header
-        if (columnList.size() == 0) {
-            return null;
-        }
-
-        List<String> header = new ArrayList<String>();
-        List<ResultColumn> resultColumns = columnList.get(0);
-        for (ResultColumn column : resultColumns) {
-            header.add(column.getName());
-        }
-
-        //construct table
-        String[] headers = header.toArray(new String[header.size()]);
-        Object[][] datas = new Object[columnList.size()][];
-        for (int i = 0; i < columnList.size(); i++) {
-            datas[i] = new Object[columnList.get(i).size()];
-            for (int j = 0; j < columnList.get(i).size(); j++) {
-                datas[i][j] = columnList.get(i).get(j).getDisplayValue();
-            }
-        }
-
-        DefaultTableModel dm = new DefaultTableModel(datas, headers) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-
-            @Override
-            public Class<?> getColumnClass(int columnIndex) {
-                if (columnIndex >= 0 && columnIndex < getColumnCount() && getValueAt(0, columnIndex) != null) {
-                    return getValueAt(0, columnIndex).getClass();
-                } else {
-                    return Object.class;
-                }
-            }
-        };
-
-        JTable table = new GTable(dm);
+        final ValidationReportTableModel tableModel = new ValidationReportTableModel(records);
+        final JTable table = new GTable(tableModel);
         GroupableTableHeader head = new GroupableTableHeader(table.getTableHeader());
         table.setTableHeader(head);
         TableCellRenderer headerRenderer = head.getDefaultRenderer();
@@ -294,25 +250,26 @@ public class ValidationReportViewer extends DocumentViewer {
             }
         });
 
-        //merge header
-        TableColumnModel cm = table.getColumnModel();
-        int colIndex = 3;   //since we already have 3 other columns
-        for (RecordOfValidationResult result : records.get(0).getValidationResults()) {
-            ValidationResultEntry entry = result.getEntry();
-            ColumnGroup entryGroup = new ColumnGroup(entry.getName(), headerRenderer);
-            for (ResultFact fact : entry.getResultFacts()) {
-                ColumnGroup factGroup = new ColumnGroup(fact.getFactName(), headerRenderer);
-                for (int i = 0; i < fact.getColumns().size(); i++) {
-                    factGroup.add(cm.getColumn(colIndex++));
+        mergeHeaer(table, records.get(0));
+        final GroupableTableHeaderUI groupableTableHeaderUI = new GroupableTableHeaderUI();
+        table.getTableHeader().setUI(groupableTableHeaderUI);
+        table.setAutoCreateRowSorter(false);
+
+        table.getTableHeader().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int index = table.getColumnModel().getColumnIndexAtX(e.getX());
+
+                if (e.getY() <= groupableTableHeaderUI.getHeaderHeight() / 2) {
+                    tableModel.displayOptions(index);
+                } else {
+                    tableModel.sortByColumn(index);
+                    tableModel.updateTable();
+                    table.revalidate();
+                    table.repaint();
                 }
-
-                entryGroup.add(factGroup);
             }
-
-            head.addColumnGroup(entryGroup);
-        }
-        table.getTableHeader().setUI(new GroupableTableHeaderUI());
-        table.setAutoCreateRowSorter(true);
+        });
 
         //set alignment to center
         DefaultTableCellRenderer tcr = new DefaultTableCellRenderer();
@@ -322,118 +279,24 @@ public class ValidationReportViewer extends DocumentViewer {
         return table;
     }
 
-    @SuppressWarnings("unchecked")
-    private List<List<ResultColumn>> getDataModels(List<ValidationOutputRecord> records) {
-        Map<String, List<ResultColumn>> fixedColumns = new HashMap<String, List<ResultColumn>>();
-        Map<Class, Map<String, ValidationResultEntry>> entryList = new LinkedHashMap<Class, Map<String, ValidationResultEntry>>();
+    private void mergeHeaer(JTable table, ValidationOutputRecord record) {
+        TableColumnModel cm = table.getColumnModel();
+        GroupableTableHeader head = (GroupableTableHeader) table.getTableHeader();
+        TableCellRenderer headerRenderer = head.getDefaultRenderer();
 
-        int indexInTable = 0;
-        for (ValidationOutputRecord record : records) {
-            //fixed columns: such as Set Name, #Traces, #Assembled
-            indexInTable++;
-            List<ResultColumn> fixedCols = new ArrayList();
-            AnnotatedPluginDocument document = DocumentUtilities.getDocumentByURN(record.getBarcodeSequenceUrn());
-            String label;
-            if(document == null) {
-                label = "Set " + indexInTable;
-            } else {
-                label = document.getName();
-            }
-
-            List<URN> links = new ArrayList<URN>();
-            links.add(record.getBarcodeSequenceUrn());
-            for (URN urn : record.getTraceDocumentUrns()) {
-                links.add(urn);
-            }
-
-            LinkResultColumn setCol = new LinkResultColumn("Set Name");
-            setCol.setData(new LinkResultColumn.LinkBox(label, links));
-            fixedCols.add(setCol);
-
-            LinkResultColumn tracesCol = new LinkResultColumn("#Traces");
-            tracesCol.setData(new LinkResultColumn.LinkBox("" + record.getTrimmedDocumentUrns().size(), record.getTrimmedDocumentUrns()));
-            fixedCols.add(tracesCol);
-
-            LinkResultColumn assemblefCol = new LinkResultColumn("#Assembled");
-            links = new ArrayList<URN>();
-            links.add(record.getAssemblyUrn());
-            assemblefCol.setData(new LinkResultColumn.LinkBox("" + (record.getAssemblyUrn() == null ? 0 : DocumentUtilities.getDocumentByURN(record.getAssemblyUrn()).getReferencedDocuments().size() - 1), links));
-            fixedCols.add(assemblefCol);
-
-            fixedColumns.put(label, fixedCols);
-
-            populateLinks(record);
-            
-            //put entry into catalog
-            for (RecordOfValidationResult result : record.getValidationResults()) {
-                ValidationResultEntry entry = result.getEntry();
-                Map<String, ValidationResultEntry> entryMap = entryList.get(entry.getClass());
-                if (entryMap == null) {
-                    entryMap = new HashMap<String, ValidationResultEntry>();
-                    entryList.put(entry.getClass(), entryMap);
+        int colIndex = record.getFixedColumns(record.getTraceDocumentUrns().get(0)).size();
+        Map<Class, Map<URN, RecordOfValidationResult>> validationResultsMap = record.getValidationResultsMap();
+        for (Map<URN, RecordOfValidationResult> entry : validationResultsMap.values()) {
+            if (entry.size() > 0) {
+                ResultFact fact = entry.values().iterator().next().getFact();
+                ColumnGroup factGroup = new ColumnGroup(fact.getFactName(), headerRenderer);
+                for (int i = 0; i < fact.getColumns().size(); i++) {
+                    factGroup.add(cm.getColumn(colIndex++));
                 }
 
-                entryMap.put(label, entry);
+                head.addColumnGroup(factGroup);
             }
         }
-
-        //alignment
-        for (Map<String, ValidationResultEntry> next : entryList.values()) {
-            align(collection2List(next.values()));
-        }
-
-        //assembly
-        List<List<ResultColumn>> ret = new ArrayList<List<ResultColumn>>();
-        for (Map.Entry<String, List<ResultColumn>> entry : fixedColumns.entrySet()) {
-            String key = entry.getKey();
-            List<ResultColumn> value1 = entry.getValue();
-
-            for (Map<String, ValidationResultEntry> entryMap : entryList.values()) {
-                value1.addAll(entryMap.get(key).getColumns());
-            }
-
-            ret.add(value1);
-        }
-
-        return ret;
-    }
-
-    private void populateLinks(ValidationOutputRecord record) {
-        for (RecordOfValidationResult result : record.getValidationResults()) {
-            for (ResultColumn column : result.getEntry().getColumns()) {
-                if (column instanceof LinkResultColumn) {
-                    LinkResultColumn.LinkBox data = ((LinkResultColumn) column).getData();
-                    String col1Lable = data.getLabel();
-                    URN urn = record.getTraceDocumentUrnByName(col1Lable);
-                    if (urn != null) {
-                        data.addLink(urn);
-                        continue;
-                    }
-
-                    urn = record.getgetTrimmedDocumentUrnByName(col1Lable);
-                    if (urn != null) {
-                        data.addLink(urn);
-                    }
-                }
-            }
-        }
-    }
-
-    private List<ValidationResultEntry> collection2List(Collection<ValidationResultEntry> values) {
-        List<ValidationResultEntry> ret = new ArrayList<ValidationResultEntry>();
-        for (ValidationResultEntry entry : values) {
-            ret.add(entry);
-        }
-
-        return ret;
-    }
-
-    private void align(List<ValidationResultEntry> values) {
-        if (values == null || values.size() == 0) {
-            return;
-        }
-
-        values.get(0).align(values);
     }
 
     @Override
@@ -484,7 +347,7 @@ public class ValidationReportViewer extends DocumentViewer {
                         List<String> values = getHeader();
                         writeRow(writer, values);
                         int rowCount = table.getRowCount();
-                        for (int row=0; row < rowCount; row++) {
+                        for (int row = 0; row < rowCount; row++) {
                             values.clear();
                             for (int column=0; column < columnCount; column++) {
                                 Object value = table.getValueAt(row, column);
@@ -555,6 +418,109 @@ public class ValidationReportViewer extends DocumentViewer {
             string = string.replace("&gt;",">");
             string = string.replace("&lt;","<");
             return string;
+        }
+    }
+
+    public static class ValidationReportTableModel extends AbstractTableModel {
+        private int direct = -1;
+        private List<ValidationOutputRecord> records;
+        private List<List<ResultColumn>> data = new ArrayList<List<ResultColumn>>();
+
+        public ValidationReportTableModel(List<ValidationOutputRecord> records) {
+            this.records = new ArrayList<ValidationOutputRecord>();
+            for (ValidationOutputRecord record : records) {
+                this.records.add(record);
+            }
+            updateTable();
+        }
+
+        public void updateTable() {
+            data = new ArrayList<List<ResultColumn>>();
+            for (ValidationOutputRecord record : records) {
+                data.addAll(record.exportTable());
+            }
+        }
+
+        @Override
+        public int getRowCount() {
+            return data.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            if (data.size() == 0) {
+                return 0;
+            }
+
+            return data.get(0).size();
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            return data.get(rowIndex).get(columnIndex).getDisplayValue();
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            if (data.size() == 0) {
+                return super.getColumnName(column);
+            }
+
+            return data.get(0).get(column).getName();
+        }
+
+        public void sortByColumn(final int index){
+            direct *= -1;
+            Collections.sort(records, new Comparator<ValidationOutputRecord>() {
+                @Override
+                public int compare(ValidationOutputRecord o1, ValidationOutputRecord o2) {
+                    List<List<ResultColumn>> left = o1.exportTable();
+                    List<List<ResultColumn>> right = o2.exportTable();
+
+                    if (left.size() == 0) {
+                        return right.size() == 0 ? 0 : -1;
+                    }
+
+                    if (right.size() == 0) {
+                        return 1;
+                    }
+
+                    List<ResultColumn> leftCols = left.get(0);
+                    List<ResultColumn> rightCols = right.get(0);
+
+                    ResultColumn leftCol = leftCols.get(index);
+                    ResultColumn rightCol = rightCols.get(index);
+
+                    if (leftCol.getData() instanceof Comparable) {
+                        return ((Comparable)leftCol.getData()).compareTo(rightCol.getData()) * direct;
+                    } else {
+                        return 0;
+                    }
+                }
+            });
+        }
+
+        public void displayOptions(int columnIndex) {
+            final ValidationOptions options = getOptionAt(columnIndex);
+            if (options == null) {
+                return;
+            }
+
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    options.setEnabled(false);
+                    Dialogs.DialogOptions dialogOptions = new Dialogs.DialogOptions(Dialogs.OK_ONLY, "Options");
+                    Dialogs.showMoreOptionsDialog(dialogOptions, options.getPanel(), options.getAdvancedPanel());
+                }
+            });
+        }
+
+        public ValidationOptions getOptionAt(int columnIndex) {
+            assert records != null && records.size() > 0;
+            Map<Integer, ValidationOptions> colunmOptionsMap = records.get(0).getColunmOptionsMap(false);
+            assert colunmOptionsMap != null;
+
+            return colunmOptionsMap.get(columnIndex);
         }
     }
 }
