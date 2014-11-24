@@ -322,15 +322,22 @@ public class ValidationReportViewer extends DocumentViewer {
             SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
                     Options options = new Options(ValidationReportViewer.class);
-                    Options.FileSelectionOption selectionOption = options.addFileSelectionOption("targetFolder", "File to export", "", new String[0], "Browse...");
+                    Options.FileSelectionOption selectionOption = options.addFileSelectionOption("targetFolder", "Export Folder:", "", new String[0], "Browse...");
+                    selectionOption.setSelectionType(JFileChooser.DIRECTORIES_ONLY);
+                    Options.StringOption filenameOption = options.addStringOption("filename", "Filename:", "report.csv", "Name of CSV file");
 
                     options.setEnabled(true);
-                    Dialogs.DialogOptions dialogOptions = new Dialogs.DialogOptions(Dialogs.OK_CANCEL, "Export report table to csv file");
-                    if (Dialogs.CANCEL.equals(Dialogs.showMoreOptionsDialog(dialogOptions, options.getPanel(), options.getAdvancedPanel()))) {
+                    if (!Dialogs.showOptionsDialog(options, "Export report table to csv file", true)) {
                         return;
                     }
 
-                    File outFile = new File(selectionOption.getValue());
+                    File outFile = new File(selectionOption.getValue(), filenameOption.getValue());
+                    if(outFile.exists()) {
+                        if (!Dialogs.showYesNoDialog(outFile.getName() + " already exists, do you want to replace it?",
+                                "Replace File?", null, Dialogs.DialogIcon.QUESTION)) {
+                            return;
+                        }
+                    }
                     BufferedWriter writer = null;
                     try {
                         writer = new BufferedWriter(new FileWriter(outFile));
@@ -352,9 +359,9 @@ public class ValidationReportViewer extends DocumentViewer {
                             writeRow(writer, values);
                         }
 
-                        Dialogs.showMessageDialog("Table is exported to " + selectionOption.getValue() + " successfully.");
+                        Dialogs.showMessageDialog("Table exported to " + outFile.getAbsolutePath() + " successfully.");
                     } catch (IOException e1) {
-                        Dialogs.showMessageDialog("Failed to export table, since " + e1.getMessage());
+                        Dialogs.showMessageDialog("Failed to export table: " + e1.getMessage());
                     } finally {
                         GeneralUtilities.attemptClose(writer);
                     }
