@@ -528,7 +528,6 @@ public class ValidationReportViewer extends DocumentViewer {
 
         @Override
         public CellValue getValueAt(int rowIndex, int columnIndex) {
-            // Return an Object that has Group - > Values
             return data.get(rowIndex).get(columnIndex);
         }
 
