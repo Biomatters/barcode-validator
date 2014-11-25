@@ -251,8 +251,11 @@ public class ValidationReportViewer extends DocumentViewer {
                 if (source instanceof JTable) {
                     JTable table = (JTable) source;
                     Object cell = table.getValueAt(table.getSelectedRow(), table.getSelectedColumn());
-                    if (cell instanceof LinkResultColumn.LinkBox) {
-                        ((LinkResultColumn.LinkBox) cell).openLink();
+                    if (cell instanceof CellValue) {
+                        ResultColumn value = ((CellValue) cell).value;
+                        if(value instanceof LinkResultColumn) {
+                            ((LinkResultColumn)value).getData().openLink();
+                        }
                     }
                 }
             }
@@ -383,8 +386,8 @@ public class ValidationReportViewer extends DocumentViewer {
                             values.clear();
                             for (int column=0; column < columnCount; column++) {
                                 Object value = table.getValueAt(row, column);
-                                if(value instanceof ResultColumn) {
-                                    value = ((ResultColumn)value).getDisplayValue();
+                                if(value instanceof CellValue) {
+                                    value = ((CellValue)value).value.getDisplayValue();
                                 }
                                 if (value == null) {
                                     values.add("");
