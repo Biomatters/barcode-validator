@@ -231,7 +231,7 @@ public class ValidationReportViewer extends DocumentViewer {
         for (int i = 0; i < table.getColumnCount(); i++) {
             Class<?> columnClass = table.getColumnClass(i);
             if(CellValue.class.isAssignableFrom(columnClass)) {
-                sorter.setComparator(i, getCellValueComparator(CellValue.class));
+                sorter.setComparator(i, getCellValueComparator(CellValue.class, sorter));
             }
         }
         table.setRowSorter(sorter);
@@ -330,11 +330,24 @@ public class ValidationReportViewer extends DocumentViewer {
 
     private static <T extends Comparable<T>> Comparator getCellValueComparator(
             // There is a warning that we don't use the class.  But we need this parameter at compile time to type the generic
-            @SuppressWarnings("UnusedParameters") Class<T> columnClass) {
+            @SuppressWarnings("UnusedParameters") Class<T> columnClass, final RowSorter rowSorter) {
         return new Comparator<CellValue<T>>() {
             @Override
             public int compare(CellValue<T> o1, CellValue<T> o2) {
-                return o1.compareTo(o2);
+                int value = o1.compareTo(o2);
+
+                if(o1.consensusValue == o2.consensusValue) {
+                    // If the values are from the same set we must keep the order.  So we need to check direction.
+                    //noinspection unchecked
+                    List<RowSorter.SortKey> sortKeys = rowSorter.getSortKeys();
+                    if (!sortKeys.isEmpty()) {
+                        RowSorter.SortKey sortKey = sortKeys.get(0);
+                        SortOrder sortOrder = sortKey.getSortOrder();
+                        return (sortOrder == SortOrder.ASCENDING ? 1 : -1) * value;
+                    }
+                }
+
+                return value;
             }
         };
     }
