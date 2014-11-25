@@ -25,6 +25,8 @@ import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.event.MouseInputAdapter;
+import javax.swing.event.MouseInputListener;
 import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.*;
 import java.awt.*;
@@ -267,10 +269,10 @@ public class ValidationReportViewer extends DocumentViewer {
         table.setAutoCreateRowSorter(false);
 
         MouseListener[] mouseListeners = head.getMouseListeners();
-        MouseListener originalHeaderMouseListener = null;
+        MouseInputListener originalHeaderMouseListener = null;
         for (final MouseListener mouseListener : mouseListeners) {
             if(mouseListener instanceof BasicTableHeaderUI.MouseInputHandler) {
-                originalHeaderMouseListener = mouseListener;
+                originalHeaderMouseListener = (BasicTableHeaderUI.MouseInputHandler)mouseListener;
             }
         }
         if(originalHeaderMouseListener != null) {
@@ -282,8 +284,8 @@ public class ValidationReportViewer extends DocumentViewer {
         return table;
     }
 
-    private MouseAdapter wrapMouseListenerForHeader(final ValidationReportTableModel tableModel, final JTable table, final GroupableTableHeaderUI groupableTableHeaderUI, final MouseListener originalHeaderMouseListener) {
-        return new MouseAdapter() {
+    private MouseInputAdapter wrapMouseListenerForHeader(final ValidationReportTableModel tableModel, final JTable table, final GroupableTableHeaderUI groupableTableHeaderUI, final MouseInputListener originalHeaderMouseListener) {
+        return new MouseInputAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     int column = table.columnAtPoint(e.getPoint());
@@ -293,7 +295,37 @@ public class ValidationReportViewer extends DocumentViewer {
                         originalHeaderMouseListener.mouseClicked(e);
                     }
                 }
-            };
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                originalHeaderMouseListener.mousePressed(e);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                originalHeaderMouseListener.mouseReleased(e);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                originalHeaderMouseListener.mouseEntered(e);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                originalHeaderMouseListener.mouseExited(e);
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                originalHeaderMouseListener.mouseDragged(e);
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                originalHeaderMouseListener.mouseMoved(e);
+            }
+        };
     }
 
     private static <T extends Comparable<T>> Comparator getCellValueComparator(
