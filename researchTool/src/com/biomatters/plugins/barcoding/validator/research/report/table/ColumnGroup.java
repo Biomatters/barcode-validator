@@ -1,7 +1,5 @@
 package com.biomatters.plugins.barcoding.validator.research.report.table;
 
-import com.sun.istack.internal.NotNull;
-
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -24,7 +22,7 @@ public class ColumnGroup {
      * @param text The name of this group which will show in the merged cell
      * @param renderer the render used to render cell
      */
-    public ColumnGroup(String text, @NotNull TableCellRenderer renderer) {
+    public ColumnGroup(String text, TableCellRenderer renderer) {
         this.renderer = renderer;
         this.text = text;
         vector = new Vector<Object>();
@@ -65,7 +63,6 @@ public class ColumnGroup {
         return null;
     }
 
-    @NotNull
     public TableCellRenderer getHeaderRenderer() {
         return renderer;
     }
