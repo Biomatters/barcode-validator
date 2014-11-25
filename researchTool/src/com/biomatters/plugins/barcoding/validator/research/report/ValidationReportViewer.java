@@ -106,7 +106,7 @@ public class ValidationReportViewer extends DocumentViewer {
         List<ValidationOutputRecord> recordsThatPassedAll = new ArrayList<ValidationOutputRecord>();
         List<ValidationOutputRecord> recordsThatFailedAtLeastOnce = new ArrayList<ValidationOutputRecord>();
         for (ValidationOutputRecord record : records) {
-            if(record.isAllPassed()) {
+            if(record.isAllPassedForConsensus()) {
                 recordsThatPassedAll.add(record);
             } else {
                 recordsThatFailedAtLeastOnce.add(record);

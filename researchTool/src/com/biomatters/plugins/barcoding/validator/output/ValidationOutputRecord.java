@@ -136,14 +136,14 @@ public class ValidationOutputRecord implements XMLSerializable {
 
     /**
      *
-     * @return true iff all validation tasks run passed
+     * @return true iff all validation tasks run passed for consensus sequences
      */
-    public boolean isAllPassed() {
+    public boolean isAllPassedForConsensus() {
         for (Map<URN, RecordOfValidationResult> map : validationResults.values()) {
-            for (RecordOfValidationResult result : map.values()) {
-                if(!result.isPassed()) {
-                    return false;
-                }
+            RecordOfValidationResult resultForConsensus = map.get(consensusUrn);
+            // Count no consensus as a fail
+            if(resultForConsensus == null || !resultForConsensus.isPassed()) {
+                return false;
             }
         }
         return true;

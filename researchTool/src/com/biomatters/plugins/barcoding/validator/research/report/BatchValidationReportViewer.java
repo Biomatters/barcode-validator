@@ -64,7 +64,7 @@ public class BatchValidationReportViewer extends DocumentViewer {
             boolean passedEverything = true;
             for (ValidationOutputRecord validationOutputRecord : report.getRecords()) {
                 barcodesInThisReport.add(validationOutputRecord.getBarcodeSequenceUrn());
-                if(validationOutputRecord.isAllPassed()) {
+                if(validationOutputRecord.isAllPassedForConsensus()) {
                     count++;
                 } else {
                     passedEverything = false;
