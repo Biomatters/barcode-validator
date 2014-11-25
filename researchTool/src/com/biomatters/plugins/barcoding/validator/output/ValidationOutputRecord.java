@@ -235,7 +235,7 @@ public class ValidationOutputRecord implements XMLSerializable {
         }
 
         LinkResultColumn setCol = new LinkResultColumn("Set");
-        if (urn.equals(consensusUrn) || (consensusUrn == null && trimmedDocumentUrnsMap.size() == 1)) {
+        if (urn.equals(consensusUrn) || (consensusUrn == null && !trimmedDocumentUrnsMap.isEmpty() && trimmedDocumentUrnsMap.values().iterator().next().equals(urn))) {
             List<URN> links = new ArrayList<URN>();
             links.add(getBarcodeSequenceUrn());
             for (URN urn1 : getTraceDocumentUrns()) {
