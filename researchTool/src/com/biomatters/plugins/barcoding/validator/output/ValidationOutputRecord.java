@@ -27,6 +27,8 @@ public class ValidationOutputRecord implements XMLSerializable {
     private static final String ASSEMBLY = "contigAssembly";
     private static final String CONSENSUS = "assemblyConsensus";
     private static final String VALIDATION_RESULT = "validationResult";
+    private static final String TARGET_URN = "targetUrn";
+    private static final String VALIDATION_RECORD = "record";
 
     private String setName;
 
@@ -62,8 +64,14 @@ public class ValidationOutputRecord implements XMLSerializable {
             assemblyUrn = getUrnFromElement(element, ASSEMBLY);
             consensusUrn = getUrnFromElement(element, CONSENSUS);
 
-            for (Element recordElement : element.getChildren(VALIDATION_RESULT)) {
-                addValidationResult(XMLSerializer.classFromXML(recordElement, RecordOfValidationResult.class));
+            for (Element resultElement : element.getChildren(VALIDATION_RESULT)) {
+                Element urnElement = resultElement.getChild(TARGET_URN);
+                Element recordElement = resultElement.getChild(VALIDATION_RECORD);
+                if(urnElement == null || recordElement == null) {
+                    throw new XMLSerializationException("Missing information necessary to deserialize validation result");
+                }
+                URN urn = URN.fromXML(urnElement);
+                addValidationResult(urn, XMLSerializer.classFromXML(recordElement, RecordOfValidationResult.class));
             }
         } catch (MalformedURNException e) {
             throw new XMLSerializationException("Could not de-serialize validation record: " + e.getMessage(), e);
@@ -94,8 +102,12 @@ public class ValidationOutputRecord implements XMLSerializable {
         addUrnToXml(root, consensusUrn, CONSENSUS);
 
         for (Map<URN, RecordOfValidationResult> map : validationResults.values()) {
-            for (RecordOfValidationResult result : map.values()) {
-                root.addContent(XMLSerializer.classToXML(VALIDATION_RESULT, result));
+            for (Map.Entry<URN, RecordOfValidationResult> entry : map.entrySet()) {
+                Element resultElement = new Element(VALIDATION_RESULT);
+                resultElement.addContent(entry.getKey().toXML(TARGET_URN));
+                Element elementForValidationResult = XMLSerializer.classToXML(VALIDATION_RECORD, entry.getValue());
+                resultElement.addContent(elementForValidationResult);
+                root.addContent(resultElement);
             }
         }
 
@@ -193,7 +205,7 @@ public class ValidationOutputRecord implements XMLSerializable {
         return assemblyUrn;
     }
 
-    public void addValidationResult(RecordOfValidationResult result) {
+    public void addValidationResult(URN targetSequenceUrn, RecordOfValidationResult result) {
         Class<? extends ResultFact> factClass = result.getFact().getClass();
         Map<URN, RecordOfValidationResult> factMap = validationResults.get(factClass);
         if (factMap == null) {
@@ -201,7 +213,7 @@ public class ValidationOutputRecord implements XMLSerializable {
             validationResults.put(factClass, factMap);
         }
 
-        factMap.put(result.getFact().getTargetURN(), result);
+        factMap.put(targetSequenceUrn, result);
     }
 
     public Set<URN> getDoclist() {

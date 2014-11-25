@@ -1,6 +1,5 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
-import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
@@ -77,7 +76,7 @@ public class Pipeline {
 
                 progressForEachConsensusStep.beginSubtask();
 
-                callback.addConsensus(retConsus, progressForEachConsensusStep);
+                retConsus = callback.addConsensus(retConsus, progressForEachConsensusStep);
                 consensusSequences.add(retConsus);
             }
         }
@@ -152,15 +151,11 @@ public class Pipeline {
 
                 for (NucleotideGraphSequenceDocument sequence : sequences) {
                     ResultFact sequenceValidationResult = validation.validate(sequence, options);
-                    URN urNofSequence = callback.getURNofSequence(sequence);
-                    assert urNofSequence != null;
-                    sequenceValidationResult.setTargetURN(urNofSequence);
-
                     if (!sequenceValidationResult.getPass()) {
                         failedSequenceNames.add(sequence.getName());
                     }
 
-                    result.addFact(sequenceValidationResult);
+                    result.addFact(sequence, sequenceValidationResult);
                 }
 
                 if (!failedSequenceNames.isEmpty()) {
@@ -182,16 +177,12 @@ public class Pipeline {
 
                 for (NucleotideSequenceDocument sequence : sequences) {
                     ResultFact sequenceValidationResult = validation.validate(sequence, referenceSequence, options);
-                    URN urNofSequence = callback.getURNofSequence(sequence);
-                    assert urNofSequence != null;
-
-                    sequenceValidationResult.setTargetURN(urNofSequence);
 
                     if (!sequenceValidationResult.getPass()) {
                         failedSequenceNames.add(sequence.getName());
                     }
 
-                    result.addFact(sequenceValidationResult);
+                    result.addFact(sequence, sequenceValidationResult);
                 }
 
                 if (!failedSequenceNames.isEmpty()) {

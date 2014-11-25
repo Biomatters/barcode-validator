@@ -1,9 +1,10 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
+import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Represents the result of a validation task.
@@ -16,14 +17,14 @@ public class ValidationResult {
     private boolean passed;
     private String message;
 
-    private List<ResultFact> facts = new ArrayList<ResultFact>();
+    private Map<SequenceDocument, ResultFact> facts = new HashMap<SequenceDocument, ResultFact>();
 
-    public List<ResultFact> getFacts() {
+    public Map<SequenceDocument, ResultFact> getFacts() {
         return facts;
     }
 
-    public void addFact(ResultFact fact) {
-        facts.add(fact);
+    public void addFact(SequenceDocument sequenceDocument, ResultFact fact) {
+        facts.put(sequenceDocument, fact);
     }
 
     /**

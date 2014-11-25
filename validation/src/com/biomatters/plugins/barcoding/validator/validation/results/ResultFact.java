@@ -14,10 +14,8 @@ import java.util.List;
 public abstract class ResultFact implements XMLSerializable {
     public static final String NAME = "name";
     public static final String RESULT_COLUMN = "resultColumn";
-    public static final String TARGET_URN = "targetUrn";
 
     private String factName;
-    private URN targetURN;
 
     public ResultFact() {
     }
@@ -44,14 +42,6 @@ public abstract class ResultFact implements XMLSerializable {
         fromXML(element);
     }
 
-    public URN getTargetURN() {
-        return targetURN;
-    }
-
-    public void setTargetURN(URN targetURN) {
-        this.targetURN = targetURN;
-    }
-
     @Override
     public Element toXML() {
         Element root = new Element(XMLSerializable.ROOT_ELEMENT_NAME);
@@ -61,7 +51,6 @@ public abstract class ResultFact implements XMLSerializable {
             root.addContent((XMLSerializer.classToXML(RESULT_COLUMN, column)));
         }
 
-        root.addContent(targetURN.toXML(TARGET_URN));
         return root;
     }
 
@@ -72,12 +61,6 @@ public abstract class ResultFact implements XMLSerializable {
 
         for (Element colElement : element.getChildren(RESULT_COLUMN)) {
             addColumn(XMLSerializer.classFromXML(colElement, ResultColumn.class));
-        }
-
-        try {
-            targetURN = URN.fromXML(element.getChild(TARGET_URN));
-        } catch (MalformedURNException e) {
-            e.printStackTrace();
         }
     }
 }

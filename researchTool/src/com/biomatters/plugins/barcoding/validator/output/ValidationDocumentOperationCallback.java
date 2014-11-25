@@ -48,11 +48,28 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
     }
 
     private URN saveDocumentAndGetUrn(PluginDocument pluginDocument, ProgressListener progressListener) throws DocumentOperationException {
-        return saveDocument(pluginDocument, progressListener).getURN();
+        return saveDocument(pluginDocument, progressListener).annotatedPluginDocument.getURN();
     }
 
-    private AnnotatedPluginDocument saveDocument(PluginDocument pluginDocument, ProgressListener progressListener) throws DocumentOperationException {
-        return operationCallback.addDocument(pluginDocument, !selectResultDocs, progressListener);
+    private <T extends PluginDocument> AnnotatedAndPluginDocument<T> saveDocument(T pluginDocument, ProgressListener progressListener) throws DocumentOperationException {
+        AnnotatedPluginDocument apd = operationCallback.addDocument(pluginDocument, !selectResultDocs, progressListener);
+        if(!apd.getDocumentClass().isAssignableFrom(pluginDocument.getClass())) {
+            throw new IllegalStateException("Saved document is of different type than original (" +
+                    pluginDocument.getClass() + ", " + apd.getDocumentClass() + ")");
+        }
+        // Ignore warning because we already check using getDocumentClass()
+        //noinspection unchecked
+        return new AnnotatedAndPluginDocument<T>(apd, (T)apd.getDocumentOrNull());
+    }
+
+    private class AnnotatedAndPluginDocument<T extends PluginDocument> {
+        private AnnotatedPluginDocument annotatedPluginDocument;
+        private T pluginDocument;
+
+        public AnnotatedAndPluginDocument(AnnotatedPluginDocument annotatedPluginDocument, T pluginDocument) {
+            this.annotatedPluginDocument = annotatedPluginDocument;
+            this.pluginDocument = pluginDocument;
+        }
     }
 
     @Override
@@ -70,7 +87,8 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
             if (apd != null) {
                 outputRecord.addTraceDocumentUrns(apd.getName(), apd.getURN());
             } else {
-                AnnotatedPluginDocument annotatedPluginDocument = saveDocument(trace, compositeProgress);
+                AnnotatedAndPluginDocument<NucleotideGraphSequenceDocument> saved = saveDocument(trace, compositeProgress);
+                AnnotatedPluginDocument annotatedPluginDocument = saved.annotatedPluginDocument;
                 outputRecord.addTraceDocumentUrns(annotatedPluginDocument.getName(), annotatedPluginDocument.getURN());
             }
         }
@@ -90,13 +108,9 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
 
             savingProgress.beginSubtask();
             ((DefaultSequenceDocument)trimmedTrace).setName(name + " " + SequenceTrimmer.TRIMMED_SUFFIX);
-            AnnotatedPluginDocument doc = saveDocument(SequenceTrimmer.trimSequenceUsingAnnotations(trimmedTrace), savingProgress);
-            ((DefaultSequenceDocument)trimmedTrace).setName(name);
-            if(!NucleotideGraphSequenceDocument.class.isAssignableFrom(doc.getDocumentClass())) {
-                throw new IllegalStateException("Saving NucleotideGraphSequenceDocument to database created " + doc.getDocumentClass().getSimpleName());
-            }
-
-            NucleotideGraphSequenceDocument document = (NucleotideGraphSequenceDocument) doc.getDocument();
+            AnnotatedAndPluginDocument<NucleotideGraphSequenceDocument> saved = saveDocument(SequenceTrimmer.trimSequenceUsingAnnotations(trimmedTrace), savingProgress);
+            NucleotideGraphSequenceDocument document = saved.pluginDocument;
+            AnnotatedPluginDocument doc = saved.annotatedPluginDocument;
             results.add(document);
             sequenceURNMap.put(document, doc.getURN());
             outputRecord.addTrimmedDocumentUrns(doc.getName(), doc.getURN());
@@ -105,29 +119,34 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
     }
 
     @Override
-    public void addAssembly(SequenceAlignmentDocument contigAssembly, ProgressListener progressListener) throws DocumentOperationException {
-        outputRecord.assemblyUrn = saveDocumentAndGetUrn(contigAssembly, progressListener);
+    public SequenceAlignmentDocument addAssembly(SequenceAlignmentDocument contigAssembly, ProgressListener progressListener) throws DocumentOperationException {
+        AnnotatedAndPluginDocument<SequenceAlignmentDocument> saved = saveDocument(contigAssembly, progressListener);
+        outputRecord.assemblyUrn = saved.annotatedPluginDocument.getURN();
+        return saved.pluginDocument;
     }
 
     @Override
-    public void addConsensus(SequenceDocument consensusSequence, ProgressListener progressListener) throws DocumentOperationException {
-        outputRecord.consensusUrn = saveDocumentAndGetUrn(consensusSequence, progressListener);
+    public NucleotideGraphSequenceDocument addConsensus(NucleotideGraphSequenceDocument consensusSequence, ProgressListener progressListener) throws DocumentOperationException {
+        AnnotatedAndPluginDocument<NucleotideGraphSequenceDocument> saved = saveDocument(consensusSequence, progressListener);
+        outputRecord.consensusUrn = saved.annotatedPluginDocument.getURN();
+        consensusSequence = saved.pluginDocument;
         sequenceURNMap.put(consensusSequence, outputRecord.consensusUrn);
+        return consensusSequence;
     }
 
     @Override
     public void addValidationResult(ValidationOptions options, ValidationResult validationResult, ProgressListener progressListener) throws DocumentOperationException {
-        for (ResultFact fact : validationResult.getFacts()) {
-            outputRecord.addValidationResult(new RecordOfValidationResult(options, validationResult.isPassed(), fact));
+        for (Map.Entry<SequenceDocument, ResultFact> entry : validationResult.getFacts().entrySet()) {
+            ResultFact fact = entry.getValue();
+            SequenceDocument seq = entry.getKey();
+            AnnotatedPluginDocument apd = DocumentUtilities.getAnnotatedPluginDocumentThatContains(seq);
+            assert apd != null : "Input sequence should have been saved to the database";
+            outputRecord.addValidationResult(apd.getURN(), new RecordOfValidationResult(options, validationResult.isPassed(), fact));
         }
     }
 
 
     public ValidationOutputRecord getRecord() {
         return outputRecord;
-    }
-
-    public URN getURNofSequence(PluginDocument sequence) {
-        return sequenceURNMap.get(sequence);
     }
 }
