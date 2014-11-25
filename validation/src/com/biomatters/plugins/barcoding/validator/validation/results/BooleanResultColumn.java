@@ -25,6 +25,8 @@ public class BooleanResultColumn extends ResultColumn<Boolean>  {
 
     @Override
     public Object getDisplayValue() {
-        return data ? "Pass" : "Fail";
+        String displayValue = data ? "Pass" : "Fail";
+        String colour = data ? "green" : "red";
+        return "<html><font color=\"" + colour + "\">" + displayValue + "</font></html>";
     }
 }
