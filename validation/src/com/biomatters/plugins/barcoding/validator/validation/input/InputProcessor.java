@@ -41,14 +41,14 @@ public class InputProcessor {
         CompositeProgressListener inputProcessingProgress = new CompositeProgressListener(progressListener, 3);
 
         /* Import documents. */
-        inputProcessingProgress.beginSubtask("Traces...");
+        inputProcessingProgress.beginSubtask("Importing traces...");
         List<AnnotatedPluginDocument> traces = ImportUtilities.importTraces(traceFilePaths, operationCallback, inputProcessingProgress);
 
-        inputProcessingProgress.beginSubtask("Barcode sequences...");
+        inputProcessingProgress.beginSubtask("Importing barcodes...");
         List<AnnotatedPluginDocument> barcodes = ImportUtilities.importBarcodes(barcodeFilePaths, operationCallback, inputProcessingProgress);
 
         /* Map barcodes to traces and return result. */
-        inputProcessingProgress.beginSubtask("Mapping...");
+        inputProcessingProgress.beginSubtask("Mapping traces to barcodes...");
         return BarcodesToTracesMapperFactory.getBarcodesToTracesMapper(options).map(barcodes, traces);
     }
 }

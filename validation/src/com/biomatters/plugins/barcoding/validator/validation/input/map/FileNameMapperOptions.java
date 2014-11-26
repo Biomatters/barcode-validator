@@ -47,7 +47,7 @@ public class FileNameMapperOptions extends BarcodesToTracesMapperOptions {
         beginAlignHorizontally(null, false);
 
         addCustomOption(new NamePartOption(SEQUENCE_PART_NUMBER, ""));
-        addCustomOption(new NameSeparatorOption(SEQUENCE_SEPARATOR, "part of sequence name separated by "));
+        addCustomOption(new NameSeparatorOption(SEQUENCE_SEPARATOR, "part of barcode name separated by "));
 
         endAlignHorizontally();
     }
