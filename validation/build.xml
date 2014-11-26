@@ -45,7 +45,7 @@
             </batchtest>
             <classpath>
                 <path refid="classpath"/>
-                <file file="{geneious-runtime-dependencies}/iSeek.jar"/>
+                <file file="${geneious-runtime-dependencies}/iSeek.jar"/>
                 <fileset dir="${geneious-runtime-dependencies}/lib"/>
                 <pathelement location="${test-classes}"/>
                 <pathelement location="${classes}"/>
