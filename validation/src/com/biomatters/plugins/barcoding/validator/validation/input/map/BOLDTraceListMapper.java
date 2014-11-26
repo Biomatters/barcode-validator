@@ -1,8 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation.input.map;
 
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.google.common.collect.ArrayListMultimap;
 
@@ -77,6 +75,7 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
             result.put(barcode, new ArrayList<AnnotatedPluginDocument>());
         }
 
+        Map<AnnotatedPluginDocument, String> tracesWithoutBarcode = new LinkedHashMap<AnnotatedPluginDocument, String>();
         for (AnnotatedPluginDocument trace : traces) {
             String traceName = trace.getName();
             String processId = null;
@@ -94,10 +93,28 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
             AnnotatedPluginDocument barcode = processIdToBarcode.get(processId);
 
             if (processIdToBarcode.get(processId) == null) {
-                throw new DocumentOperationException("No barcode was found for trace '" + traceName + "' (BOLD process ID: " + processId + ").");
+                tracesWithoutBarcode.put(trace, processId);
+                continue;
             }
 
             result.get(barcode).add(trace);
+        }
+        if(!tracesWithoutBarcode.isEmpty()) {
+            String message = "No barcode sequences were found for <strong>" + tracesWithoutBarcode.size() + "</strong> traces:\n\n";
+            int count = 0;
+            StringBuilder list = new StringBuilder();
+            for (Map.Entry<AnnotatedPluginDocument, String> entry : tracesWithoutBarcode.entrySet()) {
+                count++;
+                if(count <= 100) {
+                    list.append(entry.getKey().getName()).append(" (BOLD process ID: ").append(entry.getValue()).append(")\n");
+                }
+            }
+            message += list.toString();
+            if(count > 100) {
+                message += "Too many to list...";
+            }
+
+            throw new DocumentOperationException(message);
         }
 
         return result;
@@ -144,14 +161,23 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
     }
 
     /**
-     * Parses the name of a trace file from a trace list file to the actual name of the trace file.
+     * Parses the name of a trace file from a trace list file to the actual name of the trace file.  Traces from BOLD
+     * can be named NNNN/traceName+dddddd.ab1 rather than just traceName
      *
      * @param traceFileName The name of a trace file from a trace list file.
      * @return The actual name of the trace file.
      */
     private String parseTraceFileName(String traceFileName) {
-        traceFileName = traceFileName.substring(traceFileName.lastIndexOf("/") + 1);
-        return traceFileName.substring(0, traceFileName.indexOf("+")) + traceFileName.substring(traceFileName.indexOf("."));
+        int indexOfSeparator = traceFileName.lastIndexOf("/");
+        if(indexOfSeparator > -1) {
+            traceFileName = traceFileName.substring(indexOfSeparator + 1);
+        }
+        int indexOfPlus = traceFileName.indexOf("+");
+        if(indexOfPlus > -1) {
+            return traceFileName.substring(0, indexOfPlus) + traceFileName.substring(traceFileName.indexOf(".", indexOfPlus));
+        } else {
+            return traceFileName;
+        }
     }
 
     /**
