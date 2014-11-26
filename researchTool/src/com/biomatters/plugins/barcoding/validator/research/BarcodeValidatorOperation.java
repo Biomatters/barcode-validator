@@ -6,9 +6,11 @@ import com.biomatters.geneious.publicapi.databaseservice.WritableDatabaseService
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.PluginDocument;
+import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.*;
+import com.biomatters.plugins.barcoding.validator.output.RecordOfValidationResult;
 import com.biomatters.plugins.barcoding.validator.output.ValidationDocumentOperationCallback;
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
 import com.biomatters.plugins.barcoding.validator.output.ValidationReportDocument;
@@ -16,6 +18,7 @@ import com.biomatters.plugins.barcoding.validator.validation.*;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
 import com.biomatters.plugins.barcoding.validator.validation.input.Input;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
+import com.biomatters.plugins.barcoding.validator.validation.results.SlidingWindowQualityValidationResultFact;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
 import jebl.util.CompositeProgressListener;
 import jebl.util.ProgressListener;
@@ -228,14 +231,38 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             setSubFolder(operationCallback, setName + subSubFolderSeparator + barcodeName);
 
             pipelineProgress.beginSubtask();
-            callback.getRecord().setSetName(setName);
+            ValidationOutputRecord record = callback.getRecord();
+            record.setSetName(setName);
             Pipeline.runValidationPipeline(barcode, traces, trimmingOptions, CAP3Options, validationOptions, callback, pipelineProgress);
+
+            saveChangesToSequencesMadeByValidationPipeline(record);
+
             setSubFolder(operationCallback, setName);
-            outputs.add(callback.getRecord());
+            outputs.add(record);
         }
 
         validationProgress.beginSubtask();
         operationCallback.addDocument(new ValidationReportDocument(setName + REPORT_NAME_SUFFIX, outputs, barcodeValidatorOptions), false, validationProgress);
+    }
+
+    private static void saveChangesToSequencesMadeByValidationPipeline(ValidationOutputRecord record) {
+        List<URN> docsToSave = new ArrayList<URN>(record.getTrimmedDocumentUrns());
+
+        // There is probably a more general way of doing this.  But it would involve making a fact aware of if the
+        // input sequence needed saving.  This will do for now since it is isolated to the research tool.
+        Map<URN, RecordOfValidationResult> qualityValidationResults = record.getValidationResultsMap().get(
+                SlidingWindowQualityValidationResultFact.class);
+        for (Map.Entry<URN, RecordOfValidationResult> entry : qualityValidationResults.entrySet()) {
+            if(!entry.getValue().isPassed()) {
+                docsToSave.add(entry.getKey());
+            }
+        }
+        for (URN urn : docsToSave) {
+            AnnotatedPluginDocument apd = DocumentUtilities.getDocumentByURN(urn);
+            if(apd != null) {
+                apd.saveDocument();
+            }
+        }
     }
 
     public static final String REPORT_NAME_SUFFIX = " Validation Report";

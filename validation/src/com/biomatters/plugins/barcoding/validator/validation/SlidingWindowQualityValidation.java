@@ -81,24 +81,22 @@ public class SlidingWindowQualityValidation extends SingleSequenceValidation {
         result.setNumberOfFailedWindows(numberOfFailedWindows);
 
         if (numberOfFailedWindows == 0) {
+            result.setPass(true);
+        } else {
             if (sequence instanceof SequenceDocumentWithEditableAnnotations) {
                 validationFailureAnnotation.setQualifier(
                         "Validation Settings",
                         " Window Size=" + winSize +
-                        ", Step Size=" + stepSize +
-                        ", Min Quality=" + minimumQuality +
-                        ", Min Ratio=" + minimumSatisfactionRatio + "%"
+                                ", Step Size=" + stepSize +
+                                ", Min Quality=" + minimumQuality +
+                                ", Min Ratio=" + minimumSatisfactionRatio + "%"
                 );
+                validationFailureAnnotation.setIntervals(SequenceAnnotationInterval.merge(validationFailureAnnotation.getIntervals(), false));
+                List<SequenceAnnotation> sequenceAnnotations = new ArrayList<SequenceAnnotation>();
+                sequenceAnnotations.addAll(sequence.getSequenceAnnotations());
+                sequenceAnnotations.add(validationFailureAnnotation);
+                ((SequenceDocumentWithEditableAnnotations)sequence).setAnnotations(sequenceAnnotations);
             }
-
-            validationFailureAnnotation.setIntervals(SequenceAnnotationInterval.merge(validationFailureAnnotation.getIntervals(), false));
-            List<SequenceAnnotation> sequenceAnnotations = new ArrayList<SequenceAnnotation>();
-            sequenceAnnotations.addAll(sequence.getSequenceAnnotations());
-            sequenceAnnotations.add(validationFailureAnnotation);
-            ((SequenceDocumentWithEditableAnnotations)sequence).setAnnotations(sequenceAnnotations);
-
-            result.setPass(true);
-        } else {
             result.setPass(false);
         }
 
