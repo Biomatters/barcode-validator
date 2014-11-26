@@ -7,6 +7,8 @@ import com.biomatters.geneious.publicapi.plugin.DocumentSelectionOption;
 import com.biomatters.geneious.publicapi.plugin.Options;
 import jebl.evolution.align.scores.Scores;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -67,7 +69,14 @@ public class PrimerTrimmingOptions extends Options {
     }
 
     private void addPrimerSelectionOption() {
-        addPrimerSelectionOption(PRIMER_SELECTION_OPTIONS_NAME, "Primers:", DocumentSelectionOption.FolderOrDocuments.EMPTY, true, Collections.<AnnotatedPluginDocument>emptyList());
+        final DocumentSelectionOption primerSelectionOption = addPrimerSelectionOption(PRIMER_SELECTION_OPTIONS_NAME,
+                "Primers:", DocumentSelectionOption.FolderOrDocuments.EMPTY, true, Collections.<AnnotatedPluginDocument>emptyList());
+        addButtonOption("clear", "", "Clear Selection").addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                primerSelectionOption.setValue(DocumentSelectionOption.FolderOrDocuments.EMPTY);
+            }
+        });
     }
 
     private void addCostMatrixOptions() {
