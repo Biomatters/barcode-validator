@@ -1,5 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
+import com.biomatters.geneious.publicapi.components.Dialogs;
 import com.biomatters.geneious.publicapi.databaseservice.DatabaseService;
 import com.biomatters.geneious.publicapi.databaseservice.DatabaseServiceException;
 import com.biomatters.geneious.publicapi.databaseservice.WritableDatabaseService;
@@ -10,6 +11,7 @@ import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.*;
+import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.biomatters.plugins.barcoding.validator.output.RecordOfValidationResult;
 import com.biomatters.plugins.barcoding.validator.output.ValidationDocumentOperationCallback;
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
@@ -20,9 +22,12 @@ import com.biomatters.plugins.barcoding.validator.validation.input.Input;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
 import com.biomatters.plugins.barcoding.validator.validation.results.SlidingWindowQualityValidationResultFact;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import jebl.util.CompositeProgressListener;
 import jebl.util.ProgressListener;
 
+import javax.annotation.Nullable;
 import javax.swing.*;
 import java.net.URL;
 import java.util.*;
@@ -84,6 +89,31 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces =
                 getBarcodesToTraces(composite, operationCallback, inputSplitterOptions);
         WritableDatabaseService resultsFolder = getResultsFolder(suppliedBarcodesToSuppliedTraces);
+        List<NucleotideSequenceDocument> barcodesWithMissingTraces = new ArrayList<NucleotideSequenceDocument>();
+        for (Map.Entry<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> entry : suppliedBarcodesToSuppliedTraces.entrySet()) {
+            if(entry.getValue().isEmpty()) {
+                barcodesWithMissingTraces.add(entry.getKey());
+            }
+        }
+        if(barcodesWithMissingTraces.size() == suppliedBarcodesToSuppliedTraces.size()) {
+            Dialogs.showMessageDialog("All barcode sequences have no associated traces.  Please double " +
+                    "check your input sequences and mapping options.", "Invalid Input", null, Dialogs.DialogIcon.INFORMATION);
+            return;
+        }
+        if(!barcodesWithMissingTraces.isEmpty()) {
+            String list = StringUtilities.join("\n", Collections2.transform(barcodesWithMissingTraces, new Function<NucleotideSequenceDocument, String>() {
+                @Nullable
+                @Override
+                public String apply(@Nullable NucleotideSequenceDocument input) {
+                    return input != null ? input.getName() : "missing";
+                }
+            }));
+            if(!Dialogs.showContinueCancelDialog("The following <strong>" + barcodesWithMissingTraces.size() +
+                    "</strong> barcode sequences do not have associated " +
+                    "traces and will be skipped.\n\n" + list, "Missing Traces", null, Dialogs.DialogIcon.INFORMATION)) {
+                throw new DocumentOperationException.Canceled();
+            }
+        }
 
         composite.beginSubtask();
         Iterator<BarcodeValidatorOptions> iterator = allOptions.iterator();
@@ -223,6 +253,9 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             String barcodeName = barcode.getName();
 
             validationProgress.beginSubtask(barcodeName);
+            if(traces.isEmpty()) {
+                continue;
+            }
 
             CompositeProgressListener pipelineProgress = new CompositeProgressListener(validationProgress, 0.2, 0.8);
             pipelineProgress.beginSubtask();
