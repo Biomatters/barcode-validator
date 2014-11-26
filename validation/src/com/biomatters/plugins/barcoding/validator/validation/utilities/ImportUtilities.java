@@ -209,8 +209,13 @@ public class ImportUtilities {
                 } else if (fileNameHasOneOfExtensions(source.getName(), allowedFileExtensions)) {
                     List<AnnotatedPluginDocument> imported = PluginUtilities.importDocuments(source, ProgressListener.EMPTY);
                     for (AnnotatedPluginDocument annotatedPluginDocument : imported) {
+                        String nameBeforeSave = annotatedPluginDocument.getName();
                         if(operationCallback != null) {
                             annotatedPluginDocument = operationCallback.addDocument(annotatedPluginDocument, true, ProgressListener.EMPTY);
+                            if(!nameBeforeSave.equals(annotatedPluginDocument.getName())) {
+                                annotatedPluginDocument.setName(nameBeforeSave);
+                                annotatedPluginDocument.save();
+                            }
                         }
                         result.add(annotatedPluginDocument);
                     }
