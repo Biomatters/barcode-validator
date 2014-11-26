@@ -95,7 +95,13 @@ public class ImportUtilities {
                     FastaImporter importer = new FastaImporter(file, SequenceType.NUCLEOTIDE);
                     List<Sequence> sequences = importer.importSequences();
                     for (Sequence seq : sequences) {
-                        AnnotatedPluginDocument apd = operationCallback.addDocument(new DefaultNucleotideSequence(new GaplessSequence(seq)), true, ProgressListener.EMPTY);
+                        DefaultNucleotideSequence seqDoc = new DefaultNucleotideSequence(new GaplessSequence(seq));
+                        String sequenceName = seqDoc.getName();
+                        AnnotatedPluginDocument apd = operationCallback.addDocument(seqDoc, true, ProgressListener.EMPTY);
+                        if(!sequenceName.equals(apd.getName())) {
+                            apd.setName(sequenceName);
+                            apd.save();
+                        }
                         result.add(apd);
                     }
                 } catch (FileNotFoundException e) {
@@ -208,12 +214,12 @@ public class ImportUtilities {
                     result.addAll(importDocuments(Arrays.asList(subSource), allowedFileExtensions, operationCallback, cancelable));
                 } else if (fileNameHasOneOfExtensions(source.getName(), allowedFileExtensions)) {
                     List<AnnotatedPluginDocument> imported = PluginUtilities.importDocuments(source, ProgressListener.EMPTY);
+                    String originalFilename = source.getName();
                     for (AnnotatedPluginDocument annotatedPluginDocument : imported) {
-                        String nameBeforeSave = annotatedPluginDocument.getName();
                         if(operationCallback != null) {
                             annotatedPluginDocument = operationCallback.addDocument(annotatedPluginDocument, true, ProgressListener.EMPTY);
-                            if(!nameBeforeSave.equals(annotatedPluginDocument.getName())) {
-                                annotatedPluginDocument.setName(nameBeforeSave);
+                            if(!originalFilename.equals(annotatedPluginDocument.getName())) {
+                                annotatedPluginDocument.setName(originalFilename);
                                 annotatedPluginDocument.save();
                             }
                         }

@@ -87,8 +87,8 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         composite.beginSubtask("Processing inputs");
         Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> suppliedBarcodesToSuppliedTraces =
                 Input.processInputs(inputSplitterOptions.getTraceFilePaths(),
-                                        inputSplitterOptions.getBarcodeFilePaths(),
-                                        inputSplitterOptions.getMethodOption(), operationCallback, composite);
+                        inputSplitterOptions.getBarcodeFilePaths(),
+                        inputSplitterOptions.getMethodOption(), operationCallback, composite);
 
         WritableDatabaseService resultsFolder = getResultsFolder(suppliedBarcodesToSuppliedTraces);
         List<AnnotatedPluginDocument> barcodesWithMissingTraces = new ArrayList<AnnotatedPluginDocument>();
