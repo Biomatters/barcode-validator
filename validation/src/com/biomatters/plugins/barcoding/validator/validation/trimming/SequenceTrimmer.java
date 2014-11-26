@@ -5,7 +5,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSeque
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotation;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationInterval;
 import com.biomatters.geneious.publicapi.implementations.SequenceExtractionUtilities;
-import com.biomatters.geneious.publicapi.implementations.sequence.DefaultSequenceDocument;
+import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.implementations.sequence.OligoSequenceDocument;
 import com.biomatters.geneious.publicapi.utilities.SequenceUtilities;
 import jebl.evolution.align.SmithWatermanLinearSpaceAffine;
@@ -76,18 +76,20 @@ public class SequenceTrimmer {
             maxTrimmage = new Trimmage(sequence.getSequenceLength(), 0);
         }
 
-        if (trimByAddingAnnotations && sequence instanceof DefaultSequenceDocument) {
+        if (trimByAddingAnnotations) {
+            DefaultNucleotideGraphSequence trimmedSeq = new DefaultNucleotideGraphSequence(sequence, new Date());
+
             SequenceAnnotation annotation;
             if (maxTrimmage.trimAtStart > 0) {
                 annotation = SequenceAnnotation.createTrimAnnotation(1, maxTrimmage.trimAtStart);
-                ((DefaultSequenceDocument)sequence).addSequenceAnnotation(annotation);
+                trimmedSeq.addSequenceAnnotation(annotation);
             }
 
             if (maxTrimmage.trimAtEnd > 0) {
-                annotation = SequenceAnnotation.createTrimAnnotation(sequence.getSequenceLength() - maxTrimmage.trimAtEnd + 1, sequence.getSequenceLength());
-                ((DefaultSequenceDocument)sequence).addSequenceAnnotation(annotation);
+                annotation = SequenceAnnotation.createTrimAnnotation(trimmedSeq.getSequenceLength() - maxTrimmage.trimAtEnd + 1, trimmedSeq.getSequenceLength());
+                trimmedSeq.addSequenceAnnotation(annotation);
             }
-            return sequence;
+            return trimmedSeq;
         } else {
             /* Trim the sequence using the generated trimmage and return the result. */
             return trimSequenceUsingTrimmage(sequence, maxTrimmage);
