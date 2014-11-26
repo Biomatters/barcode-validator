@@ -31,7 +31,7 @@ import java.util.*;
  */
 public class ImportUtilities {
     /* Allowed file extensions. */
-    public final static Set<String> TRACE_ALLOWED_FILE_EXTENSIONS =  Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("abi", "ab1", "scf")));
+    public final static Set<String> TRACE_ALLOWED_FILE_EXTENSIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("abi", "ab1", "scf")));
     private final static Set<String> BARCODE_ALLOWED_FILE_EXTENSIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("fasta", "fas")));
     private final static Set<String> CONTIGS_ALLOWED_FILE_EXTENSIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("ace")));
 
@@ -137,7 +137,8 @@ public class ImportUtilities {
                     Collections.singletonList(sourcePath),
                     Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)SequenceAlignmentDocument.class), CONTIGS_ALLOWED_FILE_EXTENSIONS,
                     null,
-                    ProgressListener.EMPTY);
+                    ProgressListener.EMPTY
+            );
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not import contigs: " + e.getMessage(), e);
         }
@@ -226,17 +227,18 @@ public class ImportUtilities {
                 } else if (fileNameHasOneOfExtensions(sourceFileName, allowedFileExtensions)) {
                     List<AnnotatedPluginDocument> rawImportedDocuments = PluginUtilities.importDocuments(sourceFile, ProgressListener.EMPTY);
 
-                    if (operationCallback != null) {
                         for (AnnotatedPluginDocument importedDocument : rawImportedDocuments) {
-                            importedDocument = operationCallback.addDocument(importedDocument, true, ProgressListener.EMPTY);
-                            if (!sourceFileName.equals(importedDocument.getName())) {
-                                importedDocument.setName(sourceFileName);
-                                importedDocument.save();
+                            if (operationCallback != null) {
+                                importedDocument = operationCallback.addDocument(importedDocument, true, ProgressListener.EMPTY);
+                                if (!sourceFileName.equals(importedDocument.getName())) {
+                                    importedDocument.setName(sourceFileName);
+                                    importedDocument.save();
+                                }
                             }
-                        }
-                    }
 
-                    importedDocuments.addAll(rawImportedDocuments);
+                            importedDocuments.add(importedDocument);
+                        }
+
                 }
             }
         } catch (DocumentImportException e) {
