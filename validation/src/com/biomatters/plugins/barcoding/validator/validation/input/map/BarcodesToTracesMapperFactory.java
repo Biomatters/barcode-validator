@@ -10,7 +10,7 @@ public class BarcodesToTracesMapperFactory {
     private BarcodesToTracesMapperFactory() {
     }
 
-    public static BarcodesToTracesMapper getBarcodesToTracesMapper(BarcodesToTracesMapperOptions options) throws DocumentOperationException {
+    public static BarcodeToTraceMapper getBarcodesToTracesMapper(BarcodesToTracesMapperOptions options) throws DocumentOperationException {
         if (BOLDTraceListMapperOptions.class.isAssignableFrom(options.getClass())) {
             BOLDTraceListMapperOptions BOLDTraceListMapperOptions = (BOLDTraceListMapperOptions)options;
 

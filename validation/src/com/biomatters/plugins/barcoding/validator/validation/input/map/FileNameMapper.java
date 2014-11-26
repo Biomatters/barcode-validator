@@ -14,7 +14,7 @@ import java.util.Map;
  * @author Gen Li
  *         Created on 4/09/14 12:40 PM
  */
-public class FileNameMapper extends BarcodesToTracesMapper {
+public class FileNameMapper extends BarcodeToTraceMapper {
     private int traceNamePart;
     private int barcodeNamePart;
 
@@ -37,16 +37,14 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @throws DocumentOperationException
      */
     @Override
-    public Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(List<AnnotatedPluginDocument> barcodes,
-                                                                           List<AnnotatedPluginDocument> traces)
-            throws DocumentOperationException {
+    public Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(List<AnnotatedPluginDocument> barcodes, List<AnnotatedPluginDocument> traces) throws DocumentOperationException {
         try {
-            /* Map documents to part of their names used for mapping. */
-            Map<AnnotatedPluginDocument, String> tracesToNameParts = mapTracesToPartOfName(traces, traceSeparator, traceNamePart);
-            Map<AnnotatedPluginDocument, String> barcodesToNameParts = mapBarcodesToPartOfName(barcodes, barcodeSeparator, barcodeNamePart);
 
-            /* Map. */
-            return map(tracesToNameParts, barcodesToNameParts);
+
+            /* Map the supplied documents to the part of their names that will be used for the main mapping between the
+             * barcodes and the traces and perform the main mapping.
+             */
+            return map(mapTracesToPartOfName(traces, traceSeparator, traceNamePart), mapBarcodesToPartOfName(barcodes, barcodeSeparator, barcodeNamePart));
         } catch (NoMatchException e) {
             throw new DocumentOperationException(
                     e.getMessage() + "\n\n" +
@@ -66,11 +64,9 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @return Map of barcodes to traces.
      * @throws DocumentOperationException
      */
-    private static Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(Map<AnnotatedPluginDocument, String> tracesToNameParts,
-                                                                                              Map<AnnotatedPluginDocument, String> barcodesToNameParts)
+    private static Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(Map<AnnotatedPluginDocument, String> tracesToNameParts, Map<AnnotatedPluginDocument, String> barcodesToNameParts)
             throws NoMatchException {
-        Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> result =
-                new HashMap<AnnotatedPluginDocument, List<AnnotatedPluginDocument>>();
+        Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> result = new HashMap<AnnotatedPluginDocument, List<AnnotatedPluginDocument>>();
 
         for (AnnotatedPluginDocument barcode : barcodesToNameParts.keySet()) {
             result.put(barcode, new ArrayList<AnnotatedPluginDocument>());
@@ -78,16 +74,19 @@ public class FileNameMapper extends BarcodesToTracesMapper {
 
         /* Map. */
         for (Map.Entry<AnnotatedPluginDocument, String> traceToNamePart : tracesToNameParts.entrySet()) {
-            String namePart = traceToNamePart.getValue();
             AnnotatedPluginDocument barcode = null;
+
+            String namePart = traceToNamePart.getValue();
             for (Map.Entry<AnnotatedPluginDocument, String> barcodeToNamePart : barcodesToNameParts.entrySet()) {
                 if (barcodeToNamePart.getValue().equals(namePart)) {
                     barcode = barcodeToNamePart.getKey();
                 }
             }
+
             if (barcode == null) {
                 throw new NoMatchException(traceToNamePart.getKey().getName(), traceToNamePart.getValue());
             }
+
             result.get(barcode).add(traceToNamePart.getKey());
         }
 
@@ -117,20 +116,16 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @return Map of documents to part of their names used for mapping.
      * @throws DocumentOperationException
      */
-    private static Map<AnnotatedPluginDocument, String> mapDocumentsToPartOfName(List<AnnotatedPluginDocument> documents, String separator, int i)
-            throws DocumentOperationException {
+    private static Map<AnnotatedPluginDocument, String> mapDocumentsToPartOfName(List<AnnotatedPluginDocument> documents, String separator, int i) throws DocumentOperationException {
         Map<AnnotatedPluginDocument, String> result = new HashMap<AnnotatedPluginDocument, String>();
 
         for (AnnotatedPluginDocument document : documents) {
             String documentName = document.getName();
+
             try {
                 result.put(document, splitAndReturnNth(documentName, separator, i));
             } catch (IndexOutOfBoundsException e) {
-                throw new DocumentOperationException(
-                        "Could not get " + getOrdinalString(i + 1) + " substring of '" + documentName +
-                        "' separated by '" + separator + "'.",
-                        e
-                );
+                throw new DocumentOperationException("Could not get " + getOrdinalString(i + 1) + " substring of '" + documentName + "' separated by '" + separator + "'.", e);
             }
         }
 
@@ -147,11 +142,10 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @return Map of traces to part of their names used for mapping.
      * @throws DocumentOperationException
      */
-    private static Map<AnnotatedPluginDocument, String> mapTracesToPartOfName(List<AnnotatedPluginDocument> traces, String separator, int i)
-            throws DocumentOperationException {
-        Map<AnnotatedPluginDocument, String> resultNSDs = mapDocumentsToPartOfName(new ArrayList<AnnotatedPluginDocument>(traces), separator, i);
+    private static Map<AnnotatedPluginDocument, String> mapTracesToPartOfName(List<AnnotatedPluginDocument> traces, String separator, int i) throws DocumentOperationException {
         Map<AnnotatedPluginDocument, String> result = new HashMap<AnnotatedPluginDocument, String>();
 
+        Map<AnnotatedPluginDocument, String> resultNSDs = mapDocumentsToPartOfName(new ArrayList<AnnotatedPluginDocument>(traces), separator, i);
         for (Map.Entry<AnnotatedPluginDocument, String> traceNSDToNamePart : resultNSDs.entrySet()) {
             result.put(traceNSDToNamePart.getKey(), traceNSDToNamePart.getValue());
         }
@@ -169,8 +163,7 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @return Map of barcodes to, the part of the name of each barcode used for the mapping.
      * @throws DocumentOperationException
      */
-    private static Map<AnnotatedPluginDocument, String> mapBarcodesToPartOfName(List<AnnotatedPluginDocument> barcodes, String separator, int i)
-            throws DocumentOperationException {
+    private static Map<AnnotatedPluginDocument, String> mapBarcodesToPartOfName(List<AnnotatedPluginDocument> barcodes, String separator, int i) throws DocumentOperationException {
         return mapDocumentsToPartOfName(barcodes, separator, i);
     }
 
@@ -195,7 +188,6 @@ public class FileNameMapper extends BarcodesToTracesMapper {
     static String getOrdinalString(int n) {
         String nString = Integer.toString(n);
         String nAbsString = String.valueOf(Math.abs(n));
-
         int nAbsStringLength = nAbsString.length();
 
         if (nAbsStringLength > 1 && Character.digit(nAbsString.charAt(nAbsStringLength - 2), 10) == 1) {

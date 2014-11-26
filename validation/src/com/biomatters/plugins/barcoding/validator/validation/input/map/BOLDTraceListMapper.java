@@ -13,7 +13,7 @@ import java.util.*;
  * @author Gen Li
  *         Created on 5/09/14 9:54 AM
  */
-public class BOLDTraceListMapper extends BarcodesToTracesMapper {
+public class BOLDTraceListMapper extends BarcodeToTraceMapper {
     private static final String PROCESS_ID_COLUMN_NAME = "PROCESSID";
     private static final String TRACE_FILE_COLUMN_NAME = "TRACEFILE";
 
@@ -34,9 +34,7 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
      * @throws DocumentOperationException If an error occurs during the mapping process.
      */
     @Override
-    public Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(List<AnnotatedPluginDocument> barcodes,
-                                                                           List<AnnotatedPluginDocument> traces)
-            throws DocumentOperationException {
+    public Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(List<AnnotatedPluginDocument> barcodes, List<AnnotatedPluginDocument> traces) throws DocumentOperationException {
         try {
             /* Get a map of process ids to names of trace files via the trace list file associated with the instance. */
             Map<String, Collection<String>> processIdToTraceFileName = getProcessIdToTraceFileNameMap();
@@ -61,21 +59,17 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
      * @throws DocumentOperationException If one or more of the supplied traces is not associated with a supplied
      *                                    barcode.
      */
-    private Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(List<AnnotatedPluginDocument> barcodes,
-                                                                           List<AnnotatedPluginDocument> traces,
-                                                                           Map<String, Collection<String>> processIdToTraceFileName)
+    private Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(List<AnnotatedPluginDocument> barcodes, List<AnnotatedPluginDocument> traces, Map<String, Collection<String>> processIdToTraceFileName)
             throws DocumentOperationException {
-        Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> result =
-                new HashMap<AnnotatedPluginDocument, List<AnnotatedPluginDocument>>();
-
-        Map<String, AnnotatedPluginDocument> processIdToBarcode = getProcessIdToBarcode(barcodes);
+        Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> result = new HashMap<AnnotatedPluginDocument, List<AnnotatedPluginDocument>>();
+        Map<AnnotatedPluginDocument, String> tracesWithoutAssociatedBarcode = new LinkedHashMap<AnnotatedPluginDocument, String>();
 
         /* Map. */
         for (AnnotatedPluginDocument barcode : barcodes) {
             result.put(barcode, new ArrayList<AnnotatedPluginDocument>());
         }
 
-        Map<AnnotatedPluginDocument, String> tracesWithoutBarcode = new LinkedHashMap<AnnotatedPluginDocument, String>();
+        Map<String, AnnotatedPluginDocument> processIdToBarcode = getProcessIdToBarcode(barcodes);
         for (AnnotatedPluginDocument trace : traces) {
             String traceName = trace.getName();
             String processId = null;
@@ -90,31 +84,17 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
                 throw new DocumentOperationException("The trace " + traceName + " was not found in the TRACE_FILE_INFO.txt mapping file.");
             }
 
-            AnnotatedPluginDocument barcode = processIdToBarcode.get(processId);
-
             if (processIdToBarcode.get(processId) == null) {
-                tracesWithoutBarcode.put(trace, processId);
+                tracesWithoutAssociatedBarcode.put(trace, processId);
+
                 continue;
             }
 
-            result.get(barcode).add(trace);
+            result.get(processIdToBarcode.get(processId)).add(trace);
         }
-        if(!tracesWithoutBarcode.isEmpty()) {
-            String message = "No barcode sequences were found for <strong>" + tracesWithoutBarcode.size() + "</strong> traces:\n\n";
-            int count = 0;
-            StringBuilder list = new StringBuilder();
-            for (Map.Entry<AnnotatedPluginDocument, String> entry : tracesWithoutBarcode.entrySet()) {
-                count++;
-                if(count <= 100) {
-                    list.append(entry.getKey().getName()).append(" (BOLD process ID: ").append(entry.getValue()).append(")\n");
-                }
-            }
-            message += list.toString();
-            if(count > 100) {
-                message += "Too many to list...";
-            }
 
-            throw new DocumentOperationException(message);
+        if (!tracesWithoutAssociatedBarcode.isEmpty()) {
+            throw new DocumentOperationException(constructTracesWithoutAssociatedBarcodeFoundMessage(tracesWithoutAssociatedBarcode));
         }
 
         return result;
@@ -145,12 +125,10 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
      */
     private Map<String, Collection<String>> getProcessIdToTraceFileNameMap() throws BoldTraceListMapperException, IOException {
         ArrayListMultimap<String, String> result = ArrayListMultimap.create();
-
         List<List<String>> contents = getTraceListFileContent();
 
         int processIdRowIndex = getProcessIdIndex(contents);
         int traceFileRowIndex = getTraceFileIndex(contents);
-
         for (int i = 1; i < contents.size(); i++) {
             List<String> row = contents.get(i);
 
@@ -169,11 +147,12 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
      */
     private String parseTraceFileName(String traceFileName) {
         int indexOfSeparator = traceFileName.lastIndexOf("/");
-        if(indexOfSeparator > -1) {
+        if (indexOfSeparator > -1) {
             traceFileName = traceFileName.substring(indexOfSeparator + 1);
         }
+
         int indexOfPlus = traceFileName.indexOf("+");
-        if(indexOfPlus > -1) {
+        if (indexOfPlus > -1) {
             return traceFileName.substring(0, indexOfPlus) + traceFileName.substring(traceFileName.indexOf(".", indexOfPlus));
         } else {
             return traceFileName;
@@ -189,12 +168,12 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
     private List<List<String>> getTraceListFileContent() throws BoldTraceListMapperException, IOException {
         List<List<String>> result = new ArrayList<List<String>>();
         File file = new File(boldTraceListFilePath);
-        BufferedReader reader = new BufferedReader(new FileReader(file));
 
         if (!file.isFile()) {
             throw new BoldTraceListMapperException("The path '" + boldTraceListFilePath + "' is not of a file.");
         }
 
+        BufferedReader reader = new BufferedReader(new FileReader(file));
         String line = reader.readLine();
         while (line != null && !line.isEmpty()) {
             result.add(Arrays.asList(line.split("\t")));
@@ -218,13 +197,14 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
         if (!validateTraceListNumRows(contents)) {
             throw new BoldTraceListMapperException("The number of rows of the trace list is < 2.");
         }
+
         if (!validateTraceListRowsEqualLength(contents)) {
             throw new BoldTraceListMapperException("The lengths of the rows of the trace list are not all equal.");
         }
     }
 
     /**
-     * Validates the number of rows of a trace list being greater than or equal to 2.
+     * Validates that the number of rows of a trace list is greater than or equal to 2.
      *
      * @param contents Trace list contents.
      * @return True if the number of rows of the trace list is greater than or equal to 2, and false if not.
@@ -233,6 +213,7 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
         if (contents.size() < 2) {
             return false;
         }
+
         return true;
     }
 
@@ -248,6 +229,7 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
                 return false;
             }
         }
+
         return true;
     }
 
@@ -260,7 +242,6 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
      */
     private int getRowIndex(List<List<String>> contents, String columnName) throws BoldTraceListMapperException {
         List<String> header = contents.get(0);
-
         int index = header.indexOf(columnName);
 
         if (index == -1) {
@@ -294,6 +275,31 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
      */
     private int getTraceFileIndex(List<List<String>> contents) throws BoldTraceListMapperException {
         return getRowIndex(contents, TRACE_FILE_COLUMN_NAME);
+    }
+
+    private String constructTracesWithoutAssociatedBarcodeFoundMessage(Map<AnnotatedPluginDocument, String> tracesWithoutAssociatedBarcode) {
+        StringBuilder messageBuilder = new StringBuilder();
+
+        if (tracesWithoutAssociatedBarcode == null || tracesWithoutAssociatedBarcode.isEmpty()) {
+            return "";
+        }
+
+        messageBuilder.append("No barcode sequences were found for <strong>" + tracesWithoutAssociatedBarcode.size() + "</strong> traces:\n\n");
+
+        int count = 0;
+        for (Map.Entry<AnnotatedPluginDocument, String> entry : tracesWithoutAssociatedBarcode.entrySet()) {
+            if (++count > 100) {
+                break;
+            }
+
+            messageBuilder.append(entry.getKey().getName()).append(" (BOLD process ID: ").append(entry.getValue()).append(")\n");
+        }
+
+        if (count > 100) {
+            messageBuilder.append("And more...");
+        }
+
+        return messageBuilder.toString();
     }
 
     /**

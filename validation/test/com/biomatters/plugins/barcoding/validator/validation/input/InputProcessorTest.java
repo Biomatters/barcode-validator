@@ -18,7 +18,7 @@ import java.util.*;
  * @author Gen Li
  *         Created on 8/09/14 2:36 PM
  */
-public class InputTest extends Assert {
+public class InputProcessorTest extends Assert {
     @Test
     public void testSplitByName() throws DocumentOperationException {
         for (String separator : Arrays.asList("_", "*", "|", ":", "$", "=", ".", ",", "+", "~", " ")) {
