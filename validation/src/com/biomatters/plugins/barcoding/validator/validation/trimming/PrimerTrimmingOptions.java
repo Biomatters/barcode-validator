@@ -69,8 +69,14 @@ public class PrimerTrimmingOptions extends Options {
     }
 
     private void addPrimerSelectionOption() {
-        final DocumentSelectionOption primerSelectionOption = addPrimerSelectionOption(PRIMER_SELECTION_OPTIONS_NAME,
-                "Primers:", DocumentSelectionOption.FolderOrDocuments.EMPTY, true, Collections.<AnnotatedPluginDocument>emptyList());
+        final DocumentSelectionOption primerSelectionOption = addPrimerSelectionOption(
+                PRIMER_SELECTION_OPTIONS_NAME,
+                "Primers:",
+                DocumentSelectionOption.FolderOrDocuments.EMPTY,
+                true,
+                Collections.<AnnotatedPluginDocument>emptyList()
+        );
+
         addButtonOption("clear", "", "Clear Selection").addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
