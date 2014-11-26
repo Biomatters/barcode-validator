@@ -6,6 +6,8 @@ import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.plugins.barcoding.validator.validation.input.map.BarcodesToTracesMapperFactory;
 import com.biomatters.plugins.barcoding.validator.validation.input.map.BarcodesToTracesMapperOptions;
 import com.biomatters.plugins.barcoding.validator.validation.utilities.ImportUtilities;
+import jebl.util.CompositeProgressListener;
+import jebl.util.ProgressListener;
 
 import java.util.List;
 import java.util.Map;
@@ -27,18 +29,25 @@ public class Input {
      * @param barcodeFilePaths Barcode source file paths.
      * @param options Method and associated settings for the mapping.
      * @param operationCallback
+     * @param progressListener
      * @return Map of barcodes to traces.
      * @throws DocumentOperationException
      */
     public static Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> processInputs(List<String> traceFilePaths,
                                                                                             List<String> barcodeFilePaths,
-                                                                                            BarcodesToTracesMapperOptions options, DocumentOperation.OperationCallback operationCallback)
+                                                                                            BarcodesToTracesMapperOptions options, DocumentOperation.OperationCallback operationCallback, ProgressListener progressListener)
             throws DocumentOperationException {
+
+        CompositeProgressListener inputProgres = new CompositeProgressListener(progressListener, 3);
         /* Import documents. */
-        List<AnnotatedPluginDocument> traces = ImportUtilities.importTraces(traceFilePaths, operationCallback);
-        List<AnnotatedPluginDocument> barcodes = ImportUtilities.importBarcodes(barcodeFilePaths, operationCallback);
+        inputProgres.beginSubtask("Traces...");
+        List<AnnotatedPluginDocument> traces = ImportUtilities.importTraces(traceFilePaths, operationCallback, inputProgres);
+
+        inputProgres.beginSubtask("Barcode sequences...");
+        List<AnnotatedPluginDocument> barcodes = ImportUtilities.importBarcodes(barcodeFilePaths, operationCallback, inputProgres);
 
         /* Map barcodes to traces and return result. */
+        inputProgres.beginSubtask("Mapping...");
         return BarcodesToTracesMapperFactory.getBarcodesToTracesMapper(options).map(barcodes, traces);
     }
 }

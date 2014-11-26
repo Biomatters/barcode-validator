@@ -14,6 +14,7 @@ import jebl.evolution.io.ImportException;
 import jebl.evolution.sequences.GaplessSequence;
 import jebl.evolution.sequences.Sequence;
 import jebl.evolution.sequences.SequenceType;
+import jebl.util.Cancelable;
 import jebl.util.ProgressListener;
 
 import javax.annotation.Nullable;
@@ -42,12 +43,13 @@ public class ImportUtilities {
      *
      * @param sourcePaths Paths of source files and/or folders containing source files.
      * @param operationCallback
+     * @param cancelable
      * @return Traces.
      * @throws DocumentOperationException
      */
-    public static List<AnnotatedPluginDocument> importTraces(List<String> sourcePaths, DocumentOperation.OperationCallback operationCallback) throws DocumentOperationException {
+    public static List<AnnotatedPluginDocument> importTraces(List<String> sourcePaths, DocumentOperation.OperationCallback operationCallback, Cancelable cancelable) throws DocumentOperationException {
         try {
-            return importDocuments(sourcePaths, Arrays.asList((Class)NucleotideGraphSequenceDocument.class), TRACE_ALLOWED_FILE_EXTENSIONS, operationCallback);
+            return importDocuments(sourcePaths, Arrays.asList((Class)NucleotideGraphSequenceDocument.class), TRACE_ALLOWED_FILE_EXTENSIONS, operationCallback, cancelable);
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not import traces: " + e.getMessage(), e);
         }
@@ -58,14 +60,19 @@ public class ImportUtilities {
      *
      * @param sourcePaths Paths of source files and/or folders containing source files.
      * @param operationCallback
+     * @param cancelable
      * @return Barcodes.
      * @throws DocumentOperationException
      */
-    public static List<AnnotatedPluginDocument> importBarcodes(List<String> sourcePaths, DocumentOperation.OperationCallback operationCallback) throws DocumentOperationException {
+    public static List<AnnotatedPluginDocument> importBarcodes(List<String> sourcePaths, DocumentOperation.OperationCallback operationCallback, Cancelable cancelable) throws DocumentOperationException {
         List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
 
         /* Check existence of source paths, and import */
         for (String sourcePath : sourcePaths) {
+            if(cancelable.isCanceled()) {
+                throw new DocumentOperationException.Canceled();
+            }
+
             File file = new File(sourcePath);
             if (!file.exists()) {
                 throw new DocumentOperationException("File or directory '" + sourcePath + "' does not exist.");
@@ -82,7 +89,7 @@ public class ImportUtilities {
                     subFiles.add(f.getPath());
                 }
 
-                result.addAll(importBarcodes(subFiles, operationCallback));
+                result.addAll(importBarcodes(subFiles, operationCallback, cancelable));
             } else if (fileNameHasOneOfExtensions(file.getName(), BARCODE_ALLOWED_FILE_EXTENSIONS)) {
                 try {
                     FastaImporter importer = new FastaImporter(file, SequenceType.NUCLEOTIDE);
@@ -119,7 +126,7 @@ public class ImportUtilities {
         try {
             importedDocuments = importDocuments(
                     Collections.singletonList(sourcePath), Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)SequenceAlignmentDocument.class), CONTIGS_ALLOWED_FILE_EXTENSIONS,
-                    null);
+                    null, ProgressListener.EMPTY);
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not import contigs: " + e.getMessage(), e);
         }
@@ -141,12 +148,13 @@ public class ImportUtilities {
      * @param expectedDocumentTypes Expected document types.
      * @param allowedFileExtensions Allowed file extensions.
      * @param operationCallback
+     * @param cancelable
      * @return Documents.
      * @throws DocumentOperationException
      */
     private static List<AnnotatedPluginDocument> importDocuments(List<String> sourcePaths, List<Class> expectedDocumentTypes,
                                                                  Set<String> allowedFileExtensions,
-                                                                 @Nullable DocumentOperation.OperationCallback operationCallback)
+                                                                 @Nullable DocumentOperation.OperationCallback operationCallback, Cancelable cancelable)
             throws DocumentOperationException {
         List<AnnotatedPluginDocument> result;
         List<File> files = new ArrayList<File>();
@@ -161,7 +169,7 @@ public class ImportUtilities {
         }
 
         /* Import. */
-        result = importDocuments(files, allowedFileExtensions, operationCallback);
+        result = importDocuments(files, allowedFileExtensions, operationCallback, cancelable);
 
         /* Check types of documents. */
         checkDocumentsAreOfTypes(result, expectedDocumentTypes);
@@ -175,15 +183,20 @@ public class ImportUtilities {
      * @param sources Source files or folders containing source files.
      * @param allowedFileExtensions Allowed file extensions.
      * @param operationCallback
+     * @param cancelable
      * @return Documents.
      * @throws DocumentOperationException
      */
     private static List<AnnotatedPluginDocument> importDocuments(List<File> sources, Set<String> allowedFileExtensions,
-                                                                 @Nullable DocumentOperation.OperationCallback operationCallback) throws DocumentOperationException {
+                                                                 @Nullable DocumentOperation.OperationCallback operationCallback, Cancelable cancelable) throws DocumentOperationException {
         List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
 
         try {
             for (File source : sources) {
+                if(cancelable.isCanceled()) {
+                    throw new DocumentOperationException.Canceled();
+                }
+
                 if (source.isDirectory()) {
                     File[] subSource = source.listFiles();
 
@@ -192,7 +205,7 @@ public class ImportUtilities {
                                                              source.getAbsolutePath() + "'.");
                     }
 
-                    result.addAll(importDocuments(Arrays.asList(subSource), allowedFileExtensions, operationCallback));
+                    result.addAll(importDocuments(Arrays.asList(subSource), allowedFileExtensions, operationCallback, cancelable));
                 } else if (fileNameHasOneOfExtensions(source.getName(), allowedFileExtensions)) {
                     List<AnnotatedPluginDocument> imported = PluginUtilities.importDocuments(source, ProgressListener.EMPTY);
                     for (AnnotatedPluginDocument annotatedPluginDocument : imported) {
