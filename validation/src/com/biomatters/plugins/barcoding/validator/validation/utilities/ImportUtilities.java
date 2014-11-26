@@ -1,12 +1,12 @@
 package com.biomatters.plugins.barcoding.validator.validation.utilities;
 
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
-import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.sequence.DefaultSequenceListDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentImportException;
+import com.biomatters.geneious.publicapi.plugin.DocumentOperation;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.PluginUtilities;
 import jebl.evolution.io.FastaImporter;
@@ -16,6 +16,7 @@ import jebl.evolution.sequences.Sequence;
 import jebl.evolution.sequences.SequenceType;
 import jebl.util.ProgressListener;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -40,12 +41,13 @@ public class ImportUtilities {
      * Imports traces.
      *
      * @param sourcePaths Paths of source files and/or folders containing source files.
+     * @param operationCallback
      * @return Traces.
      * @throws DocumentOperationException
      */
-    public static List<AnnotatedPluginDocument> importTraces(List<String> sourcePaths) throws DocumentOperationException {
+    public static List<AnnotatedPluginDocument> importTraces(List<String> sourcePaths, DocumentOperation.OperationCallback operationCallback) throws DocumentOperationException {
         try {
-            return importDocuments(sourcePaths, Arrays.asList((Class)NucleotideGraphSequenceDocument.class), TRACE_ALLOWED_FILE_EXTENSIONS);
+            return importDocuments(sourcePaths, Arrays.asList((Class)NucleotideGraphSequenceDocument.class), TRACE_ALLOWED_FILE_EXTENSIONS, operationCallback);
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not import traces: " + e.getMessage(), e);
         }
@@ -55,10 +57,11 @@ public class ImportUtilities {
      * Imports barcodes.
      *
      * @param sourcePaths Paths of source files and/or folders containing source files.
+     * @param operationCallback
      * @return Barcodes.
      * @throws DocumentOperationException
      */
-    public static List<AnnotatedPluginDocument> importBarcodes(List<String> sourcePaths) throws DocumentOperationException {
+    public static List<AnnotatedPluginDocument> importBarcodes(List<String> sourcePaths, DocumentOperation.OperationCallback operationCallback) throws DocumentOperationException {
         List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
 
         /* Check existence of source paths, and import */
@@ -79,13 +82,14 @@ public class ImportUtilities {
                     subFiles.add(f.getPath());
                 }
 
-                result.addAll(importBarcodes(subFiles));
+                result.addAll(importBarcodes(subFiles, operationCallback));
             } else if (fileNameHasOneOfExtensions(file.getName(), BARCODE_ALLOWED_FILE_EXTENSIONS)) {
                 try {
                     FastaImporter importer = new FastaImporter(file, SequenceType.NUCLEOTIDE);
                     List<Sequence> sequences = importer.importSequences();
                     for (Sequence seq : sequences) {
-                        result.add(DocumentUtilities.createAnnotatedPluginDocument(new DefaultNucleotideSequence(new GaplessSequence(seq))));
+                        AnnotatedPluginDocument apd = operationCallback.addDocument(new DefaultNucleotideSequence(new GaplessSequence(seq)), true, ProgressListener.EMPTY);
+                        result.add(apd);
                     }
                 } catch (FileNotFoundException e) {
                     throw new DocumentOperationException("Could not import barcodes: " + e.getMessage(), e);
@@ -114,8 +118,8 @@ public class ImportUtilities {
         /* Import documents. */
         try {
             importedDocuments = importDocuments(
-                    Collections.singletonList(sourcePath), Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)SequenceAlignmentDocument.class), CONTIGS_ALLOWED_FILE_EXTENSIONS
-            );
+                    Collections.singletonList(sourcePath), Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)SequenceAlignmentDocument.class), CONTIGS_ALLOWED_FILE_EXTENSIONS,
+                    null);
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not import contigs: " + e.getMessage(), e);
         }
@@ -136,10 +140,13 @@ public class ImportUtilities {
      * @param sourcePaths Paths of source files and/or folders containing source files.
      * @param expectedDocumentTypes Expected document types.
      * @param allowedFileExtensions Allowed file extensions.
+     * @param operationCallback
      * @return Documents.
      * @throws DocumentOperationException
      */
-    private static List<AnnotatedPluginDocument> importDocuments(List<String> sourcePaths, List<Class> expectedDocumentTypes, Set<String> allowedFileExtensions)
+    private static List<AnnotatedPluginDocument> importDocuments(List<String> sourcePaths, List<Class> expectedDocumentTypes,
+                                                                 Set<String> allowedFileExtensions,
+                                                                 @Nullable DocumentOperation.OperationCallback operationCallback)
             throws DocumentOperationException {
         List<AnnotatedPluginDocument> result;
         List<File> files = new ArrayList<File>();
@@ -154,7 +161,7 @@ public class ImportUtilities {
         }
 
         /* Import. */
-        result = importDocuments(files, allowedFileExtensions);
+        result = importDocuments(files, allowedFileExtensions, operationCallback);
 
         /* Check types of documents. */
         checkDocumentsAreOfTypes(result, expectedDocumentTypes);
@@ -167,10 +174,12 @@ public class ImportUtilities {
      *
      * @param sources Source files or folders containing source files.
      * @param allowedFileExtensions Allowed file extensions.
+     * @param operationCallback
      * @return Documents.
      * @throws DocumentOperationException
      */
-    private static List<AnnotatedPluginDocument> importDocuments(List<File> sources, Set<String> allowedFileExtensions) throws DocumentOperationException {
+    private static List<AnnotatedPluginDocument> importDocuments(List<File> sources, Set<String> allowedFileExtensions,
+                                                                 @Nullable DocumentOperation.OperationCallback operationCallback) throws DocumentOperationException {
         List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
 
         try {
@@ -183,9 +192,15 @@ public class ImportUtilities {
                                                              source.getAbsolutePath() + "'.");
                     }
 
-                    result.addAll(importDocuments(Arrays.asList(subSource), allowedFileExtensions));
+                    result.addAll(importDocuments(Arrays.asList(subSource), allowedFileExtensions, operationCallback));
                 } else if (fileNameHasOneOfExtensions(source.getName(), allowedFileExtensions)) {
-                    result.addAll(PluginUtilities.importDocuments(source, ProgressListener.EMPTY));
+                    List<AnnotatedPluginDocument> imported = PluginUtilities.importDocuments(source, ProgressListener.EMPTY);
+                    for (AnnotatedPluginDocument annotatedPluginDocument : imported) {
+                        if(operationCallback != null) {
+                            annotatedPluginDocument = operationCallback.addDocument(annotatedPluginDocument, true, ProgressListener.EMPTY);
+                        }
+                        result.add(annotatedPluginDocument);
+                    }
                 }
             }
         } catch (DocumentImportException e) {

@@ -1,8 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.validation.input;
 
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
+import com.biomatters.geneious.publicapi.plugin.DocumentOperation;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.plugins.barcoding.validator.validation.input.map.BarcodesToTracesMapperFactory;
 import com.biomatters.plugins.barcoding.validator.validation.input.map.BarcodesToTracesMapperOptions;
@@ -27,16 +26,17 @@ public class Input {
      * @param traceFilePaths Trace source file paths.
      * @param barcodeFilePaths Barcode source file paths.
      * @param options Method and associated settings for the mapping.
+     * @param operationCallback
      * @return Map of barcodes to traces.
      * @throws DocumentOperationException
      */
     public static Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> processInputs(List<String> traceFilePaths,
-                                                                                                       List<String> barcodeFilePaths,
-                                                                                                       BarcodesToTracesMapperOptions options)
+                                                                                            List<String> barcodeFilePaths,
+                                                                                            BarcodesToTracesMapperOptions options, DocumentOperation.OperationCallback operationCallback)
             throws DocumentOperationException {
         /* Import documents. */
-        List<AnnotatedPluginDocument> traces = ImportUtilities.importTraces(traceFilePaths);
-        List<AnnotatedPluginDocument> barcodes = ImportUtilities.importBarcodes(barcodeFilePaths);
+        List<AnnotatedPluginDocument> traces = ImportUtilities.importTraces(traceFilePaths, operationCallback);
+        List<AnnotatedPluginDocument> barcodes = ImportUtilities.importBarcodes(barcodeFilePaths, operationCallback);
 
         /* Map barcodes to traces and return result. */
         return BarcodesToTracesMapperFactory.getBarcodesToTracesMapper(options).map(barcodes, traces);
