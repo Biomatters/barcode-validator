@@ -1,9 +1,9 @@
 package com.biomatters.plugins.barcoding.validator.validation.utilities;
 
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
+import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.sequence.DefaultSequenceListDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentImportException;
@@ -43,22 +43,12 @@ public class ImportUtilities {
      * @return Traces.
      * @throws DocumentOperationException
      */
-    public static List<NucleotideGraphSequenceDocument> importTraces(List<String> sourcePaths) throws DocumentOperationException {
-        List<NucleotideGraphSequenceDocument> result = new ArrayList<NucleotideGraphSequenceDocument>();
-        List<AnnotatedPluginDocument> importedDocuments;
-
-        /* Import documents. */
+    public static List<AnnotatedPluginDocument> importTraces(List<String> sourcePaths) throws DocumentOperationException {
         try {
-            importedDocuments = importDocuments(sourcePaths, Arrays.asList((Class)NucleotideGraphSequenceDocument.class), TRACE_ALLOWED_FILE_EXTENSIONS);
+            return importDocuments(sourcePaths, Arrays.asList((Class)NucleotideGraphSequenceDocument.class), TRACE_ALLOWED_FILE_EXTENSIONS);
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not import traces: " + e.getMessage(), e);
         }
-
-        for (AnnotatedPluginDocument importedDocument : importedDocuments) {
-            result.add((NucleotideGraphSequenceDocument)importedDocument.getDocument());
-        }
-
-        return result;
     }
 
     /**
@@ -68,8 +58,8 @@ public class ImportUtilities {
      * @return Barcodes.
      * @throws DocumentOperationException
      */
-    public static List<NucleotideSequenceDocument> importBarcodes(List<String> sourcePaths) throws DocumentOperationException {
-        List<NucleotideSequenceDocument> result = new ArrayList<NucleotideSequenceDocument>();
+    public static List<AnnotatedPluginDocument> importBarcodes(List<String> sourcePaths) throws DocumentOperationException {
+        List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
 
         /* Check existence of source paths, and import */
         for (String sourcePath : sourcePaths) {
@@ -95,7 +85,7 @@ public class ImportUtilities {
                     FastaImporter importer = new FastaImporter(file, SequenceType.NUCLEOTIDE);
                     List<Sequence> sequences = importer.importSequences();
                     for (Sequence seq : sequences) {
-                        result.add(new DefaultNucleotideSequence(new GaplessSequence(seq)));
+                        result.add(DocumentUtilities.createAnnotatedPluginDocument(new DefaultNucleotideSequence(new GaplessSequence(seq))));
                     }
                 } catch (FileNotFoundException e) {
                     throw new DocumentOperationException("Could not import barcodes: " + e.getMessage(), e);

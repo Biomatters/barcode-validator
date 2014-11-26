@@ -1,5 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation.input.map;
 
+import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
@@ -35,8 +36,8 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
      * @throws DocumentOperationException If an error occurs during the mapping process.
      */
     @Override
-    public Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> map(List<NucleotideSequenceDocument> barcodes,
-                                                                                      List<NucleotideGraphSequenceDocument> traces)
+    public Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(List<AnnotatedPluginDocument> barcodes,
+                                                                           List<AnnotatedPluginDocument> traces)
             throws DocumentOperationException {
         try {
             /* Get a map of process ids to names of trace files via the trace list file associated with the instance. */
@@ -62,21 +63,21 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
      * @throws DocumentOperationException If one or more of the supplied traces is not associated with a supplied
      *                                    barcode.
      */
-    private Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> map(List<NucleotideSequenceDocument> barcodes,
-                                                                                       List<NucleotideGraphSequenceDocument> traces,
-                                                                                       Map<String, Collection<String>> processIdToTraceFileName)
+    private Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(List<AnnotatedPluginDocument> barcodes,
+                                                                           List<AnnotatedPluginDocument> traces,
+                                                                           Map<String, Collection<String>> processIdToTraceFileName)
             throws DocumentOperationException {
-        Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> result =
-                new HashMap<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>>();
+        Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> result =
+                new HashMap<AnnotatedPluginDocument, List<AnnotatedPluginDocument>>();
 
-        Map<String, NucleotideSequenceDocument> processIdToBarcode = getProcessIdToBarcode(barcodes);
+        Map<String, AnnotatedPluginDocument> processIdToBarcode = getProcessIdToBarcode(barcodes);
 
         /* Map. */
-        for (NucleotideSequenceDocument barcode : barcodes) {
-            result.put(barcode, new ArrayList<NucleotideGraphSequenceDocument>());
+        for (AnnotatedPluginDocument barcode : barcodes) {
+            result.put(barcode, new ArrayList<AnnotatedPluginDocument>());
         }
 
-        for (NucleotideGraphSequenceDocument trace : traces) {
+        for (AnnotatedPluginDocument trace : traces) {
             String traceName = trace.getName();
             String processId = null;
 
@@ -90,7 +91,7 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
                 throw new DocumentOperationException("The trace " + traceName + " was not found in the TRACE_FILE_INFO.txt mapping file.");
             }
 
-            NucleotideSequenceDocument barcode = processIdToBarcode.get(processId);
+            AnnotatedPluginDocument barcode = processIdToBarcode.get(processId);
 
             if (processIdToBarcode.get(processId) == null) {
                 throw new DocumentOperationException("No barcode was found for trace '" + traceName + "' (BOLD process ID: " + processId + ").");
@@ -108,10 +109,10 @@ public class BOLDTraceListMapper extends BarcodesToTracesMapper {
      * @param barcodes The supplied barcodes.
      * @return A map of process ids to barcodes.
      */
-    private Map<String, NucleotideSequenceDocument> getProcessIdToBarcode(List<NucleotideSequenceDocument> barcodes) {
-        Map<String, NucleotideSequenceDocument> result = new HashMap<String, NucleotideSequenceDocument>();
+    private Map<String, AnnotatedPluginDocument> getProcessIdToBarcode(List<AnnotatedPluginDocument> barcodes) {
+        Map<String, AnnotatedPluginDocument> result = new HashMap<String, AnnotatedPluginDocument>();
 
-        for (NucleotideSequenceDocument barcode : barcodes) {
+        for (AnnotatedPluginDocument barcode : barcodes) {
             result.put(barcode.getName().split(BOLD_BARCODE_DESCRIPTION_SEPARATOR)[0], barcode);
         }
 

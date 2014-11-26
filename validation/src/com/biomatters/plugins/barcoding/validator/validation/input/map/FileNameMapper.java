@@ -1,7 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation.input.map;
 
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
+import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 
 import java.util.ArrayList;
@@ -38,13 +37,13 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @throws DocumentOperationException
      */
     @Override
-    public Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> map(List<NucleotideSequenceDocument> barcodes,
-                                                                                      List<NucleotideGraphSequenceDocument> traces)
+    public Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(List<AnnotatedPluginDocument> barcodes,
+                                                                           List<AnnotatedPluginDocument> traces)
             throws DocumentOperationException {
         try {
             /* Map documents to part of their names used for mapping. */
-            Map<NucleotideGraphSequenceDocument, String> tracesToNameParts = mapTracesToPartOfName(traces, traceSeparator, traceNamePart);
-            Map<NucleotideSequenceDocument, String> barcodesToNameParts = mapBarcodesToPartOfName(barcodes, barcodeSeparator, barcodeNamePart);
+            Map<AnnotatedPluginDocument, String> tracesToNameParts = mapTracesToPartOfName(traces, traceSeparator, traceNamePart);
+            Map<AnnotatedPluginDocument, String> barcodesToNameParts = mapBarcodesToPartOfName(barcodes, barcodeSeparator, barcodeNamePart);
 
             /* Map. */
             return map(tracesToNameParts, barcodesToNameParts);
@@ -67,21 +66,21 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @return Map of barcodes to traces.
      * @throws DocumentOperationException
      */
-    private static Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> map(Map<NucleotideGraphSequenceDocument, String> tracesToNameParts,
-                                                                                              Map<NucleotideSequenceDocument, String> barcodesToNameParts)
+    private static Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(Map<AnnotatedPluginDocument, String> tracesToNameParts,
+                                                                                              Map<AnnotatedPluginDocument, String> barcodesToNameParts)
             throws NoMatchException {
-        Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> result =
-                new HashMap<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>>();
+        Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> result =
+                new HashMap<AnnotatedPluginDocument, List<AnnotatedPluginDocument>>();
 
-        for (NucleotideSequenceDocument barcode : barcodesToNameParts.keySet()) {
-            result.put(barcode, new ArrayList<NucleotideGraphSequenceDocument>());
+        for (AnnotatedPluginDocument barcode : barcodesToNameParts.keySet()) {
+            result.put(barcode, new ArrayList<AnnotatedPluginDocument>());
         }
 
         /* Map. */
-        for (Map.Entry<NucleotideGraphSequenceDocument, String> traceToNamePart : tracesToNameParts.entrySet()) {
+        for (Map.Entry<AnnotatedPluginDocument, String> traceToNamePart : tracesToNameParts.entrySet()) {
             String namePart = traceToNamePart.getValue();
-            NucleotideSequenceDocument barcode = null;
-            for (Map.Entry<NucleotideSequenceDocument, String> barcodeToNamePart : barcodesToNameParts.entrySet()) {
+            AnnotatedPluginDocument barcode = null;
+            for (Map.Entry<AnnotatedPluginDocument, String> barcodeToNamePart : barcodesToNameParts.entrySet()) {
                 if (barcodeToNamePart.getValue().equals(namePart)) {
                     barcode = barcodeToNamePart.getKey();
                 }
@@ -118,11 +117,11 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @return Map of documents to part of their names used for mapping.
      * @throws DocumentOperationException
      */
-    private static Map<NucleotideSequenceDocument, String> mapDocumentsToPartOfName(List<NucleotideSequenceDocument> documents, String separator, int i)
+    private static Map<AnnotatedPluginDocument, String> mapDocumentsToPartOfName(List<AnnotatedPluginDocument> documents, String separator, int i)
             throws DocumentOperationException {
-        Map<NucleotideSequenceDocument, String> result = new HashMap<NucleotideSequenceDocument, String>();
+        Map<AnnotatedPluginDocument, String> result = new HashMap<AnnotatedPluginDocument, String>();
 
-        for (NucleotideSequenceDocument document : documents) {
+        for (AnnotatedPluginDocument document : documents) {
             String documentName = document.getName();
             try {
                 result.put(document, splitAndReturnNth(documentName, separator, i));
@@ -148,13 +147,13 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @return Map of traces to part of their names used for mapping.
      * @throws DocumentOperationException
      */
-    private static Map<NucleotideGraphSequenceDocument, String> mapTracesToPartOfName(List<NucleotideGraphSequenceDocument> traces, String separator, int i)
+    private static Map<AnnotatedPluginDocument, String> mapTracesToPartOfName(List<AnnotatedPluginDocument> traces, String separator, int i)
             throws DocumentOperationException {
-        Map<NucleotideSequenceDocument, String> resultNSDs = mapDocumentsToPartOfName(new ArrayList<NucleotideSequenceDocument>(traces), separator, i);
-        Map<NucleotideGraphSequenceDocument, String> result = new HashMap<NucleotideGraphSequenceDocument, String>();
+        Map<AnnotatedPluginDocument, String> resultNSDs = mapDocumentsToPartOfName(new ArrayList<AnnotatedPluginDocument>(traces), separator, i);
+        Map<AnnotatedPluginDocument, String> result = new HashMap<AnnotatedPluginDocument, String>();
 
-        for (Map.Entry<NucleotideSequenceDocument, String> traceNSDToNamePart : resultNSDs.entrySet()) {
-            result.put((NucleotideGraphSequenceDocument)traceNSDToNamePart.getKey(), traceNSDToNamePart.getValue());
+        for (Map.Entry<AnnotatedPluginDocument, String> traceNSDToNamePart : resultNSDs.entrySet()) {
+            result.put(traceNSDToNamePart.getKey(), traceNSDToNamePart.getValue());
         }
 
         return result;
@@ -170,7 +169,7 @@ public class FileNameMapper extends BarcodesToTracesMapper {
      * @return Map of barcodes to, the part of the name of each barcode used for the mapping.
      * @throws DocumentOperationException
      */
-    private static Map<NucleotideSequenceDocument, String> mapBarcodesToPartOfName(List<NucleotideSequenceDocument> barcodes, String separator, int i)
+    private static Map<AnnotatedPluginDocument, String> mapBarcodesToPartOfName(List<AnnotatedPluginDocument> barcodes, String separator, int i)
             throws DocumentOperationException {
         return mapDocumentsToPartOfName(barcodes, separator, i);
     }

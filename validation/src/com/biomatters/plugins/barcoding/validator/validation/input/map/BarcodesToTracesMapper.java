@@ -1,5 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation.input.map;
 
+import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
@@ -12,7 +13,7 @@ import java.util.Map;
  *         Created on 3/09/14 5:26 PM
  */
 public abstract class BarcodesToTracesMapper {
-    public abstract Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> map(List<NucleotideSequenceDocument> barcodes,
-                                                                                               List<NucleotideGraphSequenceDocument> traces)
+    public abstract Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(List<AnnotatedPluginDocument> barcodes,
+                                                                                    List<AnnotatedPluginDocument> traces)
             throws DocumentOperationException;
 }

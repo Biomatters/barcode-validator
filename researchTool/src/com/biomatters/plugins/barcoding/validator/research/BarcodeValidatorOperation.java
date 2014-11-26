@@ -6,7 +6,6 @@ import com.biomatters.geneious.publicapi.databaseservice.DatabaseServiceExceptio
 import com.biomatters.geneious.publicapi.databaseservice.WritableDatabaseService;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
-import com.biomatters.geneious.publicapi.documents.PluginDocument;
 import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
@@ -86,11 +85,14 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         InputOptions inputSplitterOptions = allOptions.getInputOptions();
 
         composite.beginSubtask("Processing inputs");
-        Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces =
-                getBarcodesToTraces(composite, operationCallback, inputSplitterOptions);
+        Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> suppliedBarcodesToSuppliedTraces =
+                Input.processInputs(inputSplitterOptions.getTraceFilePaths(),
+                                        inputSplitterOptions.getBarcodeFilePaths(),
+                                        inputSplitterOptions.getMethodOption());
+
         WritableDatabaseService resultsFolder = getResultsFolder(suppliedBarcodesToSuppliedTraces);
-        List<NucleotideSequenceDocument> barcodesWithMissingTraces = new ArrayList<NucleotideSequenceDocument>();
-        for (Map.Entry<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> entry : suppliedBarcodesToSuppliedTraces.entrySet()) {
+        List<AnnotatedPluginDocument> barcodesWithMissingTraces = new ArrayList<AnnotatedPluginDocument>();
+        for (Map.Entry<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> entry : suppliedBarcodesToSuppliedTraces.entrySet()) {
             if(entry.getValue().isEmpty()) {
                 barcodesWithMissingTraces.add(entry.getKey());
             }
@@ -101,10 +103,10 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             return;
         }
         if(!barcodesWithMissingTraces.isEmpty()) {
-            String list = StringUtilities.join("\n", Collections2.transform(barcodesWithMissingTraces, new Function<NucleotideSequenceDocument, String>() {
+            String list = StringUtilities.join("\n", Collections2.transform(barcodesWithMissingTraces, new Function<AnnotatedPluginDocument, String>() {
                 @Nullable
                 @Override
-                public String apply(@Nullable NucleotideSequenceDocument input) {
+                public String apply(@Nullable AnnotatedPluginDocument input) {
                     return input != null ? input.getName() : "missing";
                 }
             }));
@@ -167,25 +169,21 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         }
     }
 
-    private static WritableDatabaseService getResultsFolder(Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> validatorInput) throws DocumentOperationException {
-        NucleotideGraphSequenceDocument sampleTrace = getOneTraceFromInput(validatorInput);
+    private static WritableDatabaseService getResultsFolder(Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> validatorInput) throws DocumentOperationException {
+        AnnotatedPluginDocument sampleTrace = getOneTraceFromInput(validatorInput);
         if(sampleTrace == null) {
             throw new DocumentOperationException("Cannot continue operation.  There were no trace documents.");
         }
-        AnnotatedPluginDocument apd = DocumentUtilities.getAnnotatedPluginDocumentThatContains(sampleTrace);
-        if(apd == null) {
-            throw new DocumentOperationException("Cannot continue operation.  Input was not saved to a database.");
-        }
-        DatabaseService resultsFolder = apd.getDatabase();
+        DatabaseService resultsFolder = sampleTrace.getDatabase();
         if(!(resultsFolder instanceof WritableDatabaseService)) {
-            throw new DocumentOperationException("Cannot continue operation.  Results are being saved to a non writable database: " + resultsFolder.getClass());
+            throw new DocumentOperationException("Cannot continue operation.  Results are being saved to a non writable database: " + (resultsFolder == null ? "null" : resultsFolder.getClass()));
         }
         return (WritableDatabaseService)resultsFolder;
     }
 
-    private static NucleotideGraphSequenceDocument getOneTraceFromInput(Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> validatorInput) {
-        for (List<NucleotideGraphSequenceDocument> traces : validatorInput.values()) {
-            for (NucleotideGraphSequenceDocument trace : traces) {
+    private static AnnotatedPluginDocument getOneTraceFromInput(Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> validatorInput) {
+        for (List<AnnotatedPluginDocument> traces : validatorInput.values()) {
+            for (AnnotatedPluginDocument trace : traces) {
                 if(trace != null) {
                     return trace;
                 }
@@ -194,62 +192,34 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         return null;
     }
 
-    private Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> getBarcodesToTraces(ProgressListener progressListener, OperationCallback operationCallback, InputOptions inputSplitterOptions) throws DocumentOperationException {
-        Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces
-                = Input.processInputs(inputSplitterOptions.getTraceFilePaths(),
-                inputSplitterOptions.getBarcodeFilePaths(),
-                inputSplitterOptions.getMethodOption());
-
-        CompositeProgressListener progressPerEntry = new CompositeProgressListener(progressListener, suppliedBarcodesToSuppliedTraces.size());
-        Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> resultMap = new HashMap<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>>();
-        for (Map.Entry<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> entry : suppliedBarcodesToSuppliedTraces.entrySet()) {
-            progressPerEntry.beginSubtask();
-            NucleotideSequenceDocument barcodeSequence = entry.getKey();
-            List<NucleotideGraphSequenceDocument> traces = entry.getValue();
-            CompositeProgressListener compositeProgress = new CompositeProgressListener(progressPerEntry, (barcodeSequence == null ? 0 : 1) + traces.size());
-
-            NucleotideSequenceDocument savedBarcode = null;
-            if(barcodeSequence != null) {
-                compositeProgress.beginSubtask();
-                savedBarcode = saveDatabaseCopyAndReturnNew(NucleotideSequenceDocument.class, barcodeSequence, operationCallback, compositeProgress);
-            }
-            List<NucleotideGraphSequenceDocument> savedTraces = new ArrayList<NucleotideGraphSequenceDocument>();
-            for (NucleotideGraphSequenceDocument trace : traces) {
-                compositeProgress.beginSubtask();
-                NucleotideGraphSequenceDocument traceCopy = saveDatabaseCopyAndReturnNew(NucleotideGraphSequenceDocument.class, trace, operationCallback, compositeProgress);
-                savedTraces.add(traceCopy);
-            }
-
-            resultMap.put(savedBarcode, savedTraces);
-        }
-        return resultMap;
-    }
-
-    private static <T extends PluginDocument> T saveDatabaseCopyAndReturnNew(Class<T> docClass, T pluginDoc, OperationCallback operationCallback, ProgressListener progressListener) throws DocumentOperationException {
-        AnnotatedPluginDocument apd = operationCallback.addDocument(pluginDoc, true, progressListener);
-        PluginDocument copyInDatabase = apd.getDocument();
-        if(docClass.isAssignableFrom(copyInDatabase.getClass())) {
-            return docClass.cast(copyInDatabase);
-        } else {
-            throw new IllegalStateException("Saving document of type " + docClass.getSimpleName() + " returned " +
-                    copyInDatabase.getClass().getSimpleName());
-        }
-    }
 
     private static final String SUB_SUB_FOLDER_SEPARATOR = "_";
-    private static void runPipelineWithOptions(String setName, String subSubFolderSeparator, Map<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>> suppliedBarcodesToSuppliedTraces, OperationCallback operationCallback, BarcodeValidatorOptions barcodeValidatorOptions, ProgressListener progressListener) throws DocumentOperationException {
+    private static void runPipelineWithOptions(String setName, String subSubFolderSeparator, Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> suppliedBarcodesToSuppliedTraces, OperationCallback operationCallback, BarcodeValidatorOptions barcodeValidatorOptions, ProgressListener progressListener) throws DocumentOperationException {
         TrimmingOptions trimmingOptions = barcodeValidatorOptions.getTrimmingOptions();
         CAP3Options CAP3Options = barcodeValidatorOptions.getAssemblyOptions();
         Map<String, ValidationOptions> validationOptions = barcodeValidatorOptions.getValidationOptions();
 
         List<ValidationOutputRecord> outputs = new ArrayList<ValidationOutputRecord>();
         CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, suppliedBarcodesToSuppliedTraces.size()+1);
-        for (Map.Entry<NucleotideSequenceDocument, List<NucleotideGraphSequenceDocument>>
+        for (Map.Entry<AnnotatedPluginDocument, List<AnnotatedPluginDocument>>
                 suppliedBarcodeToSuppliedTrace : suppliedBarcodesToSuppliedTraces.entrySet()) {
 
             ValidationDocumentOperationCallback callback = new ValidationDocumentOperationCallback(operationCallback, false);
-            NucleotideSequenceDocument barcode = suppliedBarcodeToSuppliedTrace.getKey();
-            List<NucleotideGraphSequenceDocument> traces = suppliedBarcodeToSuppliedTrace.getValue();
+            NucleotideSequenceDocument barcode = (NucleotideSequenceDocument)suppliedBarcodeToSuppliedTrace.getKey().getDocumentOrNull();
+            Function<AnnotatedPluginDocument, NucleotideGraphSequenceDocument> getPluginDocFunction =
+                    new Function<AnnotatedPluginDocument, NucleotideGraphSequenceDocument>() {
+                        @Nullable
+                        @Override
+                        public NucleotideGraphSequenceDocument apply(@Nullable AnnotatedPluginDocument input) {
+                            if (input == null) return null;
+
+                            return (NucleotideGraphSequenceDocument) input.getDocumentOrNull();
+                        }
+            };
+            List<NucleotideGraphSequenceDocument> traces = new ArrayList<NucleotideGraphSequenceDocument>(
+                    Collections2.transform(suppliedBarcodeToSuppliedTrace.getValue(),
+                            getPluginDocFunction));
+
             String barcodeName = barcode.getName();
 
             validationProgress.beginSubtask(barcodeName);
