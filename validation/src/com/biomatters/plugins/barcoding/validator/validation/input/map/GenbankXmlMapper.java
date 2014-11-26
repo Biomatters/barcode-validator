@@ -10,11 +10,9 @@ import java.util.Map;
  * @author Gen Li
  *         Created on 5/09/14 9:57 AM
  */
-public class GenbankXmlMapper extends BarcodesToTracesMapper {
+public class GenbankXmlMapper extends BarcodeToTraceMapper {
     @Override
-    public Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(List<AnnotatedPluginDocument> traces,
-                                                                           List<AnnotatedPluginDocument> barcodeSequences)
-            throws DocumentOperationException {
+    public Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(List<AnnotatedPluginDocument> traces, List<AnnotatedPluginDocument> barcodeSequences) throws DocumentOperationException {
         return null;
     }
 }

@@ -16,11 +16,9 @@ import com.biomatters.plugins.barcoding.validator.output.ValidationDocumentOpera
 import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
 import com.biomatters.plugins.barcoding.validator.output.ValidationReportDocument;
 import com.biomatters.plugins.barcoding.validator.validation.*;
-import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
-import com.biomatters.plugins.barcoding.validator.validation.input.Input;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
+import com.biomatters.plugins.barcoding.validator.validation.input.InputProcessor;
 import com.biomatters.plugins.barcoding.validator.validation.results.SlidingWindowQualityValidationResultFact;
-import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import jebl.util.CompositeProgressListener;
@@ -36,7 +34,11 @@ import java.util.*;
  *         Created on 20/08/14 3:11 PM
  */
 public class BarcodeValidatorOperation extends DocumentOperation {
+    public static final String VALIDATION_REPORT_NAME_SUFFIX = " Validation Report";
+
+    private static final String SUB_SUB_FOLDER_SEPARATOR = "_";
     private static final Icons ICONS;
+
     static {
         URL icon = BarcodeValidatorOperation.class.getResource("barcodeTick24.png");
         if (icon != null) {
@@ -73,36 +75,42 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                                  SequenceSelection sequenceSelection,
                                  OperationCallback operationCallback) throws DocumentOperationException {
         if (!(options instanceof BatchBarcodeValidatorOptions)) {
-            throw new DocumentOperationException("Wrong Options type, " +
-                                                 "expected: BarcodeValidatorOptions, " +
-                                                 "actual: " + options.getClass().getSimpleName() + ".");
+            throw new DocumentOperationException("Wrong Options type, expected: BarcodeValidatorOptions, actual: " + options.getClass().getSimpleName() + ".");
         }
 
         BatchBarcodeValidatorOptions allOptions = (BatchBarcodeValidatorOptions)options;
-
         CompositeProgressListener composite = new CompositeProgressListener(progressListener, 0.1, 0.9);
 
-        InputOptions inputSplitterOptions = allOptions.getInputOptions();
-
         composite.beginSubtask("Processing inputs");
-        Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> suppliedBarcodesToSuppliedTraces =
-                Input.processInputs(inputSplitterOptions.getTraceFilePaths(),
-                        inputSplitterOptions.getBarcodeFilePaths(),
-                        inputSplitterOptions.getMethodOption(), operationCallback, composite);
 
-        WritableDatabaseService resultsFolder = getResultsFolder(suppliedBarcodesToSuppliedTraces);
+        InputOptions inputSplitterOptions = allOptions.getInputOptions();
+        Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> suppliedBarcodesToSuppliedTraces = InputProcessor.run(
+                inputSplitterOptions.getTraceFilePaths(),
+                inputSplitterOptions.getBarcodeFilePaths(),
+                inputSplitterOptions.getMethodOption(),
+                operationCallback,
+                composite
+        );
+
         List<AnnotatedPluginDocument> barcodesWithMissingTraces = new ArrayList<AnnotatedPluginDocument>();
         for (Map.Entry<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> entry : suppliedBarcodesToSuppliedTraces.entrySet()) {
-            if(entry.getValue().isEmpty()) {
+            if (entry.getValue().isEmpty()) {
                 barcodesWithMissingTraces.add(entry.getKey());
             }
         }
-        if(barcodesWithMissingTraces.size() == suppliedBarcodesToSuppliedTraces.size()) {
-            Dialogs.showMessageDialog("All barcode sequences have no associated traces.  Please double " +
-                    "check your input sequences and mapping options.", "Invalid Input", null, Dialogs.DialogIcon.INFORMATION);
+
+        if (barcodesWithMissingTraces.size() == suppliedBarcodesToSuppliedTraces.size()) {
+            Dialogs.showMessageDialog(
+                    "All barcode sequences have no associated traces.  Please double check your input sequences and mapping options.",
+                    "Invalid Input",
+                    null,
+                    Dialogs.DialogIcon.INFORMATION
+            );
+
             return;
         }
-        if(!barcodesWithMissingTraces.isEmpty()) {
+
+        if (!barcodesWithMissingTraces.isEmpty()) {
             String list = StringUtilities.join("\n", Collections2.transform(barcodesWithMissingTraces, new Function<AnnotatedPluginDocument, String>() {
                 @Nullable
                 @Override
@@ -110,26 +118,33 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                     return input != null ? input.getName() : "missing";
                 }
             }));
-            if(!Dialogs.showContinueCancelDialog("The following <strong>" + barcodesWithMissingTraces.size() +
-                    "</strong> barcode sequences do not have associated " +
-                    "traces and will be skipped.\n\n" + list, "Missing Traces", null, Dialogs.DialogIcon.INFORMATION)) {
+
+            boolean continueSelected = Dialogs.showContinueCancelDialog(
+                    "The following <strong>" + barcodesWithMissingTraces.size() + "</strong> barcode sequences do not have associated traces and will be skipped.\n\n" + list,
+                    "Missing Traces",
+                    null,
+                    Dialogs.DialogIcon.INFORMATION
+            );
+
+            if (!continueSelected) {
                 throw new DocumentOperationException.Canceled();
             }
         }
 
         composite.beginSubtask();
-        Iterator<BarcodeValidatorOptions> iterator = allOptions.iterator();
-        int batchSize = allOptions.getBatchSize();
-        CompositeProgressListener perIteration = new CompositeProgressListener(composite, batchSize);
 
-        int maxLengthOfCounter = String.valueOf(batchSize).length();
-        String formatPattern = "%0" + maxLengthOfCounter + "d";
+        WritableDatabaseService resultsFolder = getResultsFolder(suppliedBarcodesToSuppliedTraces);
+        String parameterSetOrdinalFormat = "%0" + String.valueOf(allOptions.getBatchSize()).length() + "d";
+        Iterator<BarcodeValidatorOptions> parameterSetIterator = allOptions.iterator();
+        int currentParameterSet = 1;
+        CompositeProgressListener perIteration = new CompositeProgressListener(composite, allOptions.getBatchSize());
+        while (parameterSetIterator.hasNext()) {
+            String setName = "Parameter Set " + String.format(parameterSetOrdinalFormat, currentParameterSet++);
 
-        int i = 1;
-        while(iterator.hasNext()) {
-            String setName = "Parameter Set " + String.format(formatPattern, i++);
             perIteration.beginSubtask(setName);
-            runPipelineWithOptions(setName, SUB_SUB_FOLDER_SEPARATOR, suppliedBarcodesToSuppliedTraces, operationCallback, iterator.next(), perIteration);
+
+            runPipelineWithOptions(setName, SUB_SUB_FOLDER_SEPARATOR, suppliedBarcodesToSuppliedTraces, operationCallback, parameterSetIterator.next(), perIteration);
+
             // OperationCallback does not yet support sub sub folders.  So we need to do this manually afterwards.
             moveSubSubFoldersToCorrectLocation(resultsFolder, setName);
         }
@@ -142,24 +157,26 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         try {
             String prefix = setName + SUB_SUB_FOLDER_SEPARATOR;
             WritableDatabaseService subFolder = resultsFolder.getChildService(setName);
-            if(subFolder == null) {
+
+            if (subFolder == null) {
                 throw new DocumentOperationException("Results folder for " + setName + " is missing.");
             }
 
             for (GeneiousService geneiousService : resultsFolder.getChildServices()) {
-                if(geneiousService instanceof WritableDatabaseService) {
-                    WritableDatabaseService database = (WritableDatabaseService) geneiousService;
+                if (geneiousService instanceof WritableDatabaseService) {
+                    WritableDatabaseService database = (WritableDatabaseService)geneiousService;
                     String oldName = database.getFolderName();
-                    if(oldName.startsWith(prefix)) {
+                    if (oldName.startsWith(prefix)) {
                         database.moveTo(subFolder);
                     }
                 }
             }
+
             for (GeneiousService child : subFolder.getChildServices()) {
-                if(child instanceof WritableDatabaseService) {
-                    WritableDatabaseService database = (WritableDatabaseService) child;
+                if (child instanceof WritableDatabaseService) {
+                    WritableDatabaseService database = (WritableDatabaseService)child;
                     String oldName = database.getFolderName();
-                    if(oldName.startsWith(prefix)) {
+                    if (oldName.startsWith(prefix)) {
                         database.renameFolder(database.getFolderName().substring(prefix.length()));
                     }
                 }
@@ -171,81 +188,94 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
     private static WritableDatabaseService getResultsFolder(Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> validatorInput) throws DocumentOperationException {
         AnnotatedPluginDocument sampleTrace = getOneTraceFromInput(validatorInput);
-        if(sampleTrace == null) {
+
+        if (sampleTrace == null) {
             throw new DocumentOperationException("Cannot continue operation.  There were no trace documents.");
         }
+
         DatabaseService resultsFolder = sampleTrace.getDatabase();
-        if(!(resultsFolder instanceof WritableDatabaseService)) {
+
+        if (!(resultsFolder instanceof WritableDatabaseService)) {
             throw new DocumentOperationException("Cannot continue operation.  Results are being saved to a non writable database: " + (resultsFolder == null ? "null" : resultsFolder.getClass()));
         }
+
         return (WritableDatabaseService)resultsFolder;
     }
 
     private static AnnotatedPluginDocument getOneTraceFromInput(Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> validatorInput) {
         for (List<AnnotatedPluginDocument> traces : validatorInput.values()) {
             for (AnnotatedPluginDocument trace : traces) {
-                if(trace != null) {
+                if (trace != null) {
                     return trace;
                 }
             }
         }
+
         return null;
     }
 
-
-    private static final String SUB_SUB_FOLDER_SEPARATOR = "_";
-    private static void runPipelineWithOptions(String setName, String subSubFolderSeparator, Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> suppliedBarcodesToSuppliedTraces, OperationCallback operationCallback, BarcodeValidatorOptions barcodeValidatorOptions, ProgressListener progressListener) throws DocumentOperationException {
-        TrimmingOptions trimmingOptions = barcodeValidatorOptions.getTrimmingOptions();
-        CAP3Options CAP3Options = barcodeValidatorOptions.getAssemblyOptions();
-        Map<String, ValidationOptions> validationOptions = barcodeValidatorOptions.getValidationOptions();
-
+    private static void runPipelineWithOptions(String setName,
+                                               String subSubFolderSeparator,
+                                               Map<AnnotatedPluginDocument,
+                                               List<AnnotatedPluginDocument>> suppliedBarcodesToSuppliedTraces,
+                                               OperationCallback operationCallback,
+                                               BarcodeValidatorOptions barcodeValidatorOptions,
+                                               ProgressListener progressListener) throws DocumentOperationException {
         List<ValidationOutputRecord> outputs = new ArrayList<ValidationOutputRecord>();
-        CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, suppliedBarcodesToSuppliedTraces.size()+1);
-        for (Map.Entry<AnnotatedPluginDocument, List<AnnotatedPluginDocument>>
-                suppliedBarcodeToSuppliedTrace : suppliedBarcodesToSuppliedTraces.entrySet()) {
-
-            ValidationDocumentOperationCallback callback = new ValidationDocumentOperationCallback(operationCallback, false);
+        CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, suppliedBarcodesToSuppliedTraces.size() + 1);
+        for (Map.Entry<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> suppliedBarcodeToSuppliedTrace : suppliedBarcodesToSuppliedTraces.entrySet()) {
             NucleotideSequenceDocument barcode = (NucleotideSequenceDocument)suppliedBarcodeToSuppliedTrace.getKey().getDocumentOrNull();
-            Function<AnnotatedPluginDocument, NucleotideGraphSequenceDocument> getPluginDocFunction =
-                    new Function<AnnotatedPluginDocument, NucleotideGraphSequenceDocument>() {
-                        @Nullable
-                        @Override
-                        public NucleotideGraphSequenceDocument apply(@Nullable AnnotatedPluginDocument input) {
-                            if (input == null) return null;
-
-                            return (NucleotideGraphSequenceDocument) input.getDocumentOrNull();
-                        }
-            };
-            List<NucleotideGraphSequenceDocument> traces = new ArrayList<NucleotideGraphSequenceDocument>(
-                    Collections2.transform(suppliedBarcodeToSuppliedTrace.getValue(),
-                            getPluginDocFunction));
-
             String barcodeName = barcode.getName();
+            ValidationDocumentOperationCallback callback = new ValidationDocumentOperationCallback(operationCallback, false);
 
             validationProgress.beginSubtask(barcodeName);
-            if(traces.isEmpty()) {
+
+            Function<AnnotatedPluginDocument, NucleotideGraphSequenceDocument> getPluginDocFunction = new Function<AnnotatedPluginDocument, NucleotideGraphSequenceDocument>() {
+                @Nullable
+                @Override
+                public NucleotideGraphSequenceDocument apply(@Nullable AnnotatedPluginDocument input) {
+                    if (input == null) {
+                        return null;
+                    }
+
+                    return (NucleotideGraphSequenceDocument)input.getDocumentOrNull();
+                }
+            };
+            List<NucleotideGraphSequenceDocument> traces = new ArrayList<NucleotideGraphSequenceDocument>(Collections2.transform(suppliedBarcodeToSuppliedTrace.getValue(), getPluginDocFunction));
+
+            if (traces.isEmpty()) {
                 continue;
             }
 
             CompositeProgressListener pipelineProgress = new CompositeProgressListener(validationProgress, 0.2, 0.8);
+
             pipelineProgress.beginSubtask();
+
             setSubFolder(operationCallback, null);
             callback.setInputs(barcode, traces, pipelineProgress);
             setSubFolder(operationCallback, setName + subSubFolderSeparator + barcodeName);
 
             pipelineProgress.beginSubtask();
+
+            Pipeline.runValidationPipeline(
+                    barcode,
+                    traces,
+                    barcodeValidatorOptions.getTrimmingOptions(),
+                    barcodeValidatorOptions.getAssemblyOptions(),
+                    barcodeValidatorOptions.getValidationOptions(),
+                    callback,
+                    pipelineProgress
+            );
             ValidationOutputRecord record = callback.getRecord();
             record.setSetName(setName);
-            Pipeline.runValidationPipeline(barcode, traces, trimmingOptions, CAP3Options, validationOptions, callback, pipelineProgress);
-
             saveChangesToSequencesMadeByValidationPipeline(record);
-
             setSubFolder(operationCallback, setName);
             outputs.add(record);
         }
 
         validationProgress.beginSubtask();
-        operationCallback.addDocument(new ValidationReportDocument(setName + REPORT_NAME_SUFFIX, outputs, barcodeValidatorOptions), false, validationProgress);
+
+        operationCallback.addDocument(new ValidationReportDocument(setName + VALIDATION_REPORT_NAME_SUFFIX, outputs, barcodeValidatorOptions), false, validationProgress);
     }
 
     private static void saveChangesToSequencesMadeByValidationPipeline(ValidationOutputRecord record) {
@@ -253,23 +283,20 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
         // There is probably a more general way of doing this.  But it would involve making a fact aware of if the
         // input sequence needed saving.  This will do for now since it is isolated to the research tool.
-        Map<URN, RecordOfValidationResult> qualityValidationResults = record.getValidationResultsMap().get(
-                SlidingWindowQualityValidationResultFact.class);
+        Map<URN, RecordOfValidationResult> qualityValidationResults = record.getValidationResultsMap().get(SlidingWindowQualityValidationResultFact.class);
         for (Map.Entry<URN, RecordOfValidationResult> entry : qualityValidationResults.entrySet()) {
-            if(!entry.getValue().isPassed()) {
+            if (!entry.getValue().isPassed()) {
                 docsToSave.add(entry.getKey());
             }
         }
+
         for (URN urn : docsToSave) {
             AnnotatedPluginDocument apd = DocumentUtilities.getDocumentByURN(urn);
-            if(apd != null) {
+            if (apd != null) {
                 apd.saveDocument();
             }
         }
     }
-
-    public static final String REPORT_NAME_SUFFIX = " Validation Report";
-
 
     /**
      * Sets the sub folder for the {@link com.biomatters.geneious.publicapi.plugin.DocumentOperation.OperationCallback}

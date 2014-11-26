@@ -58,51 +58,54 @@ public class ImportUtilities {
     /**
      * Imports barcodes.
      *
-     * @param sourcePaths Paths of source files and/or folders containing source files.
+     * @param sourceFilePaths Paths of source files and/or folders containing source files.
      * @param operationCallback
      * @param cancelable
      * @return Barcodes.
      * @throws DocumentOperationException
      */
-    public static List<AnnotatedPluginDocument> importBarcodes(List<String> sourcePaths, DocumentOperation.OperationCallback operationCallback, Cancelable cancelable) throws DocumentOperationException {
+    public static List<AnnotatedPluginDocument> importBarcodes(List<String> sourceFilePaths, DocumentOperation.OperationCallback operationCallback, Cancelable cancelable) throws DocumentOperationException {
         List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
 
-        /* Check existence of source paths, and import */
-        for (String sourcePath : sourcePaths) {
-            if(cancelable.isCanceled()) {
+        for (String sourceFilePath : sourceFilePaths) {
+            if (cancelable.isCanceled()) {
                 throw new DocumentOperationException.Canceled();
             }
 
-            File file = new File(sourcePath);
-            if (!file.exists()) {
-                throw new DocumentOperationException("File or directory '" + sourcePath + "' does not exist.");
+            File sourceFile = new File(sourceFilePath);
+
+            if (!sourceFile.exists()) {
+                throw new DocumentOperationException("File or directory '" + sourceFilePath + "' does not exist.");
             }
 
-            if (file.isDirectory()) {
-                File[] subSource = file.listFiles();
-                if (subSource == null) {
-                    throw new DocumentOperationException("Could not list files under directory '" + file.getAbsolutePath() + "'.");
+            if (sourceFile.isDirectory()) {
+                File[] subFiles = sourceFile.listFiles();
+                List<String> subFilePaths = new ArrayList<String>();
+
+                if (subFiles == null) {
+                    throw new DocumentOperationException("Could not list files/folders under directory '" + sourceFile.getAbsolutePath() + "'.");
                 }
 
-                List<String> subFiles = new ArrayList<String>();
-                for (File f : subSource) {
-                    subFiles.add(f.getPath());
+                for (File subFile : subFiles) {
+                    subFilePaths.add(subFile.getPath());
                 }
 
-                result.addAll(importBarcodes(subFiles, operationCallback, cancelable));
-            } else if (fileNameHasOneOfExtensions(file.getName(), BARCODE_ALLOWED_FILE_EXTENSIONS)) {
+                result.addAll(importBarcodes(subFilePaths, operationCallback, cancelable));
+            } else if (fileNameHasOneOfExtensions(sourceFile.getName(), BARCODE_ALLOWED_FILE_EXTENSIONS)) {
                 try {
-                    FastaImporter importer = new FastaImporter(file, SequenceType.NUCLEOTIDE);
-                    List<Sequence> sequences = importer.importSequences();
-                    for (Sequence seq : sequences) {
-                        DefaultNucleotideSequence seqDoc = new DefaultNucleotideSequence(new GaplessSequence(seq));
-                        String sequenceName = seqDoc.getName();
-                        AnnotatedPluginDocument apd = operationCallback.addDocument(seqDoc, true, ProgressListener.EMPTY);
-                        if(!sequenceName.equals(apd.getName())) {
-                            apd.setName(sequenceName);
-                            apd.save();
+                    FastaImporter importer = new FastaImporter(sourceFile, SequenceType.NUCLEOTIDE);
+                    List<Sequence> importedSequences = importer.importSequences();
+                    for (Sequence importedSequence : importedSequences) {
+                        DefaultNucleotideSequence importedSequenceDocument = new DefaultNucleotideSequence(new GaplessSequence(importedSequence));
+                        String sequenceName = importedSequenceDocument.getName();
+                        AnnotatedPluginDocument importedSequenceAnnotatedDocument = operationCallback.addDocument(importedSequenceDocument, true, ProgressListener.EMPTY);
+
+                        if (!sequenceName.equals(importedSequenceAnnotatedDocument.getName())) {
+                            importedSequenceAnnotatedDocument.setName(sequenceName);
+                            importedSequenceAnnotatedDocument.save();
                         }
-                        result.add(apd);
+
+                        result.add(importedSequenceAnnotatedDocument);
                     }
                 } catch (FileNotFoundException e) {
                     throw new DocumentOperationException("Could not import barcodes: " + e.getMessage(), e);
@@ -131,8 +134,10 @@ public class ImportUtilities {
         /* Import documents. */
         try {
             importedDocuments = importDocuments(
-                    Collections.singletonList(sourcePath), Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)SequenceAlignmentDocument.class), CONTIGS_ALLOWED_FILE_EXTENSIONS,
-                    null, ProgressListener.EMPTY);
+                    Collections.singletonList(sourcePath),
+                    Arrays.asList((Class)DefaultSequenceListDocument.class, (Class)SequenceAlignmentDocument.class), CONTIGS_ALLOWED_FILE_EXTENSIONS,
+                    null,
+                    ProgressListener.EMPTY);
         } catch (DocumentOperationException e) {
             throw new DocumentOperationException("Could not import contigs: " + e.getMessage(), e);
         }
@@ -150,7 +155,7 @@ public class ImportUtilities {
     /**
      * Imports documents.
      *
-     * @param sourcePaths Paths of source files and/or folders containing source files.
+     * @param sourceFilePaths Paths of source files and/or folders containing source files.
      * @param expectedDocumentTypes Expected document types.
      * @param allowedFileExtensions Allowed file extensions.
      * @param operationCallback
@@ -158,73 +163,80 @@ public class ImportUtilities {
      * @return Documents.
      * @throws DocumentOperationException
      */
-    private static List<AnnotatedPluginDocument> importDocuments(List<String> sourcePaths, List<Class> expectedDocumentTypes,
+    private static List<AnnotatedPluginDocument> importDocuments(List<String> sourceFilePaths,
+                                                                 List<Class> expectedDocumentTypes,
                                                                  Set<String> allowedFileExtensions,
-                                                                 @Nullable DocumentOperation.OperationCallback operationCallback, Cancelable cancelable)
-            throws DocumentOperationException {
-        List<AnnotatedPluginDocument> result;
+                                                                 @Nullable DocumentOperation.OperationCallback operationCallback,
+                                                                 Cancelable cancelable) throws DocumentOperationException {
+        List<AnnotatedPluginDocument> importedDocuments;
         List<File> files = new ArrayList<File>();
 
         /* Check existence of source paths. */
-        for (String sourcePath : sourcePaths) {
+        for (String sourcePath : sourceFilePaths) {
             File file = new File(sourcePath);
+
             if (!file.exists()) {
                 throw new DocumentOperationException("File or directory '" + sourcePath + "' does not exist.");
             }
+
             files.add(file);
         }
 
         /* Import. */
-        result = importDocuments(files, allowedFileExtensions, operationCallback, cancelable);
+        importedDocuments = importDocuments(files, allowedFileExtensions, operationCallback, cancelable);
 
         /* Check types of documents. */
-        checkDocumentsAreOfTypes(result, expectedDocumentTypes);
+        checkDocumentsAreOfTypes(importedDocuments, expectedDocumentTypes);
 
-        return result;
+        return importedDocuments;
     }
 
     /**
      * Imports documents. Folders are recursively scanned and their containing files accumulated.
      *
-     * @param sources Source files or folders containing source files.
+     * @param sourceFiles Source files or folders containing source files.
      * @param allowedFileExtensions Allowed file extensions.
      * @param operationCallback
      * @param cancelable
      * @return Documents.
      * @throws DocumentOperationException
      */
-    private static List<AnnotatedPluginDocument> importDocuments(List<File> sources, Set<String> allowedFileExtensions,
-                                                                 @Nullable DocumentOperation.OperationCallback operationCallback, Cancelable cancelable) throws DocumentOperationException {
-        List<AnnotatedPluginDocument> result = new ArrayList<AnnotatedPluginDocument>();
+    private static List<AnnotatedPluginDocument> importDocuments(List<File> sourceFiles,
+                                                                 Set<String> allowedFileExtensions,
+                                                                 @Nullable DocumentOperation.OperationCallback operationCallback,
+                                                                 Cancelable cancelable) throws DocumentOperationException {
+        List<AnnotatedPluginDocument> importedDocuments = new ArrayList<AnnotatedPluginDocument>();
 
         try {
-            for (File source : sources) {
-                if(cancelable.isCanceled()) {
+            for (File sourceFile : sourceFiles) {
+                if (cancelable.isCanceled()) {
                     throw new DocumentOperationException.Canceled();
                 }
 
-                if (source.isDirectory()) {
-                    File[] subSource = source.listFiles();
+                String sourceFileName = sourceFile.getName();
 
-                    if (subSource == null) {
-                        throw new DocumentOperationException("Could not list files under directory '" +
-                                                             source.getAbsolutePath() + "'.");
+                if (sourceFile.isDirectory()) {
+                    File[] subFiles = sourceFile.listFiles();
+
+                    if (subFiles == null) {
+                        throw new DocumentOperationException("Could not list files/folders under directory '" + sourceFile.getAbsolutePath() + "'.");
                     }
 
-                    result.addAll(importDocuments(Arrays.asList(subSource), allowedFileExtensions, operationCallback, cancelable));
-                } else if (fileNameHasOneOfExtensions(source.getName(), allowedFileExtensions)) {
-                    List<AnnotatedPluginDocument> imported = PluginUtilities.importDocuments(source, ProgressListener.EMPTY);
-                    String originalFilename = source.getName();
-                    for (AnnotatedPluginDocument annotatedPluginDocument : imported) {
-                        if(operationCallback != null) {
-                            annotatedPluginDocument = operationCallback.addDocument(annotatedPluginDocument, true, ProgressListener.EMPTY);
-                            if(!originalFilename.equals(annotatedPluginDocument.getName())) {
-                                annotatedPluginDocument.setName(originalFilename);
-                                annotatedPluginDocument.save();
+                    importedDocuments.addAll(importDocuments(Arrays.asList(subFiles), allowedFileExtensions, operationCallback, cancelable));
+                } else if (fileNameHasOneOfExtensions(sourceFileName, allowedFileExtensions)) {
+                    List<AnnotatedPluginDocument> rawImportedDocuments = PluginUtilities.importDocuments(sourceFile, ProgressListener.EMPTY);
+
+                    if (operationCallback != null) {
+                        for (AnnotatedPluginDocument importedDocument : rawImportedDocuments) {
+                            importedDocument = operationCallback.addDocument(importedDocument, true, ProgressListener.EMPTY);
+                            if (!sourceFileName.equals(importedDocument.getName())) {
+                                importedDocument.setName(sourceFileName);
+                                importedDocument.save();
                             }
                         }
-                        result.add(annotatedPluginDocument);
                     }
+
+                    importedDocuments.addAll(rawImportedDocuments);
                 }
             }
         } catch (DocumentImportException e) {
@@ -233,7 +245,7 @@ public class ImportUtilities {
             throw new DocumentOperationException(e.getMessage(), e);
         }
 
-        return result;
+        return importedDocuments;
     }
 
     /**
@@ -264,6 +276,7 @@ public class ImportUtilities {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -302,6 +315,7 @@ public class ImportUtilities {
                 return true;
             }
         }
+
         return false;
     }
 }

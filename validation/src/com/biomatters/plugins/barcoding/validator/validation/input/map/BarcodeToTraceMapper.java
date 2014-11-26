@@ -12,8 +12,6 @@ import java.util.Map;
  * @author Gen Li
  *         Created on 3/09/14 5:26 PM
  */
-public abstract class BarcodesToTracesMapper {
-    public abstract Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(List<AnnotatedPluginDocument> barcodes,
-                                                                                    List<AnnotatedPluginDocument> traces)
-            throws DocumentOperationException;
+public abstract class BarcodeToTraceMapper {
+    public abstract Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(List<AnnotatedPluginDocument> barcodes, List<AnnotatedPluginDocument> traces) throws DocumentOperationException;
 }

@@ -13,13 +13,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Functionality for processing inputs to the Barcode Validator. Non-instantiable.
+ * Functionality for processing Barcode Validator inputs. Non-instantiable.
  *
  * @author Gen Li
  *         Created on 3/09/14 5:22 PM
  */
-public class Input {
-    private Input() {
+public class InputProcessor {
+    private InputProcessor() {
     }
 
     /**
@@ -33,21 +33,22 @@ public class Input {
      * @return Map of barcodes to traces.
      * @throws DocumentOperationException
      */
-    public static Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> processInputs(List<String> traceFilePaths,
-                                                                                            List<String> barcodeFilePaths,
-                                                                                            BarcodesToTracesMapperOptions options, DocumentOperation.OperationCallback operationCallback, ProgressListener progressListener)
-            throws DocumentOperationException {
+    public static Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> run(List<String> traceFilePaths,
+                                                                                  List<String> barcodeFilePaths,
+                                                                                  BarcodesToTracesMapperOptions options,
+                                                                                  DocumentOperation.OperationCallback operationCallback,
+                                                                                  ProgressListener progressListener) throws DocumentOperationException {
+        CompositeProgressListener inputProcessingProgress = new CompositeProgressListener(progressListener, 3);
 
-        CompositeProgressListener inputProgres = new CompositeProgressListener(progressListener, 3);
         /* Import documents. */
-        inputProgres.beginSubtask("Traces...");
-        List<AnnotatedPluginDocument> traces = ImportUtilities.importTraces(traceFilePaths, operationCallback, inputProgres);
+        inputProcessingProgress.beginSubtask("Traces...");
+        List<AnnotatedPluginDocument> traces = ImportUtilities.importTraces(traceFilePaths, operationCallback, inputProcessingProgress);
 
-        inputProgres.beginSubtask("Barcode sequences...");
-        List<AnnotatedPluginDocument> barcodes = ImportUtilities.importBarcodes(barcodeFilePaths, operationCallback, inputProgres);
+        inputProcessingProgress.beginSubtask("Barcode sequences...");
+        List<AnnotatedPluginDocument> barcodes = ImportUtilities.importBarcodes(barcodeFilePaths, operationCallback, inputProcessingProgress);
 
         /* Map barcodes to traces and return result. */
-        inputProgres.beginSubtask("Mapping...");
+        inputProcessingProgress.beginSubtask("Mapping...");
         return BarcodesToTracesMapperFactory.getBarcodesToTracesMapper(options).map(barcodes, traces);
     }
 }

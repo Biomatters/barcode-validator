@@ -228,8 +228,8 @@ public class BatchValidationReportViewer extends DocumentViewer {
             @Override
             Object getValueForRow(Row row) {
                 String rowName = row.name;
-                if (rowName.endsWith(BarcodeValidatorOperation.REPORT_NAME_SUFFIX)) {
-                    rowName = rowName.substring(0, rowName.length() - BarcodeValidatorOperation.REPORT_NAME_SUFFIX.length());
+                if (rowName.endsWith(BarcodeValidatorOperation.VALIDATION_REPORT_NAME_SUFFIX)) {
+                    rowName = rowName.substring(0, rowName.length() - BarcodeValidatorOperation.VALIDATION_REPORT_NAME_SUFFIX.length());
                 }
                 return rowName;
             }
