@@ -141,6 +141,14 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         while (parameterSetIterator.hasNext()) {
             String setName = "Parameter Set " + String.format(parameterSetOrdinalFormat, currentParameterSet++);
 
+            if (resultsFolder.getChildService(setName) != null) {
+                int index = 1;
+                while (resultsFolder.getChildService(setName + "_" + index) != null) {
+                    index++;
+                }
+
+                setName = setName + "_" + index;
+            }
             perIteration.beginSubtask(setName);
 
             runPipelineWithOptions(setName, SUB_SUB_FOLDER_SEPARATOR, suppliedBarcodesToSuppliedTraces, operationCallback, parameterSetIterator.next(), perIteration);
