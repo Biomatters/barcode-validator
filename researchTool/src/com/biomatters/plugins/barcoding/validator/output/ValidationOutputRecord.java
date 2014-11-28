@@ -41,6 +41,7 @@ public class ValidationOutputRecord implements XMLSerializable {
 
     private Map<Class, Map<URN, RecordOfValidationResult>> validationResults = new LinkedHashMap<Class, Map<URN, RecordOfValidationResult>>();
     private Map<Integer, ValidationOptions> colunmOptionsMap = null;
+    private Map<Integer, Class> colunmClassMap = null;
 
     ValidationOutputRecord() {
     }
@@ -330,22 +331,36 @@ public class ValidationOutputRecord implements XMLSerializable {
 
     public Map<Integer, ValidationOptions> getColunmOptionsMap(boolean refresh) {
         if (colunmOptionsMap == null || refresh) {
-            colunmOptionsMap = new HashMap<Integer, ValidationOptions>();
-            List<ResultColumn> fixedColumns = getFixedColumns(getOneURN());
-            int i = fixedColumns.size();
-
-            for (Map.Entry<Class, Map<URN, RecordOfValidationResult>> entry : validationResults.entrySet()) {
-                RecordOfValidationResult next = entry.getValue().values().iterator().next();
-                int entryColumnSize = next.getFact().getColumns().size();
-                for (int j = 0; j < entryColumnSize; j++) {
-                    colunmOptionsMap.put((j + i), next.getOptions());
-                }
-
-                i += entryColumnSize;
-            }
+            initMapping();
         }
 
         return colunmOptionsMap;
+    }
+
+    public Map<Integer, Class> getColunmClassMap(boolean refresh) {
+        if (colunmClassMap == null || refresh) {
+            initMapping();
+        }
+        return colunmClassMap;
+    }
+
+    private void initMapping() {
+        colunmOptionsMap = new HashMap<Integer, ValidationOptions>();
+        colunmClassMap = new HashMap<Integer, Class>();
+
+        List<ResultColumn> fixedColumns = getFixedColumns(getOneURN());
+        int i = fixedColumns.size();
+
+        for (Map.Entry<Class, Map<URN, RecordOfValidationResult>> entry : validationResults.entrySet()) {
+            RecordOfValidationResult next = entry.getValue().values().iterator().next();
+            int entryColumnSize = next.getFact().getColumns().size();
+            for (int j = 0; j < entryColumnSize; j++) {
+                colunmOptionsMap.put((j + i), next.getOptions());
+                colunmClassMap.put((j + i), entry.getKey());
+            }
+
+            i += entryColumnSize;
+        }
     }
 
     public URN getOneURN() {

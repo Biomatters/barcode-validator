@@ -141,7 +141,7 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
             SequenceDocument seq = entry.getKey();
             AnnotatedPluginDocument apd = DocumentUtilities.getAnnotatedPluginDocumentThatContains(seq);
             assert apd != null : "Input sequence should have been saved to the database";
-            outputRecord.addValidationResult(apd.getURN(), new RecordOfValidationResult(options, validationResult.isPassed(), fact));
+            outputRecord.addValidationResult(apd.getURN(), new RecordOfValidationResult(options, fact.getPass(), fact));
         }
     }
 

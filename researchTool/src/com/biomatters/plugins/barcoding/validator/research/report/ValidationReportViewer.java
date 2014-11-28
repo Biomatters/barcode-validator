@@ -1,9 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.research.report;
 
-import com.biomatters.geneious.publicapi.components.Dialogs;
-import com.biomatters.geneious.publicapi.components.GPanel;
-import com.biomatters.geneious.publicapi.components.GTable;
-import com.biomatters.geneious.publicapi.components.GTextPane;
+import com.biomatters.geneious.publicapi.components.*;
+import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
 import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.plugin.ActionProvider;
 import com.biomatters.geneious.publicapi.plugin.DocumentViewer;
@@ -263,7 +261,7 @@ public class ValidationReportViewer extends DocumentViewer {
             }
         });
 
-        mergeHeaer(table, records.get(0));
+        mergeHeaer(table, records);
         final GroupableTableHeaderUI groupableTableHeaderUI = new GroupableTableHeaderUI();
         table.getTableHeader().setUI(groupableTableHeaderUI);
         table.setAutoCreateRowSorter(false);
@@ -352,23 +350,41 @@ public class ValidationReportViewer extends DocumentViewer {
         };
     }
 
-    private void mergeHeaer(JTable table, ValidationOutputRecord record) {
+    private void mergeHeaer(JTable table, List<ValidationOutputRecord> records) {
+        assert records != null && records.size() > 0;
+        ValidationOutputRecord record = records.get(0);
         TableColumnModel cm = table.getColumnModel();
         GroupableTableHeader head = (GroupableTableHeader) table.getTableHeader();
         TableCellRenderer headerRenderer = head.getDefaultRenderer();
+        ValidationReportTableModel model = (ValidationReportTableModel) table.getModel();
 
         int colIndex = record.getFixedColumns(record.getTraceDocumentUrns().get(0)).size();
         Map<Class, Map<URN, RecordOfValidationResult>> validationResultsMap = record.getValidationResultsMap();
-        for (Map<URN, RecordOfValidationResult> entry : validationResultsMap.values()) {
-            if (entry.size() > 0) {
-                ResultFact fact = entry.values().iterator().next().getFact();
-                ColumnGroup factGroup = new ColumnGroup(fact.getFactName(), headerRenderer);
-                for (int i = 0; i < fact.getColumns().size(); i++) {
-                    factGroup.add(cm.getColumn(colIndex++));
-                }
 
-                head.addColumnGroup(factGroup);
+        for (Map.Entry<Class, Map<URN, RecordOfValidationResult>> classMapEntry : validationResultsMap.entrySet()) {
+            Map<URN, RecordOfValidationResult> entry = classMapEntry.getValue();
+            assert entry.size() > 0;
+
+            int failCount = 0;
+            int successCount = 0;
+
+            for (Map.Entry<URN, RecordOfValidationResult> resultEntry : model.getResultsAt(colIndex).entrySet()) {
+                if (resultEntry.getValue().isPassed()) {
+                    successCount++;
+                } else {
+                    failCount++;
+                }
             }
+
+            ResultFact fact = entry.values().iterator().next().getFact();
+            String headText = fact.getFactName() + " ( " + failCount + " failed/ " + successCount + " passed )";
+            ColumnGroup factGroup = new ColumnGroup(headText, headerRenderer);
+            for (int i = 0; i < fact.getColumns().size(); i++) {
+                factGroup.add(cm.getColumn(colIndex++));
+            }
+
+            head.addColumnGroup(factGroup);
+
         }
     }
 
@@ -612,10 +628,35 @@ public class ValidationReportViewer extends DocumentViewer {
                 return;
             }
 
+            final List<URN> failedResults = new ArrayList<URN>();
+            final List<URN> passedResults = new ArrayList<URN>();
+            for (Map.Entry<URN, RecordOfValidationResult> resultEntry : getResultsAt(columnIndex).entrySet()) {
+                if (resultEntry.getValue().isPassed()) {
+                    passedResults.add(resultEntry.getKey());
+                } else {
+                    failedResults.add(resultEntry.getKey());
+                }
+            }
+
             SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
                     options.setEnabled(false);
-                    Dialogs.DialogOptions dialogOptions = new Dialogs.DialogOptions(Dialogs.OK_ONLY, "Options");
+                    Dialogs.DialogAction failButton = new Dialogs.DialogAction("View Failed Cases") {
+                        @Override
+                        public boolean performed(GDialog dialog) {
+                            DocumentUtilities.selectDocuments(failedResults);
+                            return true;
+                        }
+                    };
+
+                    Dialogs.DialogAction passButton = new Dialogs.DialogAction("View Passed Cases") {
+                        @Override
+                        public boolean performed(GDialog dialog) {
+                            DocumentUtilities.selectDocuments(passedResults);
+                            return true;
+                        }
+                    };
+                    Dialogs.DialogOptions dialogOptions = new Dialogs.DialogOptions(new Dialogs.DialogAction[]{failButton, passButton, Dialogs.OK}, "Options");
                     Dialogs.showMoreOptionsDialog(dialogOptions, options.getPanel(), options.getAdvancedPanel());
                 }
             });
@@ -627,6 +668,19 @@ public class ValidationReportViewer extends DocumentViewer {
             assert colunmOptionsMap != null;
 
             return colunmOptionsMap.get(columnIndex);
+        }
+
+        public Map<URN, RecordOfValidationResult> getResultsAt(int columnIndex) {
+            assert records != null && records.size() > 0;
+
+            Map<URN, RecordOfValidationResult> ret = new HashMap<URN, RecordOfValidationResult>();
+            Class aClass = records.get(0).getColunmClassMap(true).get(columnIndex);
+
+            for (ValidationOutputRecord record : records) {
+                ret.putAll(record.getValidationResultsMap().get(aClass));
+            }
+
+            return ret;
         }
 
         public int getFixedColumnLength() {
