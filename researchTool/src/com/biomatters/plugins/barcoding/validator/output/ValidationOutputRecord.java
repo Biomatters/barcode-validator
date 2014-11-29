@@ -2,7 +2,6 @@ package com.biomatters.plugins.barcoding.validator.output;
 
 import com.biomatters.geneious.publicapi.documents.*;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
-import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.results.*;
 import org.jdom.Element;
@@ -17,8 +16,7 @@ import java.util.*;
  *         Created on 30/09/14 3:04 PM
  */
 public class ValidationOutputRecord implements XMLSerializable {
-
-    private static final String SETNAME = "setname";
+    private static final String SET_NAME = "setname";
     private static final String BARCODE = "barcode";
     private static final String TRACE = "trace";
     private static final String TRACE_KEY = "traceKey";
@@ -51,7 +49,7 @@ public class ValidationOutputRecord implements XMLSerializable {
     @SuppressWarnings("unused")
     public ValidationOutputRecord(Element element) throws XMLSerializationException {
         try {
-            setName = element.getChildText(SETNAME);
+            setName = element.getChildText(SET_NAME);
             barcodeSequenceUrn = URN.fromXML(element.getChild(BARCODE));
             for (Element child : element.getChildren(TRACE)) {
                 String key = child.getChildText(TRACE_KEY);
@@ -84,7 +82,7 @@ public class ValidationOutputRecord implements XMLSerializable {
     @Override
     public Element toXML() {
         Element root = new Element(XMLSerializable.ROOT_ELEMENT_NAME);
-        root.addContent(new Element(SETNAME).setText(getSetName()));
+        root.addContent(new Element(SET_NAME).setText(getSetName()));
         root.addContent(barcodeSequenceUrn.toXML(BARCODE));
 
         for (Map.Entry<String, URN> entry: traceDocumentUrnsMap.entrySet()) {
@@ -231,48 +229,56 @@ public class ValidationOutputRecord implements XMLSerializable {
 
     public List<ResultColumn> getFixedColumns(URN urn) {
         List<ResultColumn> fixedColumns = new ArrayList<ResultColumn>();
-        PluginDocument barcode = DocumentUtilities.getDocumentByURN(getBarcodeSequenceUrn()).getDocumentOrNull();
 
-        LinkResultColumn barcodeCol = new LinkResultColumn("Barcode");
+        PluginDocument barcode = DocumentUtilities.getDocumentByURN(getBarcodeSequenceUrn()).getDocumentOrNull();
+        PluginDocument sequence = DocumentUtilities.getDocumentByURN(urn).getDocumentOrNull();
+
+        LinkResultColumn setColumn = new LinkResultColumn("Set");
         if (urn.equals(consensusUrn) || (consensusUrn == null && !trimmedDocumentUrnsMap.isEmpty() && trimmedDocumentUrnsMap.values().iterator().next().equals(urn))) {
             List<URN> links = new ArrayList<URN>();
             links.add(getBarcodeSequenceUrn());
             for (URN urn1 : getTraceDocumentUrns()) {
                 links.add(urn1);
             }
-            barcodeCol.setData(new LinkResultColumn.LinkBox(barcode.getName(), links));
+            setColumn.setData(new LinkResultColumn.LinkBox(setName, links));
         } else {
-            barcodeCol.setData(new LinkResultColumn.LinkBox("", null));
+            setColumn.setData(new LinkResultColumn.LinkBox("", null));
         }
-        fixedColumns.add(barcodeCol);
+        fixedColumns.add(setColumn);
 
-        PluginDocument sequence = DocumentUtilities.getDocumentByURN(urn).getDocumentOrNull();
-
-        LinkResultColumn sequenceCol = new LinkResultColumn("Sequence");
-        sequenceCol.setData(new LinkResultColumn.LinkBox(sequence.getName(), Collections.singletonList(urn)));
-        fixedColumns.add(sequenceCol);
-
-        StringResultColumn lengthOfBarcodeCol = new StringResultColumn("Barcode length");
+        LinkResultColumn barcodeColumn = new LinkResultColumn("Barcode");
         if (urn.equals(consensusUrn)) {
-            lengthOfBarcodeCol.setData(String.valueOf(((SequenceDocument) barcode).getSequenceLength()));
+            barcodeColumn.setData(new LinkResultColumn.LinkBox(barcode.getName(), Collections.singletonList(barcode.getURN())));
         } else {
-            lengthOfBarcodeCol.setData("");
+            barcodeColumn.setData(new LinkResultColumn.LinkBox("", null));
         }
-        fixedColumns.add(lengthOfBarcodeCol);
+        fixedColumns.add(barcodeColumn);
 
-        IntegerResultColumn lengthOfSequenceCol = new IntegerResultColumn("Sequence length");
-        lengthOfSequenceCol.setData(((SequenceDocument)sequence).getSequenceLength());
-        fixedColumns.add(lengthOfSequenceCol);
-
-        LinkResultColumn tracesCol = new LinkResultColumn("Number of traces used");
+        StringResultColumn barcodeLengthColumn = new StringResultColumn("Barcode length");
         if (urn.equals(consensusUrn)) {
-            tracesCol.setData(new LinkResultColumn.LinkBox(String.valueOf(getTrimmedDocumentUrns().size()), getTrimmedDocumentUrns()));
+            barcodeLengthColumn.setData(String.valueOf(((SequenceDocument)barcode).getSequenceLength()));
         } else {
-            tracesCol.setData(new LinkResultColumn.LinkBox("", null));
+            barcodeLengthColumn.setData("");
         }
-        fixedColumns.add(tracesCol);
+        fixedColumns.add(barcodeLengthColumn);
 
-        LinkResultColumn assemblefCol = new LinkResultColumn("Number of traces not used");
+        LinkResultColumn sequenceColumns = new LinkResultColumn("Sequence");
+        sequenceColumns.setData(new LinkResultColumn.LinkBox(sequence.getName(), Collections.singletonList(urn)));
+        fixedColumns.add(sequenceColumns);
+
+        IntegerResultColumn sequenceLengthColumn = new IntegerResultColumn("Sequence length");
+        sequenceLengthColumn.setData(((SequenceDocument) sequence).getSequenceLength());
+        fixedColumns.add(sequenceLengthColumn);
+
+        LinkResultColumn numberOfTracesUsedColumn = new LinkResultColumn("Number of traces used");
+        if (urn.equals(consensusUrn)) {
+            numberOfTracesUsedColumn.setData(new LinkResultColumn.LinkBox(String.valueOf(getTrimmedDocumentUrns().size()), getTrimmedDocumentUrns()));
+        } else {
+            numberOfTracesUsedColumn.setData(new LinkResultColumn.LinkBox("", null));
+        }
+        fixedColumns.add(numberOfTracesUsedColumn);
+
+        LinkResultColumn numberOfTracesNotUsedColumn = new LinkResultColumn("Number of traces not used");
         if (urn.equals(consensusUrn)) {
             List<URN> links = new ArrayList<URN>();
             Set<URN> assembles = DocumentUtilities.getDocumentByURN(getAssemblyUrn()).getReferencedDocuments();
@@ -287,39 +293,40 @@ public class ValidationOutputRecord implements XMLSerializable {
                 links.addAll(getTrimmedDocumentUrns());
             }
 
-            assemblefCol.setData(new LinkResultColumn.LinkBox(String.valueOf(links.size()), links));
+            numberOfTracesNotUsedColumn.setData(new LinkResultColumn.LinkBox(String.valueOf(links.size()), links));
         } else {
-            assemblefCol.setData(new LinkResultColumn.LinkBox("", null));
+            numberOfTracesNotUsedColumn.setData(new LinkResultColumn.LinkBox("", null));
         }
-        fixedColumns.add(assemblefCol);
+        fixedColumns.add(numberOfTracesNotUsedColumn);
 
-        StringResultColumn isAssembledCol = new StringResultColumn("Assembled");
+        StringResultColumn isAssembledColumn = new StringResultColumn("Assembled");
         if (urn.equals(consensusUrn)) {
-            isAssembledCol.setData("");
+            isAssembledColumn.setData("");
         } else {
             URN assemblyUrn1 = getAssemblyUrn();
             if (assemblyUrn1 == null
                     || DocumentUtilities.getDocumentByURN(assemblyUrn1) == null
                     || !DocumentUtilities.getDocumentByURN(assemblyUrn1).getReferencedDocuments().contains(urn)) {
-                isAssembledCol.setData("No");
+                isAssembledColumn.setData("No");
             } else {
-                isAssembledCol.setData("Yes");
+                isAssembledColumn.setData("Yes");
             }
         }
-        fixedColumns.add(isAssembledCol);
+        fixedColumns.add(isAssembledColumn);
         return fixedColumns;
     }
 
     public List<List<ResultColumn>> exportTable() {
         List<List<ResultColumn>> ret = new ArrayList<List<ResultColumn>>();
 
-        Set<URN> doclist = getDoclist();
-        List<ResultColumn> row;
-        for (URN urn : doclist) {
-            row = new ArrayList<ResultColumn>();
+        for (URN urn : getDoclist()) {
+            List<ResultColumn> row = new ArrayList<ResultColumn>();
+
             row.addAll(getFixedColumns(urn));
+
             for (Map<URN, RecordOfValidationResult> entry : validationResults.values()) {
                 RecordOfValidationResult result = entry.get(urn);
+
                 row.addAll(result.getFact().getColumns());
             }
 

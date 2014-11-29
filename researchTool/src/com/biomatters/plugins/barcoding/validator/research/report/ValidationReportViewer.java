@@ -261,7 +261,7 @@ public class ValidationReportViewer extends DocumentViewer {
             }
         });
 
-        mergeHeaer(table, records);
+        mergeHeader(table, records);
         final GroupableTableHeaderUI groupableTableHeaderUI = new GroupableTableHeaderUI();
         table.getTableHeader().setUI(groupableTableHeaderUI);
         table.setAutoCreateRowSorter(false);
@@ -350,7 +350,7 @@ public class ValidationReportViewer extends DocumentViewer {
         };
     }
 
-    private void mergeHeaer(JTable table, List<ValidationOutputRecord> records) {
+    private void mergeHeader(JTable table, List<ValidationOutputRecord> records) {
         assert records != null && records.size() > 0;
         ValidationOutputRecord record = records.get(0);
         TableColumnModel cm = table.getColumnModel();

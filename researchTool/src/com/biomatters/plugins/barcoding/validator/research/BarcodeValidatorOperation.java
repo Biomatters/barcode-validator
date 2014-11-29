@@ -139,7 +139,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         int currentParameterSet = 1;
         CompositeProgressListener perIteration = new CompositeProgressListener(composite, allOptions.getBatchSize());
         while (parameterSetIterator.hasNext()) {
-            String setName = "Parameter Set " + String.format(parameterSetOrdinalFormat, currentParameterSet++);
+            String setName = "Parameter Set " + String.format(parameterSetOrdinalFormat, currentParameterSet);
 
             if (resultsFolder.getChildService(setName) != null) {
                 int index = 1;
@@ -151,10 +151,11 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             }
             perIteration.beginSubtask(setName);
 
-            runPipelineWithOptions(setName, SUB_SUB_FOLDER_SEPARATOR, suppliedBarcodesToSuppliedTraces, operationCallback, parameterSetIterator.next(), perIteration);
+            runPipelineWithOptions(currentParameterSet, SUB_SUB_FOLDER_SEPARATOR, suppliedBarcodesToSuppliedTraces, operationCallback, parameterSetIterator.next(), perIteration);
 
             // OperationCallback does not yet support sub sub folders.  So we need to do this manually afterwards.
             moveSubSubFoldersToCorrectLocation(resultsFolder, setName);
+            currentParameterSet++;
         }
 
         composite.setComplete();
@@ -222,7 +223,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         return null;
     }
 
-    private static void runPipelineWithOptions(String setName,
+    private static void runPipelineWithOptions(int setNumber,
                                                String subSubFolderSeparator,
                                                Map<AnnotatedPluginDocument,
                                                List<AnnotatedPluginDocument>> suppliedBarcodesToSuppliedTraces,
@@ -230,8 +231,10 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                                                BarcodeValidatorOptions barcodeValidatorOptions,
                                                ProgressListener progressListener) throws DocumentOperationException {
         List<ValidationOutputRecord> outputs = new ArrayList<ValidationOutputRecord>();
+        String setName = "Parameter Set " + setNumber;
         CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, suppliedBarcodesToSuppliedTraces.size() + 1);
         for (Map.Entry<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> suppliedBarcodeToSuppliedTrace : suppliedBarcodesToSuppliedTraces.entrySet()) {
+
             NucleotideSequenceDocument barcode = (NucleotideSequenceDocument)suppliedBarcodeToSuppliedTrace.getKey().getDocumentOrNull();
             String barcodeName = barcode.getName();
             ValidationDocumentOperationCallback callback = new ValidationDocumentOperationCallback(operationCallback, false);
@@ -275,7 +278,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                     pipelineProgress
             );
             ValidationOutputRecord record = callback.getRecord();
-            record.setSetName(setName);
+            record.setSetName(String.valueOf(setNumber));
             saveChangesToSequencesMadeByValidationPipeline(record);
             setSubFolder(operationCallback, setName);
             outputs.add(record);
