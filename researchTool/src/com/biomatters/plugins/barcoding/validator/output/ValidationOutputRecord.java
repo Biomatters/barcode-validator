@@ -1,6 +1,8 @@
 package com.biomatters.plugins.barcoding.validator.output;
 
 import com.biomatters.geneious.publicapi.documents.*;
+import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
+import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.results.*;
 import org.jdom.Element;
@@ -228,7 +230,7 @@ public class ValidationOutputRecord implements XMLSerializable {
     }
 
     public List<ResultColumn> getFixedColumns(URN urn) {
-        List<ResultColumn> ret = new ArrayList<ResultColumn>();
+        List<ResultColumn> fixedColumns = new ArrayList<ResultColumn>();
         AnnotatedPluginDocument barcodeUrn = DocumentUtilities.getDocumentByURN(getBarcodeSequenceUrn());
         String label = "";
         if (barcodeUrn != null) {
@@ -246,19 +248,33 @@ public class ValidationOutputRecord implements XMLSerializable {
         } else {
             setCol.setData(new LinkResultColumn.LinkBox("", null));
         }
-        ret.add(setCol);
+        fixedColumns.add(setCol);
 
-        LinkResultColumn sequenceCold = new LinkResultColumn("Sequence");
-        sequenceCold.setData(new LinkResultColumn.LinkBox(DocumentUtilities.getDocumentByURN(urn).getName(), Collections.singletonList(urn)));
-        ret.add(sequenceCold);
+        PluginDocument sequence = DocumentUtilities.getDocumentByURN(urn).getDocumentOrNull();
+
+        if (!(sequence instanceof SequenceDocument)) {
+            throw new IllegalStateException(
+                    "Unexpected document type denoted by urn " + urn +
+                    ", expected type: ? extends SequenceDocument " +
+                    ", actual type: " + sequence.getClass().getSimpleName() + "."
+            );
+        }
+
+        LinkResultColumn sequenceCol = new LinkResultColumn("Sequence");
+        sequenceCol.setData(new LinkResultColumn.LinkBox(sequence.getName(), Collections.singletonList(urn)));
+        fixedColumns.add(sequenceCol);
+
+        IntegerResultColumn lengthOfSequenceCol = new IntegerResultColumn("Sequence length");
+        lengthOfSequenceCol.setData(((SequenceDocument)sequence).getSequenceLength());
+        fixedColumns.add(lengthOfSequenceCol);
 
         LinkResultColumn tracesCol = new LinkResultColumn("Number of traces used");
         if (urn.equals(consensusUrn)) {
-            tracesCol.setData(new LinkResultColumn.LinkBox("" + getTrimmedDocumentUrns().size(), getTrimmedDocumentUrns()));
+            tracesCol.setData(new LinkResultColumn.LinkBox(String.valueOf(getTrimmedDocumentUrns().size()), getTrimmedDocumentUrns()));
         } else {
             tracesCol.setData(new LinkResultColumn.LinkBox("", null));
         }
-        ret.add(tracesCol);
+        fixedColumns.add(tracesCol);
 
         LinkResultColumn assemblefCol = new LinkResultColumn("Number of traces not used");
         if (urn.equals(consensusUrn)) {
@@ -275,11 +291,11 @@ public class ValidationOutputRecord implements XMLSerializable {
                 links.addAll(getTrimmedDocumentUrns());
             }
 
-            assemblefCol.setData(new LinkResultColumn.LinkBox("" + links.size(), links));
+            assemblefCol.setData(new LinkResultColumn.LinkBox(String.valueOf(links.size()), links));
         } else {
             assemblefCol.setData(new LinkResultColumn.LinkBox("", null));
         }
-        ret.add(assemblefCol);
+        fixedColumns.add(assemblefCol);
 
         StringResultColumn isAssembledCol = new StringResultColumn("Assembled");
         if (urn.equals(consensusUrn)) {
@@ -294,8 +310,8 @@ public class ValidationOutputRecord implements XMLSerializable {
                 isAssembledCol.setData("Yes");
             }
         }
-        ret.add(isAssembledCol);
-        return ret;
+        fixedColumns.add(isAssembledCol);
+        return fixedColumns;
     }
 
     public List<List<ResultColumn>> exportTable() {

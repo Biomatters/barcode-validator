@@ -55,9 +55,7 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
         AnnotatedPluginDocument sequenceReversedDocument = DocumentUtilities.createAnnotatedPluginDocument(sequenceReversed);
         sequenceReversedDocument.setName(sequenceName + " (reversed)");
 
-        MuscleAlignmentValidationResultFact result = new MuscleAlignmentValidationResultFact(
-                false, 0.0, "", Collections.<URN>emptyList(), ""
-        );
+        MuscleAlignmentValidationResultFact result = new MuscleAlignmentValidationResultFact(false, 0.0, "", Collections.<URN>emptyList(), "");
 
         try {
             float similarityBetweenSequenceOneAndSequenceTwo = getSimilarity(alignmentOperation, sequenceDocument, referenceSequenceDocument, similarityToIntermediateDocument);

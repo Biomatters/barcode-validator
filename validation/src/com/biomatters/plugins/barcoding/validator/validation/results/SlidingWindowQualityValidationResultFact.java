@@ -70,13 +70,16 @@ public class SlidingWindowQualityValidationResultFact extends ResultFact {
     public void setPass(boolean pass) {
         passColumn.setData(pass);
     }
+
     @Override
-    public boolean getPass() { return passColumn.getData(); }
+    public boolean getPass() {
+        return passColumn.getData();
+    }
 
     public void setTotalNumberOfWindows(int totalNumberOfWindows) {
         totalNumberOfWindowsColumn.setData(totalNumberOfWindows);
 
-        ratioOfPassedWindowsColumn.setData((double)(totalNumberOfWindows - numberOfFailedWindowsColumn.getData()) * 100 / totalNumberOfWindows);
+        ratioOfPassedWindowsColumn.setData((double)(totalNumberOfWindows - numberOfFailedWindowsColumn.getData()) * 100/totalNumberOfWindows);
     }
 
     public void setNumberOfFailedWindows(int numberOfFailedWindows) {
@@ -84,7 +87,7 @@ public class SlidingWindowQualityValidationResultFact extends ResultFact {
 
         int totalNumberOfWindows = totalNumberOfWindowsColumn.getData();
 
-        ratioOfPassedWindowsColumn.setData((double)(totalNumberOfWindows - numberOfFailedWindows) * 100 /totalNumberOfWindows);
+        ratioOfPassedWindowsColumn.setData((double)(totalNumberOfWindows - numberOfFailedWindows) * 100/totalNumberOfWindows);
     }
 
     public void setNotes(String notes) {

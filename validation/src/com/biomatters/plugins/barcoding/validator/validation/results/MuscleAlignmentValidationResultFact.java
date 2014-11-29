@@ -13,10 +13,10 @@ import java.util.List;
  *         Created on 22/11/14 9:57 AM
  */
 public class MuscleAlignmentValidationResultFact extends ResultFact {
-    public static final String PASS_COLUMN_NAME = "Pass";
+    public static final String PASS_COLUMN_NAME       = "Pass";
     public static final String SIMILARITY_COLUMN_NAME = "Similarity (%)";
-    public static final String ALIGNMENT_COLUMN_NAME = "Alignment";
-    public static final String NOTES_COLUMN_NAME = "Notes";
+    public static final String ALIGNMENT_COLUMN_NAME  = "Alignment";
+    public static final String NOTES_COLUMN_NAME      = "Notes";
 
     private BooleanResultColumn passColumn;
     private DoubleResultColumn similarityColumn;
@@ -28,11 +28,7 @@ public class MuscleAlignmentValidationResultFact extends ResultFact {
         super(element);
     }
 
-    public MuscleAlignmentValidationResultFact(boolean pass,
-                                               double similarity,
-                                               String alignmentName,
-                                               List<URN> alignmentLinks,
-                                               String notes) {
+    public MuscleAlignmentValidationResultFact(boolean pass, double similarity, String alignmentName, List<URN> alignmentLinks, String notes) {
         super("Barcode Similarity Validation");
         initColumns(pass, similarity, alignmentName, alignmentLinks, notes);
     }
@@ -67,6 +63,7 @@ public class MuscleAlignmentValidationResultFact extends ResultFact {
     public void setPass(boolean pass) {
         passColumn.setData(pass);
     }
+
     @Override
     public boolean getPass() {
         return passColumn.getData();

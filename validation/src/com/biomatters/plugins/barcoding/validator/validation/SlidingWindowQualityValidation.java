@@ -64,9 +64,7 @@ public class SlidingWindowQualityValidation extends SingleSequenceValidation {
         SequenceAnnotation validationFailureAnnotation = new SequenceAnnotation("Validation Failure", "Insufficient Quality");
         int numberOfFailedWindows = 0;
 
-        SlidingWindowQualityValidationResultFact result = new SlidingWindowQualityValidationResultFact(
-                false, sequenceLength, 0, ""
-        );
+        SlidingWindowQualityValidationResultFact result = new SlidingWindowQualityValidationResultFact(false, sequenceLength, 0, "");
 
         /* Validate sequence. */
         for (int i = 0; i <= sequenceLength - winSize; i += stepSize) {
@@ -87,9 +85,9 @@ public class SlidingWindowQualityValidation extends SingleSequenceValidation {
                 validationFailureAnnotation.setQualifier(
                         "Validation Settings",
                         " Window Size=" + winSize +
-                                ", Step Size=" + stepSize +
-                                ", Min Quality=" + minimumQuality +
-                                ", Min Ratio=" + minimumSatisfactionRatio + "%"
+                        ", Step Size=" + stepSize +
+                        ", Min Quality=" + minimumQuality +
+                        ", Min Ratio=" + minimumSatisfactionRatio + "%"
                 );
                 validationFailureAnnotation.setIntervals(SequenceAnnotationInterval.merge(validationFailureAnnotation.getIntervals(), false));
                 List<SequenceAnnotation> sequenceAnnotations = new ArrayList<SequenceAnnotation>();
