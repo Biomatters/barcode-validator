@@ -5,7 +5,10 @@ import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorOptio
 import org.jdom.Element;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Represents the result of running the validation pipeline on a set of barcode sequences and their associated traces.
@@ -32,72 +35,30 @@ public class ValidationReportDocument implements PluginDocument {
         optionsUsed = options;
     }
 
-    private static String generateDescriptionFromOptions(final BarcodeValidatorOptions options) {
+    private static String generateDescriptionFromOptions(BarcodeValidatorOptions options) {
         StringBuilder descriptionBuilder = new StringBuilder();
-
-        String trimmingByQualityParameters = buildFormattedAttributeValuePairsListInHTML(new HashMap<Object, Object>(){{
-            put("Error probability limit", options.getTrimmingOptions().getQualityTrimmingOptions().getErrorProbabilityLimit());
-        }});
-
-        String trimmingByPrimersParameters = buildFormattedAttributeValuePairsListInHTML(new HashMap<Object, Object>() {{
-            put("Max mismatches", options.getTrimmingOptions().getPrimerTrimmingOptions().getMaximumMismatches());
-            put("Max match length", options.getTrimmingOptions().getPrimerTrimmingOptions().getMinimumMatchLength());
-            put("Similary", options.getTrimmingOptions().getPrimerTrimmingOptions().getScores().getName());
-            put("Gap option penalty", options.getTrimmingOptions().getPrimerTrimmingOptions().getGapOptionPenalty());
-            put("Gap extension penalty", options.getTrimmingOptions().getPrimerTrimmingOptions().getGapExtensionPenalty());
-        }});
-
-        String assemblyParameters = buildFormattedAttributeValuePairsListInHTML(new HashMap<Object, Object>() {{
-            put("Min overlap length", options.getAssemblyOptions().getMinOverlapLength());
-            put("Min overlap identity", options.getAssemblyOptions().getMinOverlapIdentity());
-        }});
-
-        descriptionBuilder.append("The following trimming and assembly parameters were used.<br><br>");
-
-        descriptionBuilder.append("<u>Trimming by quality</u><br>").append(trimmingByQualityParameters).append("<br><br>");
+        descriptionBuilder.append("The following trimming and assembly parameters were used.<br>")
+                .append("<br>")
+                .append("<u>Trimming by quality</u><br>")
+                .append("Error Probability Limit = ").append(options.getTrimmingOptions().getQualityTrimmingOptions().getErrorProbabilityLimit())
+                .append("<br>")
+                .append("<br>");
 
         if (options.getTrimmingOptions().getPrimerTrimmingOptions().getHasPrimerTrimmered()) {
-
-               descriptionBuilder.append("<u>Trimming by primers</u><br>").append(trimmingByPrimersParameters).append("<br>");
+            descriptionBuilder.append("<u>Trimming by primers</u><br>")
+                    .append("Max Mismatches = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getMaximumMismatches()).append("<br>")
+                    .append("Min Match Length = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getMinimumMatchLength()).append("<br>")
+                    .append("Score Matrix ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getScores().getName()).append("<br>")
+                    .append("Gap Option Penalty = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getGapOptionPenalty()).append("<br>")
+                    .append("Gap Extension Penalty = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getGapExtensionPenalty()).append("<br>")
+                    .append("<br>");
         }
 
-        descriptionBuilder.append("<u>Assembly</u><br>").append(assemblyParameters);
+        descriptionBuilder.append("<u>Assembly</u><br>")
+                .append("Min Overlap Length = ").append(options.getAssemblyOptions().getMinOverlapLength()).append("<br>")
+                .append("Min Overlap Identity = ").append(options.getAssemblyOptions().getMinOverlapIdentity());
 
         return descriptionBuilder.toString();
-    }
-
-    private static <T, T2> String buildFormattedAttributeValuePairsListInHTML(Map<T, T2> attributeValuePairs) {
-        StringBuilder formattedAttributeValuePairListBuilder = new StringBuilder();
-        int longestAttributeLength = 0;
-
-        for (T currentAttribute : attributeValuePairs.keySet()) {
-            int currentAttributeLength = String.valueOf(currentAttribute).length();
-            if (currentAttributeLength > longestAttributeLength) {
-                longestAttributeLength = currentAttributeLength;
-            }
-        }
-
-        for (Map.Entry<T, T2> currentAttributeValuePair : attributeValuePairs.entrySet()) {
-            String currentAttribute = String.valueOf(currentAttributeValuePair.getKey());
-            String whiteSpacesBetweenAttributeAndEqualsSign = generateNonCollapsingHTMLWhiteSpaces(longestAttributeLength - currentAttribute.length());
-            formattedAttributeValuePairListBuilder.append(currentAttribute).append(whiteSpacesBetweenAttributeAndEqualsSign).append("= ").append(currentAttributeValuePair.getValue()).append("<br>");
-        }
-
-        if (formattedAttributeValuePairListBuilder.length() != 0) {
-            formattedAttributeValuePairListBuilder.deleteCharAt(formattedAttributeValuePairListBuilder.length() - 1);
-        }
-
-        return formattedAttributeValuePairListBuilder.toString();
-    }
-
-    private static String generateNonCollapsingHTMLWhiteSpaces(int n) {
-        String nonCollapsingHTMLWhiteSpace = "&nbsp;";
-        int nonCollapsingHTMLWhiteSpaceLength = nonCollapsingHTMLWhiteSpace.length();
-        return new String(new char[n*nonCollapsingHTMLWhiteSpaceLength]).replace(getNullCharacters(nonCollapsingHTMLWhiteSpaceLength), nonCollapsingHTMLWhiteSpace);
-    }
-
-    private static String getNullCharacters(int n) {
-        return new String(new char[n]);
     }
 
     @SuppressWarnings("UnusedDeclaration")

@@ -231,38 +231,34 @@ public class ValidationOutputRecord implements XMLSerializable {
 
     public List<ResultColumn> getFixedColumns(URN urn) {
         List<ResultColumn> fixedColumns = new ArrayList<ResultColumn>();
-        AnnotatedPluginDocument barcodeUrn = DocumentUtilities.getDocumentByURN(getBarcodeSequenceUrn());
-        String label = "";
-        if (barcodeUrn != null) {
-            label = barcodeUrn.getName();
-        }
+        PluginDocument barcode = DocumentUtilities.getDocumentByURN(getBarcodeSequenceUrn()).getDocumentOrNull();
 
-        LinkResultColumn setCol = new LinkResultColumn("Set");
+        LinkResultColumn barcodeCol = new LinkResultColumn("Barcode");
         if (urn.equals(consensusUrn) || (consensusUrn == null && !trimmedDocumentUrnsMap.isEmpty() && trimmedDocumentUrnsMap.values().iterator().next().equals(urn))) {
             List<URN> links = new ArrayList<URN>();
             links.add(getBarcodeSequenceUrn());
             for (URN urn1 : getTraceDocumentUrns()) {
                 links.add(urn1);
             }
-            setCol.setData(new LinkResultColumn.LinkBox(label, links));
+            barcodeCol.setData(new LinkResultColumn.LinkBox(barcode.getName(), links));
         } else {
-            setCol.setData(new LinkResultColumn.LinkBox("", null));
+            barcodeCol.setData(new LinkResultColumn.LinkBox("", null));
         }
-        fixedColumns.add(setCol);
+        fixedColumns.add(barcodeCol);
 
         PluginDocument sequence = DocumentUtilities.getDocumentByURN(urn).getDocumentOrNull();
-
-        if (!(sequence instanceof SequenceDocument)) {
-            throw new IllegalStateException(
-                    "Unexpected document type denoted by urn " + urn +
-                    ", expected type: ? extends SequenceDocument " +
-                    ", actual type: " + sequence.getClass().getSimpleName() + "."
-            );
-        }
 
         LinkResultColumn sequenceCol = new LinkResultColumn("Sequence");
         sequenceCol.setData(new LinkResultColumn.LinkBox(sequence.getName(), Collections.singletonList(urn)));
         fixedColumns.add(sequenceCol);
+
+        StringResultColumn lengthOfBarcodeCol = new StringResultColumn("Barcode length");
+        if (urn.equals(consensusUrn)) {
+            lengthOfBarcodeCol.setData(String.valueOf(((SequenceDocument) barcode).getSequenceLength()));
+        } else {
+            lengthOfBarcodeCol.setData("");
+        }
+        fixedColumns.add(lengthOfBarcodeCol);
 
         IntegerResultColumn lengthOfSequenceCol = new IntegerResultColumn("Sequence length");
         lengthOfSequenceCol.setData(((SequenceDocument)sequence).getSequenceLength());
