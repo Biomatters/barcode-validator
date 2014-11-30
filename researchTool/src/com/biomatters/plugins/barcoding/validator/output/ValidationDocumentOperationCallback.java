@@ -75,11 +75,10 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
     @Override
     public void setInputs(NucleotideSequenceDocument barcodeSequence, List<NucleotideGraphSequenceDocument> traces, ProgressListener progressListener) throws DocumentOperationException {
         CompositeProgressListener compositeProgress = new CompositeProgressListener(progressListener, (barcodeSequence == null ? 0 : 1) + traces.size());
-        if(barcodeSequence != null) {
+        if (barcodeSequence != null) {
             compositeProgress.beginSubtask();
             AnnotatedPluginDocument apd = DocumentUtilities.getAnnotatedPluginDocumentThatContains(barcodeSequence);
-            outputRecord.barcodeSequenceUrn = apd != null ? apd.getURN() :
-                    saveDocumentAndGetUrn(barcodeSequence, compositeProgress);
+            outputRecord.barcodeSequenceUrn = apd != null ? apd.getURN() : saveDocumentAndGetUrn(barcodeSequence, compositeProgress);
         }
         for (NucleotideGraphSequenceDocument trace : traces) {
             compositeProgress.beginSubtask();

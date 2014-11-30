@@ -4,6 +4,8 @@ import com.biomatters.geneious.publicapi.documents.*;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.results.*;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import org.jdom.Element;
 
 import java.util.*;
@@ -33,9 +35,9 @@ public class ValidationOutputRecord implements XMLSerializable {
     private String setName;
 
     URN barcodeSequenceUrn;
-    Map<String, URN> traceDocumentUrnsMap = new HashMap<String, URN>();
+    Multimap<String, URN> traceDocumentUrnsMap = ArrayListMultimap.create();
 
-    Map<String, URN> trimmedDocumentUrnsMap = new HashMap<String, URN>();
+    Multimap<String, URN> trimmedDocumentUrnsMap = ArrayListMultimap.create();
     URN assemblyUrn;
     URN consensusUrn;
 
@@ -85,18 +87,24 @@ public class ValidationOutputRecord implements XMLSerializable {
         root.addContent(new Element(SET_NAME).setText(getSetName()));
         root.addContent(barcodeSequenceUrn.toXML(BARCODE));
 
-        for (Map.Entry<String, URN> entry: traceDocumentUrnsMap.entrySet()) {
-            Element element = new Element(TRACE);
-            element.addContent(new Element(TRACE_KEY).setText(entry.getKey()));
-            element.addContent(entry.getValue().toXML(TRACE_URN));
-            root.addContent(element);
+        for (String traceDocumentName : traceDocumentUrnsMap.keySet()) {
+            Collection<URN> urnOfDocumentsWithName = traceDocumentUrnsMap.get(traceDocumentName);
+            for (URN urnOfDocumentWithName : urnOfDocumentsWithName) {
+                Element element = new Element(TRACE);
+                element.addContent(new Element(TRACE_KEY).setText(traceDocumentName));
+                element.addContent(urnOfDocumentWithName.toXML(TRACE_URN));
+                root.addContent(element);
+            }
         }
 
-        for (Map.Entry<String, URN> entry: trimmedDocumentUrnsMap.entrySet()) {
-            Element element = new Element(TRIMMED);
-            element.addContent(new Element(TRIMMED_KEY).setText(entry.getKey()));
-            element.addContent(entry.getValue().toXML(TRIMMED_URN));
-            root.addContent(element);
+        for (String trimmedTraceDocumentName : trimmedDocumentUrnsMap.keySet()) {
+            Collection<URN> urnOfTrimmedTraceDocumentsWithName = trimmedDocumentUrnsMap.get(trimmedTraceDocumentName);
+            for (URN urnOfTrimmedTraceDocumentWithName : urnOfTrimmedTraceDocumentsWithName) {
+                Element element = new Element(TRIMMED);
+                element.addContent(new Element(TRIMMED_KEY).setText(trimmedTraceDocumentName));
+                element.addContent(urnOfTrimmedTraceDocumentWithName.toXML(TRIMMED_URN));
+                root.addContent(element);
+            }
         }
 
         addUrnToXml(root, assemblyUrn, ASSEMBLY);
@@ -248,7 +256,7 @@ public class ValidationOutputRecord implements XMLSerializable {
 
         LinkResultColumn barcodeColumn = new LinkResultColumn("Barcode");
         if (urn.equals(consensusUrn)) {
-            barcodeColumn.setData(new LinkResultColumn.LinkBox(barcode.getName(), Collections.singletonList(barcode.getURN())));
+            barcodeColumn.setData(new LinkResultColumn.LinkBox(barcode.getName(), Collections.singletonList(getBarcodeSequenceUrn())));
         } else {
             barcodeColumn.setData(new LinkResultColumn.LinkBox("", null));
         }
