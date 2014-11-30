@@ -35,6 +35,7 @@ import java.util.*;
  */
 public class BarcodeValidatorOperation extends DocumentOperation {
     public static final String VALIDATION_REPORT_NAME_SUFFIX = " Validation Report";
+    public static final String PARAMETER_SET_PREFIX = "Parameter Set ";
 
     private static final String SUB_SUB_FOLDER_SEPARATOR = "_";
     private static final Icons ICONS;
@@ -139,16 +140,12 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         int currentParameterSet = 1;
         CompositeProgressListener perIteration = new CompositeProgressListener(composite, allOptions.getBatchSize());
         while (parameterSetIterator.hasNext()) {
-            String setName = "Parameter Set " + String.format(parameterSetOrdinalFormat, currentParameterSet);
 
-            if (resultsFolder.getChildService(setName) != null) {
-                int index = 1;
-                while (resultsFolder.getChildService(setName + "_" + index) != null) {
-                    index++;
-                }
-
-                setName = setName + "_" + index;
+            while (resultsFolder.getChildService(PARAMETER_SET_PREFIX + currentParameterSet) != null) {
+                currentParameterSet++;
             }
+
+            String setName = PARAMETER_SET_PREFIX + currentParameterSet;
 
             perIteration.beginSubtask(setName);
 
