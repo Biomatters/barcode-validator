@@ -149,6 +149,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
                 setName = setName + "_" + index;
             }
+
             perIteration.beginSubtask(setName);
 
             runPipelineWithOptions(currentParameterSet, SUB_SUB_FOLDER_SEPARATOR, suppliedBarcodesToSuppliedTraces, operationCallback, parameterSetIterator.next(), perIteration);
@@ -161,8 +162,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         composite.setComplete();
     }
 
-
-    public static void moveSubSubFoldersToCorrectLocation(WritableDatabaseService resultsFolder, String setName) throws DocumentOperationException {
+    private static void moveSubSubFoldersToCorrectLocation(WritableDatabaseService resultsFolder, String setName) throws DocumentOperationException {
         try {
             String prefix = setName + SUB_SUB_FOLDER_SEPARATOR;
             WritableDatabaseService subFolder = resultsFolder.getChildService(setName);
