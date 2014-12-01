@@ -378,7 +378,7 @@ public class ValidationReportViewer extends DocumentViewer {
             }
 
             ResultFact fact = entry.values().iterator().next().getFact();
-            String headText = fact.getFactName() + " ( " + failCount + " failed/ " + successCount + " passed )";
+            String headText = fact.getFactName() + "<br>(" + successCount + " Passed/" + failCount + " Failed)";
             ColumnGroup factGroup = new ColumnGroup(headText, headerRenderer);
             for (int i = 0; i < fact.getColumns().size(); i++) {
                 factGroup.add(cm.getColumn(colIndex++));
@@ -642,7 +642,7 @@ public class ValidationReportViewer extends DocumentViewer {
             SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
                     options.setEnabled(false);
-                    Dialogs.DialogAction failButton = new Dialogs.DialogAction("View Failed Cases") {
+                    Dialogs.DialogAction failButton = new Dialogs.DialogAction("View Failed") {
                         @Override
                         public boolean performed(GDialog dialog) {
                             DocumentUtilities.selectDocuments(failedResults);
@@ -650,14 +650,16 @@ public class ValidationReportViewer extends DocumentViewer {
                         }
                     };
 
-                    Dialogs.DialogAction passButton = new Dialogs.DialogAction("View Passed Cases") {
+                    Dialogs.DialogAction passButton = new Dialogs.DialogAction("View Passed") {
                         @Override
                         public boolean performed(GDialog dialog) {
                             DocumentUtilities.selectDocuments(passedResults);
                             return true;
                         }
                     };
-                    Dialogs.DialogOptions dialogOptions = new Dialogs.DialogOptions(new Dialogs.DialogAction[]{failButton, passButton, Dialogs.OK}, "Options");
+                    Dialogs.DialogOptions dialogOptions = new Dialogs.DialogOptions(new Dialogs.DialogAction[]{
+                            Dialogs.OK, passButton, failButton}, "Validation Options");
+                    dialogOptions.setCancelButton(Dialogs.OK);
                     Dialogs.showMoreOptionsDialog(dialogOptions, options.getPanel(), options.getAdvancedPanel());
                 }
             });
