@@ -177,7 +177,14 @@ public class ValidationReportViewer extends DocumentViewer {
     public JComponent getComponent() {
         JComponent textPane = getTextPane();
 
-        GPanel rootPanel = new GPanel(new BorderLayout());
+        final GPanel rootPanel = new GPanel(new BorderLayout()) {
+            @Override
+            public Dimension getPreferredSize() {
+                Dimension defaultPrefSize = super.getPreferredSize();
+                // Add 500 px to the preferred height so users can scroll past the table
+                return new Dimension(defaultPrefSize.width, defaultPrefSize.height + 500);
+            }
+        };
         final JScrollPane scroll = new JScrollPane(rootPanel);
         scroll.getViewport().setOpaque(false);
         scroll.setOpaque(false);
@@ -189,11 +196,34 @@ public class ValidationReportViewer extends DocumentViewer {
         }
         
         if (table != null) {
-            JScrollPane tableScrollPane = new JScrollPane(table,
+            final JScrollPane tableScrollPane = new JScrollPane(table,
                     ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
             // Set the scroll pane's preferred size to the same as the table so scroll bars are never needed
             tableScrollPane.getViewport().setPreferredSize(table.getPreferredSize());
+            table.addComponentListener(new ComponentListener() {
+                @Override
+                public void componentResized(ComponentEvent e) {
+                    tableScrollPane.getViewport().setPreferredSize(table.getPreferredSize());
+                    scroll.validate();
+                }
+
+                @Override
+                public void componentMoved(ComponentEvent e) {
+
+                }
+
+                @Override
+                public void componentShown(ComponentEvent e) {
+
+                }
+
+                @Override
+                public void componentHidden(ComponentEvent e) {
+
+                }
+            });
+
 
             // Delegate our mouse wheel events on the table's scroll pane to the root one
             tableScrollPane.addMouseWheelListener(new MouseWheelListener() {
@@ -206,9 +236,6 @@ public class ValidationReportViewer extends DocumentViewer {
             });
             rootPanel.add(tableScrollPane, BorderLayout.CENTER);
         }
-        Dimension oldPrefSize = rootPanel.getPreferredSize();
-        // Add 500 px to the preferred height so users can scroll past the table
-        rootPanel.setPreferredSize(new Dimension(oldPrefSize.width, oldPrefSize.height + 500));
         return scroll;
     }
 
