@@ -217,6 +217,7 @@ public class ValidationReportViewer extends DocumentViewer {
 
         final ValidationReportTableModel tableModel = new ValidationReportTableModel(records);
         final JTable table = new GTable(tableModel);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.setDefaultRenderer(ResultColumn.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
