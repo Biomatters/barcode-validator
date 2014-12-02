@@ -48,7 +48,7 @@ public class ValidationReportDocument implements PluginDocument {
             descriptionBuilder.append("<u>Trimming by primers</u><br>")
                     .append("Max Mismatches = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getMaximumMismatches()).append("<br>")
                     .append("Min Match Length = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getMinimumMatchLength()).append("<br>")
-                    .append("Score Matrix ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getScores().getName()).append("<br>")
+                    .append("Score Matrix = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getScores().getName()).append("<br>")
                     .append("Gap Option Penalty = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getGapOptionPenalty()).append("<br>")
                     .append("Gap Extension Penalty = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getGapExtensionPenalty()).append("<br>")
                     .append("<br>");
