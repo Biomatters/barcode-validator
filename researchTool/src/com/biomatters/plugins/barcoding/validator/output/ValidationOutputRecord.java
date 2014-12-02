@@ -84,7 +84,7 @@ public class ValidationOutputRecord implements XMLSerializable {
     @Override
     public Element toXML() {
         Element root = new Element(XMLSerializable.ROOT_ELEMENT_NAME);
-        root.addContent(new Element(SET_NAME).setText(getSetName()));
+        root.addContent(new Element(SET_NAME).setText(getParameterSetName()));
         root.addContent(barcodeSequenceUrn.toXML(BARCODE));
 
         for (String traceDocumentName : traceDocumentUrnsMap.keySet()) {
@@ -241,26 +241,18 @@ public class ValidationOutputRecord implements XMLSerializable {
         PluginDocument barcode = DocumentUtilities.getDocumentByURN(getBarcodeSequenceUrn()).getDocumentOrNull();
         PluginDocument sequence = DocumentUtilities.getDocumentByURN(urn).getDocumentOrNull();
 
-        LinkResultColumn setColumn = new LinkResultColumn("Set");
+        LinkResultColumn setColumn = new LinkResultColumn("Barcode");
         if (urn.equals(consensusUrn) || (consensusUrn == null && !trimmedDocumentUrnsMap.isEmpty() && trimmedDocumentUrnsMap.values().iterator().next().equals(urn))) {
             List<URN> links = new ArrayList<URN>();
             links.add(getBarcodeSequenceUrn());
             for (URN urn1 : getTraceDocumentUrns()) {
                 links.add(urn1);
             }
-            setColumn.setData(new LinkResultColumn.LinkBox(setName, links));
+            setColumn.setData(new LinkResultColumn.LinkBox(barcode.getName(), links));
         } else {
             setColumn.setData(new LinkResultColumn.LinkBox("", null));
         }
         fixedColumns.add(setColumn);
-
-        LinkResultColumn barcodeColumn = new LinkResultColumn("Barcode");
-        if (urn.equals(consensusUrn)) {
-            barcodeColumn.setData(new LinkResultColumn.LinkBox(barcode.getName(), Collections.singletonList(getBarcodeSequenceUrn())));
-        } else {
-            barcodeColumn.setData(new LinkResultColumn.LinkBox("", null));
-        }
-        fixedColumns.add(barcodeColumn);
 
         StringResultColumn barcodeLengthColumn = new StringResultColumn("Barcode length");
         if (urn.equals(consensusUrn)) {
@@ -348,11 +340,11 @@ public class ValidationOutputRecord implements XMLSerializable {
         return ret;
     }
 
-    public String getSetName() {
+    public String getParameterSetName() {
         return setName;
     }
 
-    public void setSetName(String setName) {
+    public void setParameterSetName(String setName) {
         this.setName = setName;
     }
 

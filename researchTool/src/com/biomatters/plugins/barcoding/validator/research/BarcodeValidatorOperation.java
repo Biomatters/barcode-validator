@@ -136,37 +136,40 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         composite.beginSubtask();
 
         WritableDatabaseService resultsFolder = getResultsFolder(suppliedBarcodesToSuppliedTraces);
-        String parameterSetOrdinalFormat = "%0" + String.valueOf(allOptions.getBatchSize()).length() + "d";
         Iterator<BarcodeValidatorOptions> parameterSetIterator = allOptions.iterator();
         int currentParameterSet = 1;
         CompositeProgressListener perIteration = new CompositeProgressListener(composite, allOptions.getBatchSize());
         while (parameterSetIterator.hasNext()) {
+            String parameterSetName = PARAMETER_SET_PREFIX + currentParameterSet;
 
-            while (resultsFolder.getChildService(PARAMETER_SET_PREFIX + currentParameterSet) != null) {
-                currentParameterSet++;
+            if (resultsFolder.getChildService(parameterSetName) != null) {
+                int renameIndex = 1;
+                do {
+                    parameterSetName += " (" + renameIndex++ + ")";
+                }
+                while (resultsFolder.getChildService(parameterSetName) != null);
             }
 
-            String setName = PARAMETER_SET_PREFIX + currentParameterSet;
+            perIteration.beginSubtask(parameterSetName);
 
-            perIteration.beginSubtask(setName);
-
-            runPipelineWithOptions(currentParameterSet, SUB_SUB_FOLDER_SEPARATOR, suppliedBarcodesToSuppliedTraces, operationCallback, parameterSetIterator.next(), perIteration);
+            runPipelineWithOptions(currentParameterSet, parameterSetName, suppliedBarcodesToSuppliedTraces, operationCallback, parameterSetIterator.next(), perIteration);
 
             // OperationCallback does not yet support sub sub folders.  So we need to do this manually afterwards.
-            moveSubSubFoldersToCorrectLocation(resultsFolder, setName);
+            moveSubSubFoldersToCorrectLocation(resultsFolder, parameterSetName);
+
             currentParameterSet++;
         }
 
         composite.setComplete();
     }
 
-    private static void moveSubSubFoldersToCorrectLocation(WritableDatabaseService resultsFolder, String setName) throws DocumentOperationException {
+    private static void moveSubSubFoldersToCorrectLocation(WritableDatabaseService resultsFolder, String parameterSetName) throws DocumentOperationException {
         try {
-            String prefix = setName + SUB_SUB_FOLDER_SEPARATOR;
-            WritableDatabaseService subFolder = resultsFolder.getChildService(setName);
+            String prefix = parameterSetName + SUB_SUB_FOLDER_SEPARATOR;
+            WritableDatabaseService subFolder = resultsFolder.getChildService(parameterSetName);
 
             if (subFolder == null) {
-                throw new DocumentOperationException("Results folder for " + setName + " is missing.");
+                throw new DocumentOperationException("Results folder for " + parameterSetName + " is missing.");
             }
 
             for (GeneiousService geneiousService : resultsFolder.getChildServices()) {
@@ -214,16 +217,15 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         return inputTraces.isEmpty() ? null : inputTraces.iterator().next();
     }
 
-    private static void runPipelineWithOptions(int setNumber,
-                                               String subSubFolderSeparator,
+    private static void runPipelineWithOptions(int parameterSetNumber,
+                                               String parameterSetName,
                                                Multimap<AnnotatedPluginDocument, AnnotatedPluginDocument> suppliedBarcodesToSuppliedTraces,
                                                OperationCallback operationCallback,
                                                BarcodeValidatorOptions barcodeValidatorOptions,
                                                ProgressListener progressListener) throws DocumentOperationException {
         List<ValidationOutputRecord> outputs = new ArrayList<ValidationOutputRecord>();
-        String setName = "Parameter Set " + setNumber;
         CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, suppliedBarcodesToSuppliedTraces.size() + 1);
-        for (AnnotatedPluginDocument suppliedBarcode : suppliedBarcodesToSuppliedTraces.keys()) {
+        for (AnnotatedPluginDocument suppliedBarcode : suppliedBarcodesToSuppliedTraces.keySet()) {
             NucleotideSequenceDocument barcode = (NucleotideSequenceDocument)suppliedBarcode.getDocument();
             String barcodeName = barcode.getName();
             ValidationDocumentOperationCallback callback = new ValidationDocumentOperationCallback(operationCallback, false);
@@ -253,7 +255,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
             setSubFolder(operationCallback, null);
             callback.setInputs(barcode, traces, pipelineProgress);
-            setSubFolder(operationCallback, setName + subSubFolderSeparator + barcodeName);
+            setSubFolder(operationCallback, parameterSetName + SUB_SUB_FOLDER_SEPARATOR + barcodeName);
 
             pipelineProgress.beginSubtask();
 
@@ -267,15 +269,15 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                     pipelineProgress
             );
             ValidationOutputRecord record = callback.getRecord();
-            record.setSetName(String.valueOf(setNumber));
+            record.setParameterSetName(String.valueOf(parameterSetNumber));
             saveChangesToSequencesMadeByValidationPipeline(record);
-            setSubFolder(operationCallback, setName);
+            setSubFolder(operationCallback, parameterSetName);
             outputs.add(record);
         }
 
         validationProgress.beginSubtask();
 
-        operationCallback.addDocument(new ValidationReportDocument(setName + VALIDATION_REPORT_NAME_SUFFIX, outputs, barcodeValidatorOptions), false, validationProgress);
+        operationCallback.addDocument(new ValidationReportDocument(parameterSetName + VALIDATION_REPORT_NAME_SUFFIX, outputs, barcodeValidatorOptions), false, validationProgress);
     }
 
     private static void saveChangesToSequencesMadeByValidationPipeline(ValidationOutputRecord record) {
