@@ -46,9 +46,9 @@ public class GenbankXmlMapper extends BarcodeToTraceMapper {
         try {
             traceVolume = new FastSaxBuilder().build(new File(genbankTraceInfoFilePath)).getRootElement();
         } catch (JDOMException e) {
-            throw new DocumentOperationException("Could not read ");
+            throw new DocumentOperationException("Could not read from " + genbankTraceInfoFilePath + ": " + e.getMessage(), e);
         } catch (IOException e) {
-            throw new DocumentOperationException("");
+            throw new DocumentOperationException("Could not read from " + genbankTraceInfoFilePath + ": " + e.getMessage(), e);
         }
 
         if (!traceVolume.getName().equals(TRACE_VOLUME_ELEMENT_TAG_NAME)) {
