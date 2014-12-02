@@ -20,9 +20,15 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
     private static final String BOLD_BARCODE_DESCRIPTION_SEPARATOR = "\\|";
 
     private String boldTraceListFilePath;
+    private boolean hasHeaderRow;
+    private int processIdIndex;
+    private int traceIndex;
 
-    public BOLDTraceListMapper(String boldTraceListFilePath) {
+    public BOLDTraceListMapper(String boldTraceListFilePath, boolean hasHeaderRow, int processIdIndex, int traceIndex) {
         this.boldTraceListFilePath = boldTraceListFilePath;
+        this.hasHeaderRow = hasHeaderRow;
+        this.processIdIndex = processIdIndex;
+        this.traceIndex = traceIndex;
     }
 
     /**
@@ -127,15 +133,24 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
         ArrayListMultimap<String, String> result = ArrayListMultimap.create();
         List<List<String>> contents = getTraceListFileContent();
 
-        int processIdRowIndex = getProcessIdIndex(contents);
-        int traceFileRowIndex = getTraceFileIndex(contents);
-        for (int i = 1; i < contents.size(); i++) {
+        int processIdRowIndex = hasHeaderRow ? getProcessIdIndex(contents) : processIdIndex;
+        int traceFileRowIndex = hasHeaderRow ? getTraceFileIndex(contents) : traceIndex;
+        int indexOfFirstRowWithContents = hasHeaderRow ? 1 : 0;
+        for (int i = indexOfFirstRowWithContents; i < contents.size(); i++) {
             List<String> row = contents.get(i);
-
+            throwMappingExceptionIfIndexOutOfBounds(i, processIdRowIndex, row);
+            throwMappingExceptionIfIndexOutOfBounds(i, traceFileRowIndex, row);
             result.put(row.get(processIdRowIndex), parseTraceFileName(row.get(traceFileRowIndex)));
         }
 
         return result.asMap();
+    }
+
+    private void throwMappingExceptionIfIndexOutOfBounds(int lineIndex, int index, Collection<String> row) throws BoldTraceListMapperException {
+        if(index >= row.size()) {
+            throw new BoldTraceListMapperException("Line " + (lineIndex+1) + ": did not have " +
+                        NamePartOption.getLabelForPartNumber(index) + " element.");
+        }
     }
 
     /**
@@ -284,7 +299,8 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
             return "";
         }
 
-        messageBuilder.append("No barcode sequences were found for <strong>" + tracesWithoutAssociatedBarcode.size() + "</strong> traces:\n\n");
+        messageBuilder.append("No barcode sequences were found for <strong>").append(
+                tracesWithoutAssociatedBarcode.size()).append("</strong> traces:\n\n");
 
         int count = 0;
         for (Map.Entry<AnnotatedPluginDocument, String> entry : tracesWithoutAssociatedBarcode.entrySet()) {
