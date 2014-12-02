@@ -1,33 +1,46 @@
 package com.biomatters.plugins.barcoding.validator.validation.input.map;
 
+import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
+import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
+import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideSequence;
+import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
+
+import com.google.common.collect.Multimap;
+
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * @author Matthew Cheung
  *         Created on 25/09/14 4:27 PM
  */
 public class FileNameMapperTest extends Assert {
-
     @Test
-    public void testGetOrdinal() {
-        assertEquals("1st", FileNameMapper.getOrdinalString(1));
-        assertEquals("2nd", FileNameMapper.getOrdinalString(2));
-        assertEquals("3rd", FileNameMapper.getOrdinalString(3));
-        assertEquals("4th", FileNameMapper.getOrdinalString(4));
+    public void test() throws DocumentOperationException {
+        String traceSeparator = " ";
+        String barcodeSeparator = "_";
+        int partOfTraceName = 1;
+        int partOfBarcodeName = 0;
 
-        assertEquals("10th", FileNameMapper.getOrdinalString(10));
-        assertEquals("11th", FileNameMapper.getOrdinalString(11));
-        assertEquals("12th", FileNameMapper.getOrdinalString(12));
-        assertEquals("13th", FileNameMapper.getOrdinalString(13));
-        assertEquals("14th", FileNameMapper.getOrdinalString(14));
+        AnnotatedPluginDocument trace1 = DocumentUtilities.createAnnotatedPluginDocument(new DefaultNucleotideSequence("trace" + traceSeparator + "groupOne", "", "", null));
+        AnnotatedPluginDocument trace2 = DocumentUtilities.createAnnotatedPluginDocument(new DefaultNucleotideSequence("trace2" + traceSeparator + "groupOne", "", "", null));
+        AnnotatedPluginDocument trace3 = DocumentUtilities.createAnnotatedPluginDocument(new DefaultNucleotideSequence("trace3" + traceSeparator + "groupTwo", "", "", null));
 
-        assertEquals("21st", FileNameMapper.getOrdinalString(21));
-        assertEquals("22nd", FileNameMapper.getOrdinalString(22));
-        assertEquals("23rd", FileNameMapper.getOrdinalString(23));
+        AnnotatedPluginDocument barcode1 = DocumentUtilities.createAnnotatedPluginDocument(new DefaultNucleotideSequence("groupOne" + barcodeSeparator + "barcode1", "", "", null));
+        AnnotatedPluginDocument barcode2 = DocumentUtilities.createAnnotatedPluginDocument(new DefaultNucleotideSequence("groupTwo" + barcodeSeparator + "barcode2", "", "", null));
 
-        assertEquals("111th", FileNameMapper.getOrdinalString(111));
-        assertEquals("112th", FileNameMapper.getOrdinalString(112));
-        assertEquals("113th", FileNameMapper.getOrdinalString(113));
+        Collection<AnnotatedPluginDocument> traces = Arrays.asList(trace1, trace2, trace3);
+        Collection<AnnotatedPluginDocument> barcodes = Arrays.asList(barcode1, barcode2);
+
+        Multimap<AnnotatedPluginDocument, AnnotatedPluginDocument> barcodesToTraces = new FileNameMapper(traceSeparator, partOfTraceName, barcodeSeparator, partOfBarcodeName).map(
+                barcodes,
+                traces
+        );
+
+        assertEquals(Arrays.asList(trace1, trace2), barcodesToTraces.get(barcode1));
+        assertEquals(Arrays.asList(trace3), barcodesToTraces.get(barcode2));
     }
 }

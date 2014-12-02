@@ -21,6 +21,7 @@ import com.biomatters.plugins.barcoding.validator.validation.input.InputProcesso
 import com.biomatters.plugins.barcoding.validator.validation.results.SlidingWindowQualityValidationResultFact;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.Multimap;
 import jebl.util.CompositeProgressListener;
 import jebl.util.ProgressListener;
 
@@ -85,7 +86,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         composite.beginSubtask("Processing inputs");
 
         InputOptions inputSplitterOptions = allOptions.getInputOptions();
-        Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> suppliedBarcodesToSuppliedTraces = InputProcessor.run(
+        Multimap<AnnotatedPluginDocument, AnnotatedPluginDocument> suppliedBarcodesToSuppliedTraces = InputProcessor.run(
                 inputSplitterOptions.getTraceFilePaths(),
                 inputSplitterOptions.getBarcodeFilePaths(),
                 inputSplitterOptions.getMethodOption(),
@@ -94,9 +95,9 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         );
 
         List<AnnotatedPluginDocument> barcodesWithMissingTraces = new ArrayList<AnnotatedPluginDocument>();
-        for (Map.Entry<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> entry : suppliedBarcodesToSuppliedTraces.entrySet()) {
-            if (entry.getValue().isEmpty()) {
-                barcodesWithMissingTraces.add(entry.getKey());
+        for (AnnotatedPluginDocument suppliedBarcode : suppliedBarcodesToSuppliedTraces.keySet()) {
+            if (suppliedBarcodesToSuppliedTraces.get(suppliedBarcode).isEmpty()) {
+                barcodesWithMissingTraces.add(suppliedBarcode);
             }
         }
 
@@ -192,7 +193,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         }
     }
 
-    private static WritableDatabaseService getResultsFolder(Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> validatorInput) throws DocumentOperationException {
+    private static WritableDatabaseService getResultsFolder(Multimap<AnnotatedPluginDocument, AnnotatedPluginDocument> validatorInput) throws DocumentOperationException {
         AnnotatedPluginDocument sampleTrace = getOneTraceFromInput(validatorInput);
 
         if (sampleTrace == null) {
@@ -208,31 +209,22 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         return (WritableDatabaseService)resultsFolder;
     }
 
-    private static AnnotatedPluginDocument getOneTraceFromInput(Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> validatorInput) {
-        for (List<AnnotatedPluginDocument> traces : validatorInput.values()) {
-            for (AnnotatedPluginDocument trace : traces) {
-                if (trace != null) {
-                    return trace;
-                }
-            }
-        }
-
-        return null;
+    private static AnnotatedPluginDocument getOneTraceFromInput(Multimap<AnnotatedPluginDocument, AnnotatedPluginDocument> validatorInput) {
+        Collection<AnnotatedPluginDocument> inputTraces = validatorInput.values();
+        return inputTraces.isEmpty() ? null : inputTraces.iterator().next();
     }
 
     private static void runPipelineWithOptions(int setNumber,
                                                String subSubFolderSeparator,
-                                               Map<AnnotatedPluginDocument,
-                                               List<AnnotatedPluginDocument>> suppliedBarcodesToSuppliedTraces,
+                                               Multimap<AnnotatedPluginDocument, AnnotatedPluginDocument> suppliedBarcodesToSuppliedTraces,
                                                OperationCallback operationCallback,
                                                BarcodeValidatorOptions barcodeValidatorOptions,
                                                ProgressListener progressListener) throws DocumentOperationException {
         List<ValidationOutputRecord> outputs = new ArrayList<ValidationOutputRecord>();
         String setName = "Parameter Set " + setNumber;
         CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, suppliedBarcodesToSuppliedTraces.size() + 1);
-        for (Map.Entry<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> suppliedBarcodeToSuppliedTrace : suppliedBarcodesToSuppliedTraces.entrySet()) {
-
-            NucleotideSequenceDocument barcode = (NucleotideSequenceDocument)suppliedBarcodeToSuppliedTrace.getKey().getDocumentOrNull();
+        for (AnnotatedPluginDocument suppliedBarcode : suppliedBarcodesToSuppliedTraces.keys()) {
+            NucleotideSequenceDocument barcode = (NucleotideSequenceDocument)suppliedBarcode.getDocument();
             String barcodeName = barcode.getName();
             ValidationDocumentOperationCallback callback = new ValidationDocumentOperationCallback(operationCallback, false);
 
@@ -249,7 +241,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                     return (NucleotideGraphSequenceDocument)input.getDocumentOrNull();
                 }
             };
-            List<NucleotideGraphSequenceDocument> traces = new ArrayList<NucleotideGraphSequenceDocument>(Collections2.transform(suppliedBarcodeToSuppliedTrace.getValue(), getPluginDocFunction));
+            List<NucleotideGraphSequenceDocument> traces = new ArrayList<NucleotideGraphSequenceDocument>(Collections2.transform(suppliedBarcodesToSuppliedTraces.get(suppliedBarcode), getPluginDocFunction));
 
             if (traces.isEmpty()) {
                 continue;

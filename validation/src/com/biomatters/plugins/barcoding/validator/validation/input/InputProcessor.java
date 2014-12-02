@@ -6,6 +6,7 @@ import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.plugins.barcoding.validator.validation.input.map.BarcodesToTracesMapperFactory;
 import com.biomatters.plugins.barcoding.validator.validation.input.map.BarcodesToTracesMapperOptions;
 import com.biomatters.plugins.barcoding.validator.validation.utilities.ImportUtilities;
+import com.google.common.collect.Multimap;
 import jebl.util.CompositeProgressListener;
 import jebl.util.ProgressListener;
 
@@ -33,11 +34,11 @@ public class InputProcessor {
      * @return Map of barcodes to traces.
      * @throws DocumentOperationException
      */
-    public static Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> run(List<String> traceFilePaths,
-                                                                                  List<String> barcodeFilePaths,
-                                                                                  BarcodesToTracesMapperOptions options,
-                                                                                  DocumentOperation.OperationCallback operationCallback,
-                                                                                  ProgressListener progressListener) throws DocumentOperationException {
+    public static Multimap<AnnotatedPluginDocument, AnnotatedPluginDocument> run(List<String> traceFilePaths,
+                                                                                 List<String> barcodeFilePaths,
+                                                                                 BarcodesToTracesMapperOptions options,
+                                                                                 DocumentOperation.OperationCallback operationCallback,
+                                                                                 ProgressListener progressListener) throws DocumentOperationException {
         CompositeProgressListener inputProcessingProgress = new CompositeProgressListener(progressListener, 3);
 
         /* Import documents. */

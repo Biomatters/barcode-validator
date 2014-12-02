@@ -2,30 +2,32 @@ package com.biomatters.plugins.barcoding.validator.validation.input.map;
 
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
+import com.biomatters.geneious.publicapi.utilities.StringUtilities;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
- * Maps barcodes to traces via file name matching.
+ * Maps barcodes to traces via the matching of file names.
  *
  * @author Gen Li
  *         Created on 4/09/14 12:40 PM
  */
 public class FileNameMapper extends BarcodeToTraceMapper {
-    private int traceNamePart;
-    private int barcodeNamePart;
-
     private String traceSeparator;
     private String barcodeSeparator;
 
-    public FileNameMapper(String traceSeparator, int traceNamePart, String barcodeSeparator, int barcodeNamePart) {
-        this.traceSeparator = traceSeparator;
-        this.traceNamePart = traceNamePart;
-        this.barcodeSeparator = barcodeSeparator;
-        this.barcodeNamePart = barcodeNamePart;
+    private int partOfTraceName;
+    private int partOfBarcodeName;
+
+    public FileNameMapper(String traceSeparator, int partOfTraceName, String barcodeSeparator, int partOfBarcodeName) {
+        setTraceSeparator(traceSeparator);
+        setPartOfTraceName(partOfTraceName);
+        setBarcodeSeparator(barcodeSeparator);
+        setPartOfBarcodeName(partOfBarcodeName);
     }
 
     /**
@@ -37,146 +39,127 @@ public class FileNameMapper extends BarcodeToTraceMapper {
      * @throws DocumentOperationException
      */
     @Override
-    public Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(List<AnnotatedPluginDocument> barcodes, List<AnnotatedPluginDocument> traces) throws DocumentOperationException {
-        try {
-
-
-            /* Map the supplied documents to the part of their names that will be used for the main mapping between the
-             * barcodes and the traces and perform the main mapping.
-             */
-            return map(mapTracesToPartOfName(traces, traceSeparator, traceNamePart), mapBarcodesToPartOfName(barcodes, barcodeSeparator, barcodeNamePart));
-        } catch (NoMatchException e) {
-            throw new DocumentOperationException(
-                    e.getMessage() + "\n\n" +
-                    "No matches searching for <strong>" + e.getSearchString() + "</strong> in " +
-                    NamePartOption.getLabelForPartNumber(barcodeNamePart) + " part of barcode names separated by " +
-                    NameSeparatorOption.getLabelForPartNumber(barcodeSeparator) + ".",
-                    e
-            );
+    public Multimap<AnnotatedPluginDocument, AnnotatedPluginDocument> map(Collection<AnnotatedPluginDocument> barcodes, Collection<AnnotatedPluginDocument> traces) throws DocumentOperationException {
+        if (barcodes == null) {
+            throw new IllegalArgumentException("barcodes cannot be null.");
         }
+
+        if (barcodes.contains(null)) {
+            throw new IllegalArgumentException("Barcode documents cannot be null.");
+        }
+
+        if (traces == null) {
+            throw new IllegalArgumentException("traces cannot be null.");
+        }
+
+        if (traces.contains(null)) {
+            throw new IllegalArgumentException("Trace documents cannot be null.");
+        }
+
+        return map(mapBarcodesToNameParts(barcodes), mapNamePartsToTraces(traces));
     }
 
-    /**
-     * Maps barcodes to traces.
-     *
-     * @param tracesToNameParts Map of traces to part of their names used for mapping.
-     * @param barcodesToNameParts Map of barcodes to part of their names used for mapping.
-     * @return Map of barcodes to traces.
-     * @throws DocumentOperationException
-     */
-    private static Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> map(Map<AnnotatedPluginDocument, String> tracesToNameParts, Map<AnnotatedPluginDocument, String> barcodesToNameParts)
-            throws NoMatchException {
-        Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> result = new HashMap<AnnotatedPluginDocument, List<AnnotatedPluginDocument>>();
+    public void setTraceSeparator(String traceSeparator) {
+        this.traceSeparator = traceSeparator;
+    }
 
-        for (AnnotatedPluginDocument barcode : barcodesToNameParts.keySet()) {
-            result.put(barcode, new ArrayList<AnnotatedPluginDocument>());
+    public String getTraceSeparator() {
+        return traceSeparator;
+    }
+
+    public void setBarcodeSeparator(String barcodeSeparator) {
+        this.barcodeSeparator = barcodeSeparator;
+    }
+
+    public String getBarcodeSeparator() {
+        return barcodeSeparator;
+    }
+
+    public void setPartOfTraceName(int partOfTraceName) {
+        this.partOfTraceName = partOfTraceName;
+    }
+
+    public int getPartOfTraceName() {
+        return partOfTraceName;
+    }
+
+    public void setPartOfBarcodeName(int partOfBarcodeName) {
+        this.partOfBarcodeName = partOfBarcodeName;
+    }
+
+    public int getPartOfBarcodeName() {
+        return partOfBarcodeName;
+    }
+
+    private Multimap<AnnotatedPluginDocument, AnnotatedPluginDocument> map(Map<AnnotatedPluginDocument, String> barcodesToNameParts,
+                                                                           Multimap<String, AnnotatedPluginDocument> namePartsToTraces) throws DocumentOperationException {
+        Multimap<AnnotatedPluginDocument, AnnotatedPluginDocument> barcodesToTraces = ArrayListMultimap.create();
+
+        for (Map.Entry<AnnotatedPluginDocument, String> barcodeToNamePart: barcodesToNameParts.entrySet()) {
+            barcodesToTraces.putAll(barcodeToNamePart.getKey(), namePartsToTraces.get(barcodeToNamePart.getValue()));
         }
 
-        /* Map. */
-        for (Map.Entry<AnnotatedPluginDocument, String> traceToNamePart : tracesToNameParts.entrySet()) {
-            AnnotatedPluginDocument barcode = null;
+        Collection<AnnotatedPluginDocument> tracesWithoutAnAssociatedBarcode = getTracesWithoutAnAssociatedBarcode(namePartsToTraces.values(), barcodesToTraces.values());
 
-            String namePart = traceToNamePart.getValue();
-            for (Map.Entry<AnnotatedPluginDocument, String> barcodeToNamePart : barcodesToNameParts.entrySet()) {
-                if (barcodeToNamePart.getValue().equals(namePart)) {
-                    barcode = barcodeToNamePart.getKey();
-                }
+        if (!tracesWithoutAnAssociatedBarcode.isEmpty()) {
+            throw new DocumentOperationException("Unmapped traces: " + StringUtilities.join(",", tracesWithoutAnAssociatedBarcode));
+        }
+
+        return barcodesToTraces;
+    }
+
+    private Map<AnnotatedPluginDocument, String> mapBarcodesToNameParts(Collection<AnnotatedPluginDocument> barcodes) throws DocumentOperationException {
+        if (barcodeSeparator == null || barcodeSeparator.isEmpty()) {
+            throw new IllegalStateException("barcodeSeparator cannot be " + (barcodeSeparator == null ? "null" : "empty") + ".");
+        }
+
+        if (partOfBarcodeName < 0) {
+            throw new IllegalStateException("partOfBarcodeName cannot be less than 0.");
+        }
+
+        Map<AnnotatedPluginDocument, String> barcodesToNameParts = new HashMap<AnnotatedPluginDocument, String>();
+
+        for (AnnotatedPluginDocument barcode : barcodes) {
+            String barcodeNameSplit[] = barcode.getName().split(barcodeSeparator);
+
+            if (partOfBarcodeName >= barcodeNameSplit.length) {
+                throw new DocumentOperationException(
+                        "Could not retrieve the " + getOrdinalString(partOfBarcodeName) + " string from \"" + barcode.getName() + "\" split by \"" + barcodeSeparator + "\"." +
+                        "\"" + barcode.getName() + "\" split by \"" + barcodeSeparator + "\" results in " + barcodeNameSplit.length + " strings."
+                );
             }
 
-            if (barcode == null) {
-                throw new NoMatchException(traceToNamePart.getKey().getName(), traceToNamePart.getValue());
+            barcodesToNameParts.put(barcode, barcodeNameSplit[partOfBarcodeName]);
+        }
+
+        return barcodesToNameParts;
+    }
+
+    private Multimap<String, AnnotatedPluginDocument> mapNamePartsToTraces(Collection<AnnotatedPluginDocument> traces) throws DocumentOperationException {
+        if (traceSeparator == null || traceSeparator.isEmpty()) {
+            throw new IllegalStateException("separator cannot be " + (traceSeparator == null ? "null" : "empty") + ".");
+        }
+
+        if (partOfTraceName < 0) {
+            throw new IllegalStateException("partOfTraceName cannot be less than 0.");
+        }
+
+        Multimap<String, AnnotatedPluginDocument> namePartsToTraces = ArrayListMultimap.create();
+
+        for (AnnotatedPluginDocument trace : traces) {
+            String traceNameSplit[] = trace.getName().split(traceSeparator);
+
+            if (partOfTraceName >= traceNameSplit.length) {
+                throw new DocumentOperationException(
+                        "Could not retrieve the " + getOrdinalString(partOfTraceName) + " string from \"" + trace.getName() + "\" split by \"" + traceSeparator + "\"." +
+                        "\"" + trace.getName() + "\" split by \"" + traceSeparator + "\" results in " + traceNameSplit.length + " strings."
+                );
             }
 
-            result.get(barcode).add(traceToNamePart.getKey());
+            namePartsToTraces.put(traceNameSplit[partOfTraceName], trace);
         }
 
-        return result;
-    }
-
-    private static class NoMatchException extends Exception {
-        private String searchString;
-
-        private NoMatchException(String fullName, String searchString) {
-            super("Trace <strong>" + fullName + "</strong> has no associated barcode.");
-            this.searchString = searchString;
-        }
-
-        public String getSearchString() {
-            return searchString;
-        }
-    }
-
-    /**
-     * Maps documents to part of their names used for mapping. Given name n, separator s, and index i:
-     * name part = n.split(s)[i].
-     *
-     * @param documents Documents.
-     * @param separator Separator.
-     * @param i Index.
-     * @return Map of documents to part of their names used for mapping.
-     * @throws DocumentOperationException
-     */
-    private static Map<AnnotatedPluginDocument, String> mapDocumentsToPartOfName(List<AnnotatedPluginDocument> documents, String separator, int i) throws DocumentOperationException {
-        Map<AnnotatedPluginDocument, String> result = new HashMap<AnnotatedPluginDocument, String>();
-
-        for (AnnotatedPluginDocument document : documents) {
-            String documentName = document.getName();
-
-            try {
-                result.put(document, splitAndReturnNth(documentName, separator, i));
-            } catch (IndexOutOfBoundsException e) {
-                throw new DocumentOperationException("Could not get " + getOrdinalString(i + 1) + " substring of '" + documentName + "' separated by '" + separator + "'.", e);
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * Maps traces to part of their names used for mapping. Given name n, separator s, and index i:
-     * name part = n.split(s)[i].
-     *
-     * @param traces Traces.
-     * @param separator Separator.
-     * @param i Index.
-     * @return Map of traces to part of their names used for mapping.
-     * @throws DocumentOperationException
-     */
-    private static Map<AnnotatedPluginDocument, String> mapTracesToPartOfName(List<AnnotatedPluginDocument> traces, String separator, int i) throws DocumentOperationException {
-        Map<AnnotatedPluginDocument, String> result = new HashMap<AnnotatedPluginDocument, String>();
-
-        Map<AnnotatedPluginDocument, String> resultNSDs = mapDocumentsToPartOfName(new ArrayList<AnnotatedPluginDocument>(traces), separator, i);
-        for (Map.Entry<AnnotatedPluginDocument, String> traceNSDToNamePart : resultNSDs.entrySet()) {
-            result.put(traceNSDToNamePart.getKey(), traceNSDToNamePart.getValue());
-        }
-
-        return result;
-    }
-
-    /**
-     * Maps barcodes to part of their names used for mapping. Given name n, separator s, and index i:
-     * name part = n.split(s)[i].
-     *
-     * @param barcodes Barcodes.
-     * @param separator Separator.
-     * @param i Index.
-     * @return Map of barcodes to, the part of the name of each barcode used for the mapping.
-     * @throws DocumentOperationException
-     */
-    private static Map<AnnotatedPluginDocument, String> mapBarcodesToPartOfName(List<AnnotatedPluginDocument> barcodes, String separator, int i) throws DocumentOperationException {
-        return mapDocumentsToPartOfName(barcodes, separator, i);
-    }
-
-    /**
-     * Equivalent to s.split(sep)[n].
-     *
-     * @param s
-     * @param sep
-     * @param n
-     * @return s.split(sep)[i].
-     */
-    private static String splitAndReturnNth(String s, String sep, int n) throws IndexOutOfBoundsException {
-        return s.split(sep)[n];
+        return namePartsToTraces;
     }
 
     /**
@@ -185,7 +168,7 @@ public class FileNameMapper extends BarcodeToTraceMapper {
      * @param n
      * @return Nth ordinal.
      */
-    static String getOrdinalString(int n) {
+    private static String getOrdinalString(int n) {
         String nString = Integer.toString(n);
         String nAbsString = String.valueOf(Math.abs(n));
         int nAbsStringLength = nAbsString.length();

@@ -6,6 +6,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.DefaultNucleotideGra
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideGraphSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.plugins.barcoding.validator.validation.input.map.FileNameMapper;
+import com.google.common.collect.Multimap;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -38,9 +39,9 @@ public class InputProcessorTest extends Assert {
         String regex = getRegularExpressionForSeparator(separator);
         FileNameMapper mapper = new FileNameMapper(regex, 1, regex, 0);
 
-        Map<AnnotatedPluginDocument, List<AnnotatedPluginDocument>> mapped = mapper.map(barcodes, traces);
-        List<AnnotatedPluginDocument> mappedToB1 = mapped.get(b1);
-        List<AnnotatedPluginDocument> mappedToB2 = mapped.get(b2);
+        Multimap<AnnotatedPluginDocument, AnnotatedPluginDocument> mapped = mapper.map(barcodes, traces);
+        Collection<AnnotatedPluginDocument> mappedToB1 = mapped.get(b1);
+        Collection<AnnotatedPluginDocument> mappedToB2 = mapped.get(b2);
 
         assertEquals(2, mapped.keySet().size());
 
