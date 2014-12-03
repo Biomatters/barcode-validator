@@ -2,7 +2,6 @@ package com.biomatters.plugins.barcoding.validator.validation.input.map;
 
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
-import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.biomatters.geneious.publicapi.utilities.xml.FastSaxBuilder;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -82,6 +81,14 @@ public class GenbankXmlMapper extends BarcodeToTraceMapper {
         }
 
         return barcodesToAccessions;
+    }
+
+    private static String getAccessionFromBarcode(AnnotatedPluginDocument barcode) {
+        String rawAccession = barcode.getName().split(GENBANK_BARCODE_DESCRIPTION_SEPARATOR)[INDEX_OF_ACCESSION_IN_GENBANK_BARCODE_DESCRIPTION];
+
+        int indexOfPeriod = rawAccession.indexOf(".");
+
+        return indexOfPeriod == -1 ? rawAccession : rawAccession.substring(0, indexOfPeriod);
     }
 
     private Multimap<String, AnnotatedPluginDocument> getAccessionsToTraces(Collection<AnnotatedPluginDocument> traces) throws DocumentOperationException {
