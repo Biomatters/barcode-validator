@@ -89,11 +89,7 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
             barcodesToTraces.putAll(barcodeToProcessID.getKey(), processIDsToTraces.get(barcodeToProcessID.getValue()));
         }
 
-        Collection<AnnotatedPluginDocument> tracesWithoutAnAssociatedBarcode = getTracesWithoutAnAssociatedBarcode(allTraces, barcodesToTraces.values());
-
-        if (!tracesWithoutAnAssociatedBarcode.isEmpty()) {
-            throw new DocumentOperationException("Unmapped traces: " + StringUtilities.join(", ", tracesWithoutAnAssociatedBarcode));
-        }
+        throwExceptionIfThereAreTracesWithoutAnAssociatedBarcode(allTraces, barcodesToTraces.values());
 
         return barcodesToTraces;
     }
