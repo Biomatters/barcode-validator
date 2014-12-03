@@ -18,28 +18,31 @@ import java.util.List;
  *         Created on 21/10/14 3:13 PM
  */
 public class PrimerTrimmingOptions extends Options {
-    private static final String PRIMER_SELECTION_OPTIONS_NAME      = "primers";
-    private static final String GAP_OPEN_PENALTY_OPTIONS_NAME      = "gapOpenPenalty";
-    private static final String GAP_EXTENSION_PENALTY_OPTIONS_NAME = "gapExtensionPenalty";
-    private static final String COST_MATRIX_OPTIONS_NAME           = "costMatrix";
-    private static final String MAXIMUM_MISMATCHES_OPTIONS_NAME    = "maximumMismatches";
-    private static final String MINIMUM_MATCH_LENGTH_OPTIONS_NAME  = "minimumMatchLength";
+    static final double DEFAULT_GAP_OPEN = 12.0;
+    static final double DEFAULT_GAP_EXTEND = 3.0;
+
+    private DocumentSelectionOption primerSelectionOption;
+    private DoubleOption gapOpenPenaltyOption;
+    private DoubleOption gapExtensionPenaltyOption;
+    private CostMatrixOption costMatrixOption;
+    private IntegerOption maximumMismatchesOption;
+    private IntegerOption minimumMatchLengthOption;
 
     public PrimerTrimmingOptions(Class cls) {
         super(cls);
 
         addPrimerSelectionOption();
-        addGapOpenPenaltyOptions();
-        addGapExtensionPenaltyOptions();
-        addCostMatrixOptions();
-        addMaximumMismatchesOptions();
-        addMinimumMatchLengthOptions();
+        addGapOpenPenaltyOption();
+        addGapExtensionPenaltyOption();
+        addSimilarityOption();
+        addMaximumMismatchesOption();
+        addMinimumMatchLengthOption();
     }
 
     public List<OligoSequenceDocument> getPrimers() throws DocumentOperationException {
         List<OligoSequenceDocument> primers = new ArrayList<OligoSequenceDocument>();
 
-        for (AnnotatedPluginDocument document : ((DocumentSelectionOption)getOption(PRIMER_SELECTION_OPTIONS_NAME)).getDocuments()) {
+        for (AnnotatedPluginDocument document : primerSelectionOption.getDocuments()) {
             if (document.getDocumentClass().isAssignableFrom(OligoSequenceDocument.class)) {
                 primers.add((OligoSequenceDocument)document.getDocument());
             }
@@ -48,29 +51,29 @@ public class PrimerTrimmingOptions extends Options {
         return primers;
     }
 
-    public Scores getScores() {
-        return ((CostMatrixOption)getOption(COST_MATRIX_OPTIONS_NAME)).getValue().getScores();
-    }
-
     public double getGapOptionPenalty() {
-        return ((DoubleOption)getOption(GAP_OPEN_PENALTY_OPTIONS_NAME)).getValue();
+        return gapOpenPenaltyOption.getValue();
     }
 
     public double getGapExtensionPenalty() {
-        return ((DoubleOption)getOption(GAP_EXTENSION_PENALTY_OPTIONS_NAME)).getValue();
+        return gapExtensionPenaltyOption.getValue();
+    }
+
+    public Scores getScores() {
+        return costMatrixOption.getValue().getScores();
     }
 
     public int getMaximumMismatches() {
-        return ((IntegerOption)getOption(MAXIMUM_MISMATCHES_OPTIONS_NAME)).getValue();
+        return maximumMismatchesOption.getValue();
     }
 
     public int getMinimumMatchLength() {
-        return ((IntegerOption)getOption(MINIMUM_MATCH_LENGTH_OPTIONS_NAME)).getValue();
+        return minimumMatchLengthOption.getValue();
     }
 
     private void addPrimerSelectionOption() {
-        final DocumentSelectionOption primerSelectionOption = addPrimerSelectionOption(
-                PRIMER_SELECTION_OPTIONS_NAME,
+        primerSelectionOption = addPrimerSelectionOption(
+                "primers",
                 "Primers:",
                 DocumentSelectionOption.FolderOrDocuments.EMPTY,
                 true,
@@ -85,29 +88,27 @@ public class PrimerTrimmingOptions extends Options {
         });
     }
 
-    private void addCostMatrixOptions() {
-        addCustomOption(new CostMatrixOption(COST_MATRIX_OPTIONS_NAME, "Cost Matrix:", true));
+    private void addGapOpenPenaltyOption() {
+        gapOpenPenaltyOption = addDoubleOption("gapOpenPenalty", "Gap Open Penalty:", DEFAULT_GAP_OPEN, 0.0, 99999.0);
     }
 
-    static final double DEFAULT_GAP_OPEN = 12.0;
-    private void addGapOpenPenaltyOptions() {
-        addDoubleOption(GAP_OPEN_PENALTY_OPTIONS_NAME, "Gap Open Penalty:", DEFAULT_GAP_OPEN, 0.0, 99999.0);
+    private void addGapExtensionPenaltyOption() {
+        gapExtensionPenaltyOption = addDoubleOption("gapExtensionPenalty", "Gap Extension Penalty:", DEFAULT_GAP_EXTEND, 0.0, 99999.0);
     }
 
-    static final double DEFAULT_GAP_EXTEND = 3.0;
-    private void addGapExtensionPenaltyOptions() {
-        addDoubleOption(GAP_EXTENSION_PENALTY_OPTIONS_NAME, "Gap Extension Penalty:", DEFAULT_GAP_EXTEND, 0.0, 99999.0);
+    private void addSimilarityOption() {
+        costMatrixOption = addCustomOption(new CostMatrixOption("similarity", "Similarity (%):", true));
     }
 
-    private void addMaximumMismatchesOptions() {
-        addIntegerOption(MAXIMUM_MISMATCHES_OPTIONS_NAME, "Maximum Mismatches", 5, 1, Integer.MAX_VALUE);
+    private void addMaximumMismatchesOption() {
+        maximumMismatchesOption = addIntegerOption("maximumMismatches", "Maximum Mismatches", 5, 1, Integer.MAX_VALUE);
     }
 
-    private void addMinimumMatchLengthOptions() {
-        addIntegerOption(MINIMUM_MATCH_LENGTH_OPTIONS_NAME, "Minimum Match Length", 15, 1, Integer.MAX_VALUE);
+    private void addMinimumMatchLengthOption() {
+        minimumMatchLengthOption = addIntegerOption("minimumMatchLength", "Minimum Match Length", 15, 1, Integer.MAX_VALUE);
     }
 
-    public boolean getHasPrimerTrimmered() {
+    public boolean getHasPrimerTrimmed() {
         try {
             return getPrimers().size() > 0;
         } catch (DocumentOperationException e) {

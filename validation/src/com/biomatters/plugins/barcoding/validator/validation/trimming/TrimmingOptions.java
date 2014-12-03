@@ -10,6 +10,9 @@ public class TrimmingOptions extends Options {
     private static final String QUALITY_TRIMMING_OPTIONS_NAME = "quality";
     private static final String PRIMER_TRIMMING_OPTIONS_NAME  = "primer";
 
+    private ErrorProbabilityOptions qualityTrimmingOptions = new ErrorProbabilityOptions();
+    private PrimerTrimmingOptions primerTrimmingOptions = new PrimerTrimmingOptions(getClass());
+
     public TrimmingOptions(Class cls) {
         super(cls);
 
@@ -17,15 +20,15 @@ public class TrimmingOptions extends Options {
     }
 
     public ErrorProbabilityOptions getQualityTrimmingOptions() {
-        return (ErrorProbabilityOptions)getChildOptions().get(QUALITY_TRIMMING_OPTIONS_NAME);
+        return qualityTrimmingOptions;
     }
 
     public PrimerTrimmingOptions getPrimerTrimmingOptions() {
-        return (PrimerTrimmingOptions)getChildOptions().get(PRIMER_TRIMMING_OPTIONS_NAME);
+        return primerTrimmingOptions;
     }
 
     private void init() {
-        addChildOptions(QUALITY_TRIMMING_OPTIONS_NAME, "By Quality", "Quality trimming", new ErrorProbabilityOptions(), true);
-        addChildOptions(PRIMER_TRIMMING_OPTIONS_NAME, "By Primer", "Primer trimming", new PrimerTrimmingOptions(TrimmingOptions.class), true);
+        addChildOptions(QUALITY_TRIMMING_OPTIONS_NAME, "By Quality", "Quality trimming", qualityTrimmingOptions, true);
+        addChildOptions(PRIMER_TRIMMING_OPTIONS_NAME, "By Primer", "Primer trimming", primerTrimmingOptions, true);
     }
 }
