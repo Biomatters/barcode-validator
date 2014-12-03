@@ -77,7 +77,7 @@ public class GenbankXmlMapper extends BarcodeToTraceMapper {
                 throw new DocumentOperationException("Barcode documents cannot be null.");
             }
 
-            barcodesToAccessions.put(barcode, barcode.getName().split(GENBANK_BARCODE_DESCRIPTION_SEPARATOR)[INDEX_OF_ACCESSION_IN_GENBANK_BARCODE_DESCRIPTION]);
+            barcodesToAccessions.put(barcode, getAccessionFromBarcode(barcode));
         }
 
         return barcodesToAccessions;
