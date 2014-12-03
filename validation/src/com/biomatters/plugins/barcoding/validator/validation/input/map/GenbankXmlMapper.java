@@ -20,7 +20,7 @@ import java.util.*;
 public class GenbankXmlMapper extends BarcodeToTraceMapper {
     private static final String TRACE_VOLUME_ELEMENT_TAG_NAME       = "trace_volume";
     private static final String TRACE_ELEMENT_TAG_NAME              = "trace";
-    private static final String TRACE_NAME_ELEMENT_TAG_NAME         = "trace_name";
+    private static final String TRACE_FILE_ELEMENT_TAG_NAME         = "trace_file";
     private static final String NCBI_TRACE_ARCHIVE_ELEMENT_TAG_NAME = "ncbi_trace_archive";
     private static final String ACCESSION_ELEMENT_TAG_NAME          = "accession";
 
@@ -108,7 +108,7 @@ public class GenbankXmlMapper extends BarcodeToTraceMapper {
             );
         }
 
-        Multimap<String, AnnotatedPluginDocument> traceNamesToTraces = getTraceNamesToTraces(traces);
+        Multimap<String, AnnotatedPluginDocument> traceFileNamesToTraces = getTraceFileNamesToTraces(traces);
 
         for (Element trace : traceVolume.getChildren(TRACE_ELEMENT_TAG_NAME)) {
             Element ncbiTraceArchive = trace.getChild(NCBI_TRACE_ARCHIVE_ELEMENT_TAG_NAME);
@@ -129,22 +129,22 @@ public class GenbankXmlMapper extends BarcodeToTraceMapper {
                 );
             }
 
-            Element name = trace.getChild(TRACE_NAME_ELEMENT_TAG_NAME);
+            Element traceFile = trace.getChild(TRACE_FILE_ELEMENT_TAG_NAME);
 
-            if (name == null) {
+            if (traceFile == null) {
                 throw new DocumentOperationException(
                         "Invalid TRACEINFO.xml file: " +
-                        "a " + TRACE_ELEMENT_TAG_NAME + " element did not contain a " + TRACE_NAME_ELEMENT_TAG_NAME + " element."
+                        "a " + TRACE_ELEMENT_TAG_NAME + " element did not contain a " + TRACE_FILE_ELEMENT_TAG_NAME + " element."
                 );
             }
 
-            accessionsToTraces.putAll(accession.getTextTrim(), traceNamesToTraces.get(name.getTextTrim()));
+            accessionsToTraces.putAll(accession.getTextTrim(), traceFileNamesToTraces.get(parseTraceFileName(traceFile.getTextTrim())));
         }
 
         return accessionsToTraces;
     }
 
-    private Multimap<String, AnnotatedPluginDocument> getTraceNamesToTraces(Collection<AnnotatedPluginDocument> traces) throws DocumentOperationException {
+    private Multimap<String, AnnotatedPluginDocument> getTraceFileNamesToTraces(Collection<AnnotatedPluginDocument> traces) throws DocumentOperationException {
         Multimap<String, AnnotatedPluginDocument> tracesToTraceNames = ArrayListMultimap.create();
 
         for (AnnotatedPluginDocument trace : traces) {
@@ -156,5 +156,15 @@ public class GenbankXmlMapper extends BarcodeToTraceMapper {
         }
 
         return tracesToTraceNames;
+    }
+
+    private static String parseTraceFileName(String traceFileName) throws DocumentOperationException {
+        if (traceFileName == null || traceFileName.isEmpty()) {
+            throw new DocumentOperationException("trace file names cannot be null or empty.");
+        }
+
+        int lastIndexOfSlashInTraceFileName = traceFileName.lastIndexOf("/");
+
+        return lastIndexOfSlashInTraceFileName == -1 ? traceFileName : traceFileName.substring(lastIndexOfSlashInTraceFileName + 1);
     }
 }
