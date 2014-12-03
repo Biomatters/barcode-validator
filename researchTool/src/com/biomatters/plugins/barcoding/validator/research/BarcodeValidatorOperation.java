@@ -144,10 +144,11 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
             if (resultsFolder.getChildService(parameterSetName) != null) {
                 int renameIndex = 1;
-                do {
-                    parameterSetName += " (" + renameIndex++ + ")";
+                while (resultsFolder.getChildService(parameterSetName + " (" + renameIndex + ")") != null) {
+                    renameIndex++;
                 }
-                while (resultsFolder.getChildService(parameterSetName) != null);
+
+                parameterSetName += " (" + renameIndex + ")";
             }
 
             perIteration.beginSubtask(parameterSetName);

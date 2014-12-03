@@ -72,4 +72,17 @@ public class IntegerMultiValueOption extends MultiValueOption<Integer> {
         results.add(max);
         return results;
     }
+
+    @Override
+    String verifyInputs(Integer min, Integer max, Integer step) {
+        if (min < 0 || max < 0 || step < 0) {
+            return "Input can not be negative.";
+        }
+
+        if (max < min) {
+            return "Max value has to be equal or greater than Min value.";
+        }
+
+        return null;
+    }
 }

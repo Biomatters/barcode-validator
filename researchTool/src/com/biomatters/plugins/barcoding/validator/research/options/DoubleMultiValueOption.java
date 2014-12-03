@@ -76,6 +76,19 @@ public class DoubleMultiValueOption extends MultiValueOption<Double> {
         return results;
     }
 
+    @Override
+    String verifyInputs(Double min, Double max, Double step) {
+        if (min < 0 || max < 0 || step < 0) {
+            return "Input can not be negative.";
+        }
+
+        if (max < min) {
+            return "Max value has to be equal or greater than Min value.";
+        }
+
+        return null;
+    }
+
     private Double getDoubleRounded(Double max) {
         return Double.valueOf(singleValueToString(max));
     }

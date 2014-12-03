@@ -2,6 +2,7 @@ package com.biomatters.plugins.barcoding.validator.validation.input.map;
 
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
+import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
@@ -24,9 +25,15 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
     private static final int INDEX_OF_PROCESS_ID_IN_BOLD_BARCODE_DESCRIPTION = 0;
 
     private String boldTraceInfoFilePath;
+    private boolean hasHeaderRow;
+    private int userSelectedProcessIdIndex;
+    private int userSelectedTracefileIndex;
 
-    public BOLDTraceListMapper(String boldTraceInfoFilePath){
+    public BOLDTraceListMapper(String boldTraceInfoFilePath, boolean hasHeaderRow, int processIdIndex, int traceIndex) {
         setBoldTraceInfoFilePath(boldTraceInfoFilePath);
+        this.hasHeaderRow = hasHeaderRow;
+        this.userSelectedProcessIdIndex = userSelectedProcessIdIndex;
+        this.userSelectedTracefileIndex = userSelectedTracefileIndex;
     }
 
     /**
@@ -55,7 +62,7 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
             throw new IllegalArgumentException("Trace documents cannot be null.");
         }
 
-        return map(getBarcodesToProcessIDs(barcodes), getProcessIDsToTracesMap(traces), traces);
+        return map(getBarcodesToProcessIDsMap(barcodes), getProcessIDsToTracesMap(traces), traces);
     }
 
     public void setBoldTraceInfoFilePath(String boldTraceInfoFilePath) {
@@ -69,7 +76,7 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
     /**
      * @param barcodesToProcessIDs Map from barcodes to process IDs.
      * @param processIDsToTraces Map from process IDs to traces.
-     * @param allTraces All of the user supplied traces. Used to elicit the number of traces that
+     * @param allTraces
      * @return Map from the supplied barcodes to the supplied traces.
      * @throws DocumentOperationException If there exists a trace that is not associated with a barcode.
      */
@@ -85,7 +92,7 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
         Collection<AnnotatedPluginDocument> tracesWithoutAnAssociatedBarcode = getTracesWithoutAnAssociatedBarcode(allTraces, barcodesToTraces.values());
 
         if (!tracesWithoutAnAssociatedBarcode.isEmpty()) {
-
+            throw new DocumentOperationException("Unmapped traces: " + StringUtilities.join(", ", tracesWithoutAnAssociatedBarcode));
         }
 
         return barcodesToTraces;
@@ -103,10 +110,15 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
 
         Multimap<String, AnnotatedPluginDocument> traceNamesToTraces = getTraceNamesToTracesMap(traces);
         List<List<String>> contents = importTraceListFileContent();
-        int traceFileRowIndex = getTraceFileIndex(contents);
-        int processIDRowIndex = getProcessIDIndex(contents);
-        for (int i = 1; i < contents.size(); i++) {
+        int traceFileRowIndex = hasHeaderRow ? getTraceFileIndex(contents) : userSelectedTracefileIndex;
+        int processIDRowIndex = hasHeaderRow ? getProcessIDIndex(contents) : userSelectedProcessIdIndex;
+        int indexOfFirstRowWithContents = hasHeaderRow ? 1 : 0;
+        for (int i = indexOfFirstRowWithContents; i < contents.size(); i++) {
             List<String> row = contents.get(i);
+            
+            throwMappingExceptionIfIndexOutOfBounds(i, processIDRowIndex, row);
+            throwMappingExceptionIfIndexOutOfBounds(i, traceFileRowIndex, row);
+            
             processIDsToTraces.putAll(row.get(processIDRowIndex), traceNamesToTraces.get(parseTraceFileName(row.get(traceFileRowIndex))));
         }
 
@@ -155,7 +167,7 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
      * @param barcodes The supplied barcodes.
      * @return Map from the process ids of the supplied barcodes to the supplied barcodes.
      */
-    private static Map<AnnotatedPluginDocument, String> getBarcodesToProcessIDs(Collection<AnnotatedPluginDocument> barcodes) {
+    private static Map<AnnotatedPluginDocument, String> getBarcodesToProcessIDsMap(Collection<AnnotatedPluginDocument> barcodes) throws DocumentOperationException {
         Map<AnnotatedPluginDocument, String> barcodesToProcessIDs = new HashMap<AnnotatedPluginDocument, String>();
 
         for (AnnotatedPluginDocument barcode : barcodes) {
@@ -260,29 +272,11 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
 
         return index;
     }
-
-    private static String constructTracesWithoutAssociatedBarcodeFoundMessage(Map<AnnotatedPluginDocument, String> tracesWithoutAssociatedBarcode) {
-        StringBuilder messageBuilder = new StringBuilder();
-
-        if (tracesWithoutAssociatedBarcode == null || tracesWithoutAssociatedBarcode.isEmpty()) {
-            return "";
+    
+    private static void throwMappingExceptionIfIndexOutOfBounds(int lineIndex, int index, Collection<String> row) throws DocumentOperationException {
+        if(index >= row.size()) {
+            throw new DocumentOperationException("Line " + (lineIndex+1) + ": did not have " +
+                        NamePartOption.getLabelForPartNumber(index) + " element.");
         }
-
-        messageBuilder.append("No barcode sequences were found for <strong>" + tracesWithoutAssociatedBarcode.size() + "</strong> traces:\n\n");
-
-        int count = 0;
-        for (Map.Entry<AnnotatedPluginDocument, String> entry : tracesWithoutAssociatedBarcode.entrySet()) {
-            if (++count > 100) {
-                break;
-            }
-
-            messageBuilder.append(entry.getKey().getName()).append(" (BOLD process ID: ").append(entry.getValue()).append(")\n");
-        }
-
-        if (count > 100) {
-            messageBuilder.append("And more...");
-        }
-
-        return messageBuilder.toString();
     }
 }
