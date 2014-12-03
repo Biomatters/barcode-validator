@@ -56,7 +56,7 @@ public class FileNameMapper extends BarcodeToTraceMapper {
             throw new IllegalArgumentException("Trace documents cannot be null.");
         }
 
-        return map(mapBarcodesToNameParts(barcodes), mapNamePartsToTraces(traces));
+        return map(getBarcodesToNamePartsMap(barcodes), getNamePartsToTracesMap(traces));
     }
 
     public void setTraceSeparator(String traceSeparator) {
@@ -102,13 +102,13 @@ public class FileNameMapper extends BarcodeToTraceMapper {
         Collection<AnnotatedPluginDocument> tracesWithoutAnAssociatedBarcode = getTracesWithoutAnAssociatedBarcode(namePartsToTraces.values(), barcodesToTraces.values());
 
         if (!tracesWithoutAnAssociatedBarcode.isEmpty()) {
-            throw new DocumentOperationException("Unmapped traces: " + StringUtilities.join(",", tracesWithoutAnAssociatedBarcode));
+            throw new DocumentOperationException("Unmapped traces: " + StringUtilities.join(", ", tracesWithoutAnAssociatedBarcode));
         }
 
         return barcodesToTraces;
     }
 
-    private Map<AnnotatedPluginDocument, String> mapBarcodesToNameParts(Collection<AnnotatedPluginDocument> barcodes) throws DocumentOperationException {
+    private Map<AnnotatedPluginDocument, String> getBarcodesToNamePartsMap(Collection<AnnotatedPluginDocument> barcodes) throws DocumentOperationException {
         if (barcodeSeparator == null || barcodeSeparator.isEmpty()) {
             throw new IllegalStateException("barcodeSeparator cannot be " + (barcodeSeparator == null ? "null" : "empty") + ".");
         }
@@ -135,7 +135,7 @@ public class FileNameMapper extends BarcodeToTraceMapper {
         return barcodesToNameParts;
     }
 
-    private Multimap<String, AnnotatedPluginDocument> mapNamePartsToTraces(Collection<AnnotatedPluginDocument> traces) throws DocumentOperationException {
+    private Multimap<String, AnnotatedPluginDocument> getNamePartsToTracesMap(Collection<AnnotatedPluginDocument> traces) throws DocumentOperationException {
         if (traceSeparator == null || traceSeparator.isEmpty()) {
             throw new IllegalStateException("separator cannot be " + (traceSeparator == null ? "null" : "empty") + ".");
         }
