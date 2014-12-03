@@ -110,8 +110,8 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
 
         Multimap<String, AnnotatedPluginDocument> traceNamesToTraces = getTraceNamesToTracesMap(traces);
         List<List<String>> contents = importTraceListFileContent();
-        int traceFileRowIndex = hasHeaderRow ? getTraceFileIndex(contents) : traceIndex;
-        int processIDRowIndex = hasHeaderRow ? getProcessIDIndex(contents) : processIdIndex;
+        int traceFileRowIndex = hasHeaderRow ? getTraceFileIndex(contents) : userSelectedTracefileIndex;
+        int processIDRowIndex = hasHeaderRow ? getProcessIDIndex(contents) : userSelectedProcessIdIndex;
         int indexOfFirstRowWithContents = hasHeaderRow ? 1 : 0;
         for (int i = indexOfFirstRowWithContents; i < contents.size(); i++) {
             List<String> row = contents.get(i);
