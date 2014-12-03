@@ -38,7 +38,7 @@ public class NamePartOption extends Options.ComboBoxOption<Options.OptionValue> 
 
     /**
      *
-     * @return part of name to use, from 0 to 5
+     * @return part of name to use, from 0 to 9
      */
     public int getPart() {
         return Integer.parseInt(getValue().getName());

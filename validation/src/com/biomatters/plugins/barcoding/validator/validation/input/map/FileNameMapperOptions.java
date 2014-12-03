@@ -5,58 +5,47 @@ package com.biomatters.plugins.barcoding.validator.validation.input.map;
  *         Created on 5/09/14 9:53 AM
  */
 public class FileNameMapperOptions extends BarcodesToTracesMapperOptions {
-    private static final String TRACE_PART_NUMBER    = "tracePartNum";
-    private static final String SEQUENCE_PART_NUMBER = "seqPartNum";
-
-    private static final String TRACE_SEPARATOR    = "traceSeparator";
-    private static final String SEQUENCE_SEPARATOR = "seqSeparator";
+    private NamePartOption barcodeNamePartOption;
+    private NameSeparatorOption barcodeNameSeparatorOption;
+    private NamePartOption traceNamePartOption;
+    private NameSeparatorOption traceNameSeparatorOption;
 
     public FileNameMapperOptions(Class cls) {
         super(cls);
 
-        addTraceOptions();
-        addSequenceOptions();
+        addTraceNameOptions();
+        addBarcodeNameOptions();
     }
 
-    public int getTraceNamePartNumber() {
-        return getPartNumber(TRACE_PART_NUMBER);
+    public int getBarcodeNamePart() {
+        return barcodeNamePartOption.getPart();
     }
 
-    public int getSequenceNamePartNumber() {
-        return getPartNumber(SEQUENCE_PART_NUMBER);
+    public String getBarcodeNameSeparator() { return barcodeNameSeparatorOption.getSeparatorString() ; }
+
+    public int getTraceNamePart() {
+        return traceNamePartOption.getPart();
     }
 
-    public String getTraceSeparator() {
-        return getSeparator(TRACE_SEPARATOR);
+    public String getTraceNameSeparator() {
+        return traceNameSeparatorOption.getSeparatorString();
     }
 
-    public String getSequenceSeparator() {
-        return getSeparator(SEQUENCE_SEPARATOR);
-    }
-
-    private void addTraceOptions() {
+    private void addBarcodeNameOptions() {
         beginAlignHorizontally(null, false);
 
-        addCustomOption(new NamePartOption(TRACE_PART_NUMBER, ""));
-        addCustomOption(new NameSeparatorOption(TRACE_SEPARATOR, "part of trace name separated by "));
+        barcodeNamePartOption = addCustomOption(new NamePartOption("barcodeNamePart", ""));
+        barcodeNameSeparatorOption = addCustomOption(new NameSeparatorOption("barcodeNameSeparator", "part of barcode name separated by "));
 
         endAlignHorizontally();
     }
 
-    private void addSequenceOptions() {
+    private void addTraceNameOptions() {
         beginAlignHorizontally(null, false);
 
-        addCustomOption(new NamePartOption(SEQUENCE_PART_NUMBER, ""));
-        addCustomOption(new NameSeparatorOption(SEQUENCE_SEPARATOR, "part of barcode name separated by "));
+        traceNamePartOption = addCustomOption(new NamePartOption("traceNamePart", ""));
+        traceNameSeparatorOption = addCustomOption(new NameSeparatorOption("traceNameSeparator", "part of trace name separated by "));
 
         endAlignHorizontally();
-    }
-
-    private int getPartNumber(String partNumber) {
-        return ((NamePartOption)getOption(partNumber)).getPart();
-    }
-
-    private String getSeparator(String separator) {
-        return ((NameSeparatorOption)getOption(separator)).getSeparatorString();
     }
 }

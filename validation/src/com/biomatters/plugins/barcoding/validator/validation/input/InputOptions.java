@@ -17,13 +17,8 @@ import java.util.List;
  *         Created on 3/09/14 3:58 PM
  */
 public class InputOptions extends Options {
-    private static final String TRACE_INPUT_OPTION_NAME   = "traceInput";
-    private static final String BARCODE_INPUT_OPTION_NAME = "barcodeInput";
-    private static final String METHOD_OPTION_NAME        = "method";
-
-    public static final String MATCH_USING_BOLD_OPTION_NAME      = "matchUsingBold";
-    public static final String MATCH_USING_GENBANK_OPTION_NAME   = "matchUsingGenbank";
-    public static final String MATCH_USING_FILE_NAME_OPTION_NAME = "matchUsingFilename";
+    private MultipleOptions barcodeInputOption;
+    private MultipleOptions traceInputOption;
 
     public InputOptions(Class cls) {
         super(cls);
@@ -31,15 +26,15 @@ public class InputOptions extends Options {
         addHelpButtonOptions();
         addTraceInputOptions();
         addBarcodeInputOptions();
-        addMethodSelectionOptions();
+        addMappingApproachOptions();
     }
 
     public List<String> getTraceFilePaths() {
-        return getFilePathsFromMultipleInputFileOptions(TRACE_INPUT_OPTION_NAME);
+        return getFilePathsFromMultipleInputFileOptions(traceInputOption);
     }
 
     public List<String> getBarcodeFilePaths() {
-        return getFilePathsFromMultipleInputFileOptions(BARCODE_INPUT_OPTION_NAME);
+        return getFilePathsFromMultipleInputFileOptions(barcodeInputOption);
     }
 
     public BarcodesToTracesMapperOptions getMethodOption() {
@@ -64,25 +59,25 @@ public class InputOptions extends Options {
     }
 
     private void addTraceInputOptions() {
-        addMultipleOptions(TRACE_INPUT_OPTION_NAME, new InputSelectionOptions("Trace(s):", ImportUtilities.TRACE_ALLOWED_FILE_EXTENSIONS), false);
+        traceInputOption = addMultipleOptions("traceInput", new InputSelectionOptions("Trace(s):", ImportUtilities.TRACE_ALLOWED_FILE_EXTENSIONS), false);
     }
 
     private void addBarcodeInputOptions() {
-        addMultipleOptions(BARCODE_INPUT_OPTION_NAME, new InputSelectionOptions("Barcode Sequence(s):"), false);
+        barcodeInputOption = addMultipleOptions("barcodeInput", new InputSelectionOptions("Barcode Sequence(s):"), false);
     }
 
-    private void addMethodSelectionOptions() {
-        addChildOptions(MATCH_USING_BOLD_OPTION_NAME, "TRACE_FILE_INFO.txt (BOLD)", "", new BOLDTraceListMapperOptions(InputOptions.class));
-        addChildOptions(MATCH_USING_GENBANK_OPTION_NAME, "XML File (Genbank)", "", new GenbankXmlMapperOptions(InputOptions.class));
-        addChildOptions(MATCH_USING_FILE_NAME_OPTION_NAME, "part of names", "", new FileNameMapperOptions(InputOptions.class));
+    private void addMappingApproachOptions() {
+        addChildOptions("mapUsingBoldTraceInfoFile", "TRACE_FILE_INFO.txt (BOLD)", "", new BOLDTraceListMapperOptions(InputOptions.class));
+        addChildOptions("mapUsingGenbankTraceInfoFile", "TRACEINFO.xml (Genbank)", "", new GenbankXmlMapperOptions(InputOptions.class));
+        addChildOptions("mapUsingPartOfNames", "part of names", "", new FileNameMapperOptions(InputOptions.class));
 
-        addChildOptionsPageChooser(METHOD_OPTION_NAME, "Match traces to sequences by: ", Collections.<String>emptyList(), PageChooserType.COMBO_BOX, false);
+        addChildOptionsPageChooser("mappingApproach", "Match traces to sequences by: ", Collections.<String>emptyList(), PageChooserType.COMBO_BOX, false);
     }
 
-    private List<String> getFilePathsFromMultipleInputFileOptions(String optionName) {
+    private static List<String> getFilePathsFromMultipleInputFileOptions(MultipleOptions options) {
         List<String> filePaths = new ArrayList<String>();
 
-        for (Options traceInput : getMultipleOptions(optionName).getValues()) {
+        for (Options traceInput : options.getValues()) {
             filePaths.add(((InputSelectionOptions) traceInput).getFilePath());
         }
 

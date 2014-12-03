@@ -17,33 +17,33 @@ import java.util.Set;
  *         Created on 15/07/14 4:09 PM
  */
 public class InputSelectionOptions extends Options {
-    private final String INPUT_SELECTION_OPTION_NAME = "input";
     private final static String SEPERATOR = ",";
-    private final static String EXT_ATTR = "exts";
+    private final static String EXT_ATTR = "extensions";
 
+    private FileSelectionOption inputSelectionOption;
     private String label;
-    private Set<String> exts;
+    private Set<String> extensions;
 
     public InputSelectionOptions(String label) {
         this(label, null);
     }
 
-    public InputSelectionOptions(String label, Set<String> exts) {
+    public InputSelectionOptions(String label, Set<String> extensions) {
         super(com.biomatters.plugins.barcoding.validator.validation.input.InputOptions.class);
-        initialize(label, exts);
+        initialize(label, extensions);
     }
 
     private void initialize(String label, Set<String> exts) {
         this.label = label;
-        this.exts = exts;
+        this.extensions = exts;
         final Set<String> extsSet = exts;
 
         beginAlignHorizontally(null, false);
 
         if (exts == null || exts.size() == 0) {
-            addFileSelectionOption(INPUT_SELECTION_OPTION_NAME, this.label, "").setSelectionType(JFileChooser.FILES_AND_DIRECTORIES);
+            inputSelectionOption = addFileSelectionOption("input", this.label, "");
         } else {
-            addFileSelectionOption(INPUT_SELECTION_OPTION_NAME, this.label, "", new String[0], "Browse", new FilenameFilter() {
+            inputSelectionOption = addFileSelectionOption("input", this.label, "", new String[0], "Browse", new FilenameFilter() {
                 @Override
                 public boolean accept(File dir, String name) {
                     if (new File(dir, name).isDirectory()) {
@@ -57,8 +57,10 @@ public class InputSelectionOptions extends Options {
 
                     return false;
                 }
-            }).setSelectionType(JFileChooser.FILES_AND_DIRECTORIES);
+            });
         }
+        inputSelectionOption.setSelectionType(JFileChooser.FILES_AND_DIRECTORIES);
+
         endAlignHorizontally();
     }
 
@@ -68,25 +70,25 @@ public class InputSelectionOptions extends Options {
         String extStr = element.getAttributeValue(EXT_ATTR);
 
         if (extStr != null && extStr.trim().length() > 0) {
-            exts = new HashSet<String>();
+            extensions = new HashSet<String>();
             for (String tmp : extStr.split(SEPERATOR)) {
-                exts.add(tmp);
+                extensions.add(tmp);
             }
         }
 
-        initialize(lable, exts);
+        initialize(lable, extensions);
     }
 
     public String getFilePath() {
-        return getOption(INPUT_SELECTION_OPTION_NAME).getValueAsString();
+        return inputSelectionOption.getValueAsString();
     }
 
     @Override
     public Element toXML() {
         Element element = new Element(XMLSerializable.ROOT_ELEMENT_NAME);
         element.setText(label);
-        if (exts != null && exts.size() > 0)
-            element.setAttribute(EXT_ATTR, StringUtilities.join(SEPERATOR, exts));
+        if (extensions != null && extensions.size() > 0)
+            element.setAttribute(EXT_ATTR, StringUtilities.join(SEPERATOR, extensions));
 
         return element;
     }

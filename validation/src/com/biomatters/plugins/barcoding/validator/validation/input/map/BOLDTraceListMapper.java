@@ -26,14 +26,14 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
 
     private String boldTraceInfoFilePath;
     private boolean hasHeaderRow;
-    private int processIdIndex;
-    private int traceIndex;
+    private int userSelectedProcessIdIndex;
+    private int userSelectedTracefileIndex;
 
-    public BOLDTraceListMapper(String boldTraceInfoFilePath){
+    public BOLDTraceListMapper(String boldTraceInfoFilePath, boolean hasHeaderRow, int processIdIndex, int traceIndex) {
         setBoldTraceInfoFilePath(boldTraceInfoFilePath);
         this.hasHeaderRow = hasHeaderRow;
-        this.processIdIndex = processIdIndex;
-        this.traceIndex = traceIndex;
+        this.userSelectedProcessIdIndex = userSelectedProcessIdIndex;
+        this.userSelectedTracefileIndex = userSelectedTracefileIndex;
     }
 
     /**
@@ -110,8 +110,8 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
 
         Multimap<String, AnnotatedPluginDocument> traceNamesToTraces = getTraceNamesToTracesMap(traces);
         List<List<String>> contents = importTraceListFileContent();
-        int traceFileRowIndex = hasHeaderRow ? getTraceFileIndex(contents) : traceIndex;
-        int processIDRowIndex = hasHeaderRow ? getProcessIDIndex(contents) : processIdIndex;
+        int traceFileRowIndex = hasHeaderRow ? getTraceFileIndex(contents) : userSelectedTracefileIndex;
+        int processIDRowIndex = hasHeaderRow ? getProcessIDIndex(contents) : userSelectedProcessIdIndex;
         int indexOfFirstRowWithContents = hasHeaderRow ? 1 : 0;
         for (int i = indexOfFirstRowWithContents; i < contents.size(); i++) {
             List<String> row = contents.get(i);

@@ -14,9 +14,9 @@ import java.awt.event.ActionListener;
  *         Created on 3/09/14 3:42 PM
  */
 public class CAP3Options extends Options {
-    private final static String MIN_OVERLAP_LENGTH_OPTION_NAME   = "minOverlapLength";
-    private final static String MIN_OVERLAP_IDENTITY_OPTION_NAME = "minOverlapIdentity";
-    private final static String EXECUTABLE_OPTION_NAME           = "executable";
+    private IntegerOption minOverlapLengthOption;
+    private IntegerOption minOverlapIdentityOption;
+    private FileSelectionOption executableSelectionOption;
 
     private final static String DEFAULT_CAP3_EXECUTABLE_NAME_WINDOWS = "cap3.exe";
     private final static String DEFAULT_CAP3_EXECUTABLE_NAME_UNIX    = "cap3";
@@ -26,37 +26,34 @@ public class CAP3Options extends Options {
 
         addMinOverlapLengthOption();
         addMinOverlapIdentityOption();
-        addExecutableOption();
-    }
-
-    public static String getDefaultCap3ExecutableName() {
-        return SystemUtilities.isWindows() ? DEFAULT_CAP3_EXECUTABLE_NAME_WINDOWS : DEFAULT_CAP3_EXECUTABLE_NAME_UNIX;
+        addExecutableSelectionOption();
     }
 
     public int getMinOverlapLength() {
-        return ((IntegerOption)getOption(MIN_OVERLAP_LENGTH_OPTION_NAME)).getValue();
+        return minOverlapLengthOption.getValue();
     }
 
     public int getMinOverlapIdentity() {
-        return ((IntegerOption)getOption(MIN_OVERLAP_IDENTITY_OPTION_NAME)).getValue();
+        return minOverlapIdentityOption.getValue();
     }
 
     public String getExecutablePath() {
-        return ((FileSelectionOption)getOption(EXECUTABLE_OPTION_NAME)).getValue();
+        return executableSelectionOption.getValue();
     }
 
     private void addMinOverlapLengthOption() {
-        addIntegerOption(MIN_OVERLAP_LENGTH_OPTION_NAME, "Min Overlap Length:", 40, 16, 1000);
+        minOverlapLengthOption = addIntegerOption("minOverlapOverlap", "Min Overlap Length:", 40, 16, 1000);
     }
 
     private void addMinOverlapIdentityOption() {
-        addIntegerOption(MIN_OVERLAP_IDENTITY_OPTION_NAME, "Min Overlap Identity:", 90, 66, 1000);
+        minOverlapIdentityOption = addIntegerOption("minOverlapIdentity", "Min Overlap Identity:", 90, 66, 1000);
     }
 
-    private void addExecutableOption() {
+    private void addExecutableSelectionOption() {
         beginAlignHorizontally(null, false);
 
-        addFileSelectionOption(EXECUTABLE_OPTION_NAME, "CAP3 Executable:", getDefaultCap3ExecutableName()).setSelectionType(JFileChooser.FILES_ONLY);
+        executableSelectionOption = addFileSelectionOption("executableSelection", "CAP3 Executable:", getDefaultCap3ExecutableName());
+        executableSelectionOption.setSelectionType(JFileChooser.FILES_ONLY);
 
         ButtonOption button = addButtonOption("help", "", "", IconUtilities.getIcons("help16.png").getIcon16(), ButtonOption.RIGHT);
         button.addActionListener(new ActionListener() {
@@ -72,5 +69,9 @@ public class CAP3Options extends Options {
         });
 
         endAlignHorizontally();
+    }
+
+    public static String getDefaultCap3ExecutableName() {
+        return SystemUtilities.isWindows() ? DEFAULT_CAP3_EXECUTABLE_NAME_WINDOWS : DEFAULT_CAP3_EXECUTABLE_NAME_UNIX;
     }
 }
