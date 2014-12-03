@@ -14,7 +14,12 @@ public class BarcodesToTracesMapperFactory {
         if (BOLDTraceListMapperOptions.class.isAssignableFrom(options.getClass())) {
             BOLDTraceListMapperOptions BOLDTraceListMapperOptions = (BOLDTraceListMapperOptions)options;
 
-            return new BOLDTraceListMapper(BOLDTraceListMapperOptions.getBoldListFilePath());
+            return new BOLDTraceListMapper(
+                    BOLDTraceListMapperOptions.getBoldListFilePath(),
+                    BOLDTraceListMapperOptions.hasHeader(),
+                    BOLDTraceListMapperOptions.getProcessIdIndex(),
+                    BOLDTraceListMapperOptions.getTraceIndex()
+            );
         } else if (GenbankXmlMapperOptions.class.isAssignableFrom(options.getClass())) {
            GenbankXmlMapperOptions genbankXmlMapperOptions = (GenbankXmlMapperOptions)options;
 

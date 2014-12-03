@@ -1,7 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.research.options;
 
 import com.biomatters.geneious.publicapi.plugin.Options;
-import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorOperation;
 
 import javax.swing.*;
 import java.util.List;
@@ -30,5 +29,10 @@ class StepSizeOptions<T extends Number> extends Options {
     List<T> getValues() {
         // I needed to create the getForSteps in MultiValueOption because I couldn't add objects of type T and get type T back :(
         return baseOption.getForSteps(minOption.getValue(), maxOption.getValue(), stepOption.getValue());
+    }
+
+    @Override
+    public String verifyOptionsAreValid() {
+        return baseOption.verifyInputs(minOption.getValue(), maxOption.getValue(), stepOption.getValue());
     }
 }

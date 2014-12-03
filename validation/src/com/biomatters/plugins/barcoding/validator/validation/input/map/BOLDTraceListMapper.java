@@ -25,9 +25,15 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
     private static final int INDEX_OF_PROCESS_ID_IN_BOLD_BARCODE_DESCRIPTION = 0;
 
     private String boldTraceInfoFilePath;
+    private boolean hasHeaderRow;
+    private int processIdIndex;
+    private int traceIndex;
 
     public BOLDTraceListMapper(String boldTraceInfoFilePath){
         setBoldTraceInfoFilePath(boldTraceInfoFilePath);
+        this.hasHeaderRow = hasHeaderRow;
+        this.processIdIndex = processIdIndex;
+        this.traceIndex = traceIndex;
     }
 
     /**
@@ -104,10 +110,15 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
 
         Multimap<String, AnnotatedPluginDocument> traceNamesToTraces = getTraceNamesToTracesMap(traces);
         List<List<String>> contents = importTraceListFileContent();
-        int traceFileRowIndex = getTraceFileIndex(contents);
-        int processIDRowIndex = getProcessIDIndex(contents);
-        for (int i = 1; i < contents.size(); i++) {
+        int traceFileRowIndex = hasHeaderRow ? getTraceFileIndex(contents) : traceIndex;
+        int processIDRowIndex = hasHeaderRow ? getProcessIDIndex(contents) : processIdIndex;
+        int indexOfFirstRowWithContents = hasHeaderRow ? 1 : 0;
+        for (int i = indexOfFirstRowWithContents; i < contents.size(); i++) {
             List<String> row = contents.get(i);
+            
+            throwMappingExceptionIfIndexOutOfBounds(i, processIDRowIndex, row);
+            throwMappingExceptionIfIndexOutOfBounds(i, traceFileRowIndex, row);
+            
             processIDsToTraces.putAll(row.get(processIDRowIndex), traceNamesToTraces.get(parseTraceFileName(row.get(traceFileRowIndex))));
         }
 
@@ -260,5 +271,12 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
         }
 
         return index;
+    }
+    
+    private static void throwMappingExceptionIfIndexOutOfBounds(int lineIndex, int index, Collection<String> row) throws DocumentOperationException {
+        if(index >= row.size()) {
+            throw new DocumentOperationException("Line " + (lineIndex+1) + ": did not have " +
+                        NamePartOption.getLabelForPartNumber(index) + " element.");
+        }
     }
 }
