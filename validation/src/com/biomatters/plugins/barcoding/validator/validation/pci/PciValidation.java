@@ -115,15 +115,19 @@ public class PciValidation extends SingleSequenceValidation {
     }
 
     /**
-     * <strong>Note</strong>: Any white space in the sequence name will be replaced by an underscore "_".  This is because the
+     * The UID consists of Genus_Species_ID.  In our case we use UnknownGenus_UnknownSpecies_SequenceName.  This is
+     * because all the sequences in the alignment need to be compared.  We are not splitting things by species.
+     *
+     * <strong>Note</strong>: Any white space in the sequence name will be replaced by an dash "-".  This is because the
      * compressed barcode format used as input for the PCI program is based on strict FASTA, which does not have spaces
      * in the names of sequences.  <a href="http://www.ncbi.nlm.nih.gov/CBBresearch/Spouge/html_ncbi/html/bib/119.html#The%20Format%20of%20an%20Compressed%20Barcode%20File">Details here.</a>.
+     * Underscore is replaced because it is a special character in the UID used as a separator.
      *
      * @param name The name of the sequence
      * @return The UID of the sequence as it should appear in the compressed barcode format.  See
      *
      */
     private static String getUid(String name) {
-        return UID_PREFIX + name.replaceAll("\\s+", "_");
+        return UID_PREFIX + name.replaceAll("[_\\s]+", "-");
     }
 }
