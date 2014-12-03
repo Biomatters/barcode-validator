@@ -44,7 +44,7 @@ public class ValidationReportDocument implements PluginDocument {
           .append("<br>")
           .append("<br>");
 
-         if (options.getTrimmingOptions().getPrimerTrimmingOptions().getHasPrimerTrimmered()) {
+         if (options.getTrimmingOptions().getPrimerTrimmingOptions().getHasPrimerTrimmed()) {
                sb.append("<u>Trimming by primers</u><br>")
                  .append("Max Mismatches = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getMaximumMismatches()).append("<br>")
                  .append("Min Match Length = ").append(options.getTrimmingOptions().getPrimerTrimmingOptions().getMinimumMatchLength()).append("<br>")

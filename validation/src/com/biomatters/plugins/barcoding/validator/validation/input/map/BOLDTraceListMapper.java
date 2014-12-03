@@ -21,14 +21,14 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
 
     private String boldTraceListFilePath;
     private boolean hasHeaderRow;
-    private int processIdIndex;
-    private int traceIndex;
+    private int userSelectedProcessIdIndex;
+    private int userSelectedTracefileIndex;
 
-    public BOLDTraceListMapper(String boldTraceListFilePath, boolean hasHeaderRow, int processIdIndex, int traceIndex) {
+    public BOLDTraceListMapper(String boldTraceListFilePath, boolean hasHeaderRow, int userSelectedProcessIdIndex, int userSelectedTracefileIndex) {
         this.boldTraceListFilePath = boldTraceListFilePath;
         this.hasHeaderRow = hasHeaderRow;
-        this.processIdIndex = processIdIndex;
-        this.traceIndex = traceIndex;
+        this.userSelectedProcessIdIndex = userSelectedProcessIdIndex;
+        this.userSelectedTracefileIndex = userSelectedTracefileIndex;
     }
 
     /**
@@ -133,14 +133,14 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
         ArrayListMultimap<String, String> result = ArrayListMultimap.create();
         List<List<String>> contents = getTraceListFileContent();
 
-        int processIdRowIndex = hasHeaderRow ? getProcessIdIndex(contents) : processIdIndex;
-        int traceFileRowIndex = hasHeaderRow ? getTraceFileIndex(contents) : traceIndex;
+        int processIDRowIndex = hasHeaderRow ? getProcessIdIndex(contents) : userSelectedProcessIdIndex;
+        int traceFileRowIndex = hasHeaderRow ? getTracefileIndex(contents) : userSelectedTracefileIndex;
         int indexOfFirstRowWithContents = hasHeaderRow ? 1 : 0;
         for (int i = indexOfFirstRowWithContents; i < contents.size(); i++) {
             List<String> row = contents.get(i);
-            throwMappingExceptionIfIndexOutOfBounds(i, processIdRowIndex, row);
+            throwMappingExceptionIfIndexOutOfBounds(i, processIDRowIndex, row);
             throwMappingExceptionIfIndexOutOfBounds(i, traceFileRowIndex, row);
-            result.put(row.get(processIdRowIndex), parseTraceFileName(row.get(traceFileRowIndex)));
+            result.put(row.get(processIDRowIndex), parseTraceFileName(row.get(traceFileRowIndex)));
         }
 
         return result.asMap();
@@ -288,7 +288,7 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
      * @return Index of the trace file column.
      * @throws BoldTraceListMapperException If no or more than 1 trace file column was found.
      */
-    private int getTraceFileIndex(List<List<String>> contents) throws BoldTraceListMapperException {
+    private int getTracefileIndex(List<List<String>> contents) throws BoldTraceListMapperException {
         return getRowIndex(contents, TRACE_FILE_COLUMN_NAME);
     }
 
