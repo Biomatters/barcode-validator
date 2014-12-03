@@ -1,31 +1,25 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
-import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
-import com.biomatters.geneious.publicapi.documents.DocumentField;
-import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
-import com.biomatters.geneious.publicapi.documents.URN;
+import com.biomatters.geneious.publicapi.documents.*;
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.Percentage;
 import com.biomatters.geneious.publicapi.implementations.SequenceExtractionUtilities;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultSequenceDocument;
-import com.biomatters.geneious.publicapi.plugin.DocumentOperation;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
-import com.biomatters.geneious.publicapi.plugin.PluginUtilities;
 import com.biomatters.plugins.barcoding.validator.validation.results.MuscleAlignmentValidationResultFact;
 import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
-import jebl.util.ProgressListener;
+import com.biomatters.plugins.barcoding.validator.validation.utilities.AlignmentUtilities;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Frank Lee
  * Created by frank on 2/10/14.
  */
 public class MuscleAlignmentValidation extends SequenceCompareValidation {
-    private static final String MUSCLE_OPERATION_ID = "MUSCLE";
+
 
     @Override
     public ResultFact validate(SequenceDocument sequence, SequenceDocument referenceSequence, ValidationOptions options) {
@@ -38,7 +32,6 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
         }
 
         MuscleAlignmentValidationOptions muscleAlignmentValidationOptions = (MuscleAlignmentValidationOptions)options;
-        DocumentOperation alignmentOperation = PluginUtilities.getAlignmentOperation(MUSCLE_OPERATION_ID, SequenceDocument.Alphabet.NUCLEOTIDE);
         String sequenceName = sequence.getName();
         float minimumSimilarity = muscleAlignmentValidationOptions.getMinimumSimilarity();
         Map<Float, AnnotatedPluginDocument> similarityToIntermediateDocument = new HashMap<Float, AnnotatedPluginDocument>();
@@ -58,8 +51,8 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
         MuscleAlignmentValidationResultFact result = new MuscleAlignmentValidationResultFact(false, 0.0, "", Collections.<URN>emptyList(), "");
 
         try {
-            float similarityBetweenSequenceOneAndSequenceTwo = getSimilarity(alignmentOperation, sequenceDocument, referenceSequenceDocument, similarityToIntermediateDocument);
-            float similarityBetweenSequenceOneReversedAndSequenceTwo = getSimilarity(alignmentOperation, sequenceDocument, sequenceReversedDocument, similarityToIntermediateDocument);
+            float similarityBetweenSequenceOneAndSequenceTwo = getSimilarity(sequenceDocument, referenceSequenceDocument, similarityToIntermediateDocument);
+            float similarityBetweenSequenceOneReversedAndSequenceTwo = getSimilarity(sequenceDocument, sequenceReversedDocument, similarityToIntermediateDocument);
 
             float similarityOfAlignment = Math.max(similarityBetweenSequenceOneAndSequenceTwo, similarityBetweenSequenceOneReversedAndSequenceTwo);
             AnnotatedPluginDocument alignmentDocument = similarityToIntermediateDocument.get(similarityOfAlignment);
@@ -87,25 +80,34 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
         return new MuscleAlignmentValidationOptions(MuscleAlignmentValidation.class);
     }
 
-    private float getSimilarity(DocumentOperation alignmentOperation,
-                                AnnotatedPluginDocument sequenceOneDocument,
+    private float getSimilarity(AnnotatedPluginDocument sequenceOneDocument,
                                 AnnotatedPluginDocument sequenceTwoDocument,
                                 Map<Float, AnnotatedPluginDocument> similarityToIntermediateDocument) throws DocumentOperationException {
-        List<AnnotatedPluginDocument> annotatedPluginDocuments = alignmentOperation.performOperation(ProgressListener.EMPTY, alignmentOperation.getOptions(sequenceOneDocument, sequenceTwoDocument), sequenceOneDocument, sequenceTwoDocument);
 
-        if (annotatedPluginDocuments == null || annotatedPluginDocuments.size() == 0) {
+        NucleotideSequenceDocument seq1 = getNucleotideSeqFromApd(sequenceOneDocument);
+        NucleotideSequenceDocument seq2 = getNucleotideSeqFromApd(sequenceTwoDocument);
+        SequenceAlignmentDocument alignment = AlignmentUtilities.performAlignment(Arrays.asList(seq1, seq2));
+
+        if (alignment == null) {
             return -1;
         }
 
-        // A pairwise alignment of two sequences should only ever produce one document
-        assert(annotatedPluginDocuments.size() == 1);
+        AnnotatedPluginDocument apd = DocumentUtilities.getAnnotatedPluginDocumentThatContains(alignment);
+        if(apd == null) {
+            apd = DocumentUtilities.createAnnotatedPluginDocument(alignment);
+        }
+        float similarity = ((Percentage)apd.getFieldValue(DocumentField.ALIGNMENT_SIMILARITY.getCode())).floatValue();
 
-        AnnotatedPluginDocument alignmentDocument = annotatedPluginDocuments.get(0);
-
-        float similarity = ((Percentage)alignmentDocument.getFieldValue(DocumentField.ALIGNMENT_SIMILARITY.getCode())).floatValue();
-
-        similarityToIntermediateDocument.put(similarity, alignmentDocument);
+        similarityToIntermediateDocument.put(similarity, apd);
 
         return similarity;
+    }
+
+    private NucleotideSequenceDocument getNucleotideSeqFromApd(AnnotatedPluginDocument sequenceOneDocument) {
+        PluginDocument pluginDoc = sequenceOneDocument.getDocumentOrNull();
+        if(!(pluginDoc instanceof NucleotideSequenceDocument)) {
+            throw new IllegalStateException("");
+        }
+        return (NucleotideSequenceDocument)pluginDoc;
     }
 }

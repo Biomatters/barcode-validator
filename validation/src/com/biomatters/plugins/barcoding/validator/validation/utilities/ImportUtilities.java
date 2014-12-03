@@ -3,6 +3,7 @@ package com.biomatters.plugins.barcoding.validator.validation.utilities;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.DefaultSequenceListDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultNucleotideSequence;
 import com.biomatters.geneious.publicapi.plugin.DocumentImportException;
@@ -92,32 +93,49 @@ public class ImportUtilities {
 
                 result.addAll(importBarcodes(subFilePaths, operationCallback, cancelable));
             } else if (fileNameHasOneOfExtensions(sourceFile.getName(), BARCODE_ALLOWED_FILE_EXTENSIONS)) {
-                try {
-                    FastaImporter importer = new FastaImporter(sourceFile, SequenceType.NUCLEOTIDE);
-                    List<Sequence> importedSequences = importer.importSequences();
-                    for (Sequence importedSequence : importedSequences) {
-                        DefaultNucleotideSequence importedSequenceDocument = new DefaultNucleotideSequence(new GaplessSequence(importedSequence));
-                        String sequenceName = importedSequenceDocument.getName();
-                        AnnotatedPluginDocument importedSequenceAnnotatedDocument = operationCallback.addDocument(importedSequenceDocument, true, ProgressListener.EMPTY);
+                List<NucleotideSequenceDocument> seqDocs = importNucleotidesFastaFile(sourceFile);
 
-                        if (!sequenceName.equals(importedSequenceAnnotatedDocument.getName())) {
-                            importedSequenceAnnotatedDocument.setName(sequenceName);
-                            importedSequenceAnnotatedDocument.save();
-                        }
+                for (NucleotideSequenceDocument importedSequenceDocument : seqDocs) {
+                    String sequenceName = importedSequenceDocument.getName();
+                    AnnotatedPluginDocument importedSequenceAnnotatedDocument = operationCallback.addDocument(importedSequenceDocument, true, ProgressListener.EMPTY);
 
-                        result.add(importedSequenceAnnotatedDocument);
+                    if (!sequenceName.equals(importedSequenceAnnotatedDocument.getName())) {
+                        importedSequenceAnnotatedDocument.setName(sequenceName);
+                        importedSequenceAnnotatedDocument.save();
                     }
-                } catch (FileNotFoundException e) {
-                    throw new DocumentOperationException("Could not import barcodes: " + e.getMessage(), e);
-                } catch (ImportException e) {
-                    throw new DocumentOperationException("Could not import barcodes: " + e.getMessage(), e);
-                } catch (IOException e) {
-                    throw new DocumentOperationException("Could not import barcodes: " + e.getMessage(), e);
+
+                    result.add(importedSequenceAnnotatedDocument);
                 }
             }
         }
 
         return result;
+    }
+
+    /**
+     * Creates {@link com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument} representing
+     * the contents of a FASTA file.  The documents will exist only in memory and are not saved to a database.
+     *
+     * @param sourceFile The fasta file to import
+     * @return A list of {@link com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument}
+     * @throws DocumentOperationException if something goes wrong in the import process
+     */
+    public static List<NucleotideSequenceDocument> importNucleotidesFastaFile(File sourceFile) throws DocumentOperationException {
+        List<NucleotideSequenceDocument> seqDocs = new ArrayList<NucleotideSequenceDocument>();
+        try {
+            FastaImporter importer = new FastaImporter(sourceFile, SequenceType.NUCLEOTIDE);
+            List<Sequence> importedSequences = importer.importSequences();
+            for (Sequence importedSequence : importedSequences) {
+                seqDocs.add(new DefaultNucleotideSequence(new GaplessSequence(importedSequence)));
+            }
+        } catch (FileNotFoundException e) {
+            throw new DocumentOperationException("Could not import barcodes: " + e.getMessage(), e);
+        } catch (ImportException e) {
+            throw new DocumentOperationException("Could not import barcodes: " + e.getMessage(), e);
+        } catch (IOException e) {
+            throw new DocumentOperationException("Could not import barcodes: " + e.getMessage(), e);
+        }
+        return seqDocs;
     }
 
     /**
