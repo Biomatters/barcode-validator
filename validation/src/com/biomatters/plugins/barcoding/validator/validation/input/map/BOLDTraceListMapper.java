@@ -29,7 +29,7 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
     private int processIdIndex;
     private int traceIndex;
 
-    public BOLDTraceListMapper(String boldTraceInfoFilePath){
+    public BOLDTraceListMapper(String boldTraceInfoFilePath, boolean hasHeaderRow, int processIdIndex, int traceIndex) {
         setBoldTraceInfoFilePath(boldTraceInfoFilePath);
         this.hasHeaderRow = hasHeaderRow;
         this.processIdIndex = processIdIndex;
