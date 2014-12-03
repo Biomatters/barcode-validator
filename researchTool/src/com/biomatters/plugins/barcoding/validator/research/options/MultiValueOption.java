@@ -49,6 +49,8 @@ public abstract class MultiValueOption<T extends Number> extends Options.Option<
 
     abstract List<T> getForSteps(T min, T max, T step);
 
+    abstract String verifyInputs(T min, T max, T step);
+
     @Override
     public List<T> getValueFromString(String s) {
         String[] valueStrings = s.split(SEPARATOR);
@@ -148,6 +150,25 @@ public abstract class MultiValueOption<T extends Number> extends Options.Option<
             } else {
                 throw new IllegalStateException("Impossible option chosen: " + methodOption.getValue());
             }
+        }
+
+        @Override
+        public String verifyOptionsAreValid() {
+            if(methodOption.getValue() == EXACT) {
+                List<Options> values = exactValues.getValues();
+                for (Options value : values) {
+                    String str = value.getValueAsString(option.getName());
+                    if (str == null || str.startsWith("-")) {
+                        return "input value " + str + " is invalid, it should not be negative.";
+                    }
+                }
+            } else if(methodOption.getValue() == STEPS) {
+                return stepSizeOptions.verifyOptionsAreValid();
+            } else {
+                throw new IllegalStateException("Impossible option chosen: " + methodOption.getValue());
+            }
+
+            return null;
         }
     }
 }
