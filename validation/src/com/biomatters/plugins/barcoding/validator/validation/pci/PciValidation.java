@@ -76,30 +76,31 @@ public class PciValidation extends SingleSequenceValidation {
     }
 
     /**
+     * Produces a file that can be used to specify new samples to the PCI program (using -s).
+     *
      * @param sequence The sequence that should have its UID in the file
-     * @return A plain text file with the UID of the sequence in it
+     * @return A plain text file with the UID of the sequence in it. Obtained by calling {@link #getUid(String)}
      * @throws IOException if there is a problem writing the file
      */
-    private File createNewUidFile(NucleotideGraphSequenceDocument sequence) throws IOException {
+    private static File createNewUidFile(NucleotideGraphSequenceDocument sequence) throws IOException {
         File newUids = FileUtilities.createTempFile("new", ".txt", false);
         FileUtilities.writeTextToFile(newUids, UID_PREFIX + sequence.getName());
         return newUids;
     }
 
     /**
-     * Generates the input file to the PCI program.  The input file will name sequences as UnknownGenus_UnknownSpecies_sequenceName.
+     * Generates the input file to the PCI program (-i).  The input file will name sequences using {@link #getUid(String)}
      *
      * @param alignment The alignment to write out to the PCI input file
      * @return The PCI input file
      * @throws IOException if there is a problem writing the file
      */
-    private File createPciInputFile(SequenceAlignmentDocument alignment) throws IOException {
+    private static File createPciInputFile(SequenceAlignmentDocument alignment) throws IOException {
         File outputFile = FileUtilities.createTempFile("alignment", ".fasta", false);
         BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
         try {
             for (SequenceDocument alignedSequence : alignment.getSequences()) {
-                writer.write(">" + UID_PREFIX);
-                writer.write(alignedSequence.getName());
+                writer.write(">" + getUid(alignedSequence.getName()));
                 writer.newLine();
 
                 writer.write(alignedSequence.getSequenceString());
@@ -111,5 +112,18 @@ public class PciValidation extends SingleSequenceValidation {
 
 
         return outputFile;
+    }
+
+    /**
+     * <strong>Note</strong>: Any white space in the sequence name will be replaced by an underscore "_".  This is because the
+     * compressed barcode format used as input for the PCI program is based on strict FASTA, which does not have spaces
+     * in the names of sequences.  <a href="http://www.ncbi.nlm.nih.gov/CBBresearch/Spouge/html_ncbi/html/bib/119.html#The%20Format%20of%20an%20Compressed%20Barcode%20File">Details here.</a>.
+     *
+     * @param name The name of the sequence
+     * @return The UID of the sequence as it should appear in the compressed barcode format.  See
+     *
+     */
+    private static String getUid(String name) {
+        return UID_PREFIX + name.replaceAll("\\s+", "_");
     }
 }
