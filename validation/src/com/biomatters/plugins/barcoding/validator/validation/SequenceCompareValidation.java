@@ -19,5 +19,5 @@ public abstract class SequenceCompareValidation extends Validation {
      * @param options Options to run the validation with. Obtained from calling {@link #getOptions()}
      * @return a {@link com.biomatters.plugins.barcoding.validator.validation.results.ResultFact}
      */
-    public abstract ResultFact validate(SequenceDocument originalSequence, SequenceDocument generatedSequence, ValidationOptions options);
+    public abstract ResultFact validate(SequenceDocument originalSequence, SequenceDocument generatedSequence, ValidationOptions options, ValidationCallback callback);
 }

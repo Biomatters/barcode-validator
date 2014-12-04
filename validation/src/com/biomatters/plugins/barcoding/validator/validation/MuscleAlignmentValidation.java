@@ -1,9 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
-import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
-import com.biomatters.geneious.publicapi.documents.DocumentField;
-import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
-import com.biomatters.geneious.publicapi.documents.URN;
+import com.biomatters.geneious.publicapi.documents.*;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.Percentage;
 import com.biomatters.geneious.publicapi.implementations.SequenceExtractionUtilities;
@@ -15,10 +12,7 @@ import com.biomatters.plugins.barcoding.validator.validation.results.MuscleAlign
 import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
 import jebl.util.ProgressListener;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Frank Lee
@@ -28,7 +22,7 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
     private static final String MUSCLE_OPERATION_ID = "MUSCLE";
 
     @Override
-    public ResultFact validate(SequenceDocument sequence, SequenceDocument referenceSequence, ValidationOptions options) {
+    public ResultFact validate(SequenceDocument sequence, SequenceDocument referenceSequence, ValidationOptions options, ValidationCallback callback) {
         if (!(options instanceof MuscleAlignmentValidationOptions)) {
             throw new IllegalArgumentException(
                     "Wrong options supplied: " +
@@ -66,7 +60,8 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
 
             result.setSimilarity(similarityOfAlignment);
             result.setAlignmentName(alignmentDocument.getName());
-            result.setAlignmentLinks(Collections.singletonList(alignmentDocument.getURN()));
+            URN urn = callback.saveDocumentAndGetUrn(alignmentDocument.getDocument(), ProgressListener.EMPTY);
+            result.setAlignmentLinks(Collections.singletonList(urn));
 
             if (similarityOfAlignment == -1) {
                 result.setNotes("Failed to align " + sequence.getName() + " and " + referenceSequence.getName());

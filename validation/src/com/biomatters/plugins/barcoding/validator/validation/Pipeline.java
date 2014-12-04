@@ -176,7 +176,7 @@ public class Pipeline {
                 List<String> failedSequenceNames = new ArrayList<String>();
 
                 for (NucleotideSequenceDocument sequence : sequences) {
-                    ResultFact sequenceValidationResult = validation.validate(sequence, referenceSequence, options);
+                    ResultFact sequenceValidationResult = validation.validate(sequence, referenceSequence, options, callback);
 
                     if (!sequenceValidationResult.getPass()) {
                         failedSequenceNames.add(sequence.getName());
