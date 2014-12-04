@@ -19,10 +19,12 @@ public class PciValidationOptions extends ValidationOptions {
 
         addStringOption(GENUS_OPTION, "Genus to Test:", "");
         addStringOption(SPECIES_OPTION, "Species to Test:", "");
-        addFileSelectionOption(BARCODES_OPTION, "Barcodes:", "");
-        addHelpButton("Help", "The file contains reference barcode sequences used in the calculation of PCI values.  " +
+        beginAlignHorizontally(null, false);
+        addFileSelectionOption(BARCODES_OPTION, "Barcodes File:", "");
+        addHelpButton("Help", "This file contains the reference barcode sequences used in the calculation of PCI values.  " +
                 "The file must be in FASTA format and contain sequences named Genus_Species_ID.  " +
                 "The ID cannot contain any spaces.");
+        endAlignHorizontally();
     }
 
     public PciValidationOptions(Element element) throws XMLSerializationException {
