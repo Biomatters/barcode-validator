@@ -1,8 +1,8 @@
 package com.biomatters.plugins.barcoding.validator.validation.pci;
 
-import com.biomatters.plugins.barcoding.validator.validation.results.ResultColumn;
-import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
+import com.biomatters.plugins.barcoding.validator.validation.results.*;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +12,26 @@ import java.util.List;
  */
 public class PciResultFact extends ResultFact {
 
+    private static final String PASS_COLUMN_NAME = "Pass";
+
+    @SuppressWarnings("UnusedDeclaration")
     public PciResultFact() {
+        // For de-serialization
+    }
+
+    public PciResultFact(@Nonnull boolean pass, @Nonnull double pDistance, @Nonnull String errorMessage) {
+        // ResultColumn crashes serializing with null values :(
+        BooleanResultColumn passColumn = new BooleanResultColumn(PASS_COLUMN_NAME);
+        passColumn.setData(pass);
+        addedColumns.add(passColumn);
+
+        DoubleResultColumn pDistanceColumn = new DoubleResultColumn("P-Distance");
+        pDistanceColumn.setData(pDistance);
+        addedColumns.add(pDistanceColumn);
+
+        StringResultColumn errorColumn = new StringResultColumn("Errors");
+        errorColumn.setData(errorMessage);
+        addedColumns.add(errorColumn);
     }
 
     @Override
@@ -33,6 +52,11 @@ public class PciResultFact extends ResultFact {
 
     @Override
     public boolean getPass() {
-        return true;
+        for (ResultColumn resultColumn : getColumns()) {
+            if(resultColumn instanceof BooleanResultColumn && resultColumn.getName().equals(PASS_COLUMN_NAME)) {
+                return ((BooleanResultColumn)resultColumn).getData();
+            }
+        }
+        return false;
     }
 }

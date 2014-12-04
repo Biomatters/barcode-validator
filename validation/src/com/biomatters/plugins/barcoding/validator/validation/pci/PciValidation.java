@@ -5,25 +5,24 @@ import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDo
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
+import com.biomatters.geneious.publicapi.utilities.Execution;
 import com.biomatters.geneious.publicapi.utilities.FileUtilities;
 import com.biomatters.geneious.publicapi.utilities.GeneralUtilities;
 import com.biomatters.plugins.barcoding.validator.validation.SingleSequenceValidation;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
-import com.biomatters.plugins.barcoding.validator.validation.results.BooleanResultColumn;
-import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
+import com.biomatters.plugins.barcoding.validator.validation.results.*;
 import com.biomatters.plugins.barcoding.validator.validation.utilities.AlignmentUtilities;
 import com.biomatters.plugins.barcoding.validator.validation.utilities.ImportUtilities;
+import jebl.util.ProgressListener;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 /**
  * @author Matthew Cheung
  *         Created on 3/12/14 12:59 PM
  */
+@SuppressWarnings("UnusedDeclaration")
 public class PciValidation extends SingleSequenceValidation {
     private static final String UID_PREFIX = "UnknownGenus_UnknownSpecies_";
 
@@ -54,25 +53,97 @@ public class PciValidation extends SingleSequenceValidation {
             File newUidFile = createNewUidFile(sequence);
 
             File outputFile = runPci(inputAlignmentFile, newUidFile);
-            return getFactFromOutputFile(outputFile);
+            return getFactFromOutputFile(outputFile, sequence);
         } catch (IOException e) {
             throw new DocumentOperationException("Failed to write out alignment for input to PCI: " + e.getMessage(), e);
+        } catch (PciValidationException e) {
+            return new PciResultFact(false, 0.0, e.getMessage());
+        }
+    }
+
+    private static ResultFact getFactFromOutputFile(File outputFile, NucleotideSequenceDocument sequenceDocument) throws IOException, PciValidationException {
+        double pDistance = getPDistanceFromFile(outputFile, getUid(sequenceDocument.getName()));
+        return new PciResultFact(true, pDistance, "");
+    }
+
+    private static double getPDistanceFromFile(File outputFile, String uid) throws IOException, PciValidationException {
+        BufferedReader reader = new BufferedReader(new FileReader(outputFile));
+        try {
+            String currentLine;
+            while ((currentLine = reader.readLine()) != null) {
+                String[] lineParts = currentLine.trim().split("\\s+");
+                if(lineParts.length != 2) {
+                    continue;
+                }
+                String lineUid = lineParts[0];
+                if(lineUid.equals(uid)) {
+                    try {
+                        return Double.parseDouble(lineParts[1]);
+                    } catch (NumberFormatException e) {
+                        throw new PciValidationException("PCI program produced invalid output.  " + lineParts[1] + " was not a numerical value.", e);
+                    }
+                }
+            }
+        } finally {
+            GeneralUtilities.attemptClose(reader);
+        }
+        return 0;
+    }
+
+    /**
+     *  An error that occurred while running the PCI program and parsing the output.
+     */
+    private static class PciValidationException extends Exception {
+        public PciValidationException(String message) {
+            super(message);
         }
 
+        public PciValidationException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 
-    private ResultFact getFactFromOutputFile(File outputFile) {
-        // todo
-        PciResultFact fact = new PciResultFact();
-        BooleanResultColumn col = new BooleanResultColumn("Pass");
-        col.setData(true);
-        fact.addColumn(col);
-        return fact;
-    }
+    private File runPci(File inputAlignmentFile, File newUidFile) throws IOException, DocumentOperationException, PciValidationException {
+        File output = FileUtilities.createTempFile("output", ".txt", false);
 
-    private File runPci(File inputAlignmentFile, File newUidFile) {
-        // todo
-        return null;
+        File programFolder = FileUtilities.getResourceForClass(PciValidation.class, "program");
+        if(!programFolder.exists()) {
+            throw new DocumentOperationException("PCI program missing from Barcode Validator plugin.  Please re-install.  " +
+                    "Contact Biomatters if this still occurs after re-installing the plugin.");
+        }
+        File validatorScriptFile = new File(programFolder, "validator_pci.pl");
+
+        final StringBuilder stdErrBuilder = new StringBuilder();
+
+        Execution execution = new Execution(new String[]{
+                "perl",
+                validatorScriptFile.getAbsolutePath(),
+                "-i",
+                inputAlignmentFile.getAbsolutePath(),
+                "-o",
+                output.getAbsolutePath(),
+                "-s",
+                newUidFile.getAbsolutePath()
+        }, ProgressListener.EMPTY, new Execution.OutputListener() {
+            @Override
+            public void stdoutWritten(String s) {
+            }
+
+            @Override
+            public void stderrWritten(String s) {
+                stdErrBuilder.append(s);
+            }
+        }, (String)null, false);
+        try {
+            execution.setWorkingDirectory(programFolder.getAbsolutePath());
+            int exitCode = execution.execute();
+            if(exitCode != 0) {
+                throw new PciValidationException("PCI program exited abnormally (exit code = " + exitCode + "): " + stdErrBuilder.toString());
+            }
+            return output;
+        } catch (InterruptedException e) {
+            throw new DocumentOperationException("Execution of validation was interrupted");
+        }
     }
 
     /**
