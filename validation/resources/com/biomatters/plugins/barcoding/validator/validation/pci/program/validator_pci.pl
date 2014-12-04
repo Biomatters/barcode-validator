@@ -142,8 +142,9 @@ This program calculates the PCI, the \'probability of correct identification\'.
 
 The program inputs:
     (1) a mandatory input filename for multiple alignment Fasta file for all samples, 
-    (2) an optional output filename (STDOUT being the default), and
-    (3) an optional set of barcode UIDs for \'new samples\', separated by ':'.
+    (2) a mandatory output filename, and
+    (3) an optional input filename, 
+        its contents being barcode UIDs for \'new samples\', each on a separate line.
 
 The barcode UIDs for the new samples must be distinct.
 The barcode UIDs for new samples must be a subset 
