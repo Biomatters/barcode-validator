@@ -22,9 +22,7 @@ import com.biomatters.plugins.barcoding.validator.validation.results.ResultColum
 import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkListener;
-import javax.swing.event.MouseInputAdapter;
-import javax.swing.event.MouseInputListener;
+import javax.swing.event.*;
 import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.*;
 import java.awt.*;
@@ -229,7 +227,15 @@ public class ValidationReportViewer extends DocumentViewer {
         List<ValidationOutputRecord> records = reportDocument.getRecords();
 
         final ValidationReportTableModel tableModel = new ValidationReportTableModel(records);
-        final JTable table = new GTable(tableModel);
+        final JTable table = new GTable(tableModel, new DefaultTableColumnModel(){
+            @Override
+            public void moveColumn(int columnIndex, int newIndex) {
+                if (tableModel.getOptionAt(columnIndex) == tableModel.getOptionAt(newIndex)) {
+                    super.moveColumn(columnIndex, newIndex);
+                }
+            }
+        });
+        table.setAutoCreateColumnsFromModel(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.setDefaultRenderer(ResultColumn.class, new DefaultTableCellRenderer() {
             @Override
@@ -293,6 +299,7 @@ public class ValidationReportViewer extends DocumentViewer {
             head.addMouseListener(wrapper);
         }
 
+        table.getTableHeader().setReorderingAllowed(true);
         return table;
     }
 
