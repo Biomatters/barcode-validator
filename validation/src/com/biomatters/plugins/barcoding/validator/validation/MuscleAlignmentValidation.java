@@ -1,6 +1,8 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
 import com.biomatters.geneious.publicapi.documents.*;
+import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.Percentage;
 import com.biomatters.geneious.publicapi.implementations.SequenceExtractionUtilities;
@@ -9,6 +11,7 @@ import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.plugins.barcoding.validator.validation.results.MuscleAlignmentValidationResultFact;
 import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
 import com.biomatters.plugins.barcoding.validator.validation.utilities.AlignmentUtilities;
+import jebl.util.ProgressListener;
 
 import java.util.*;
 
