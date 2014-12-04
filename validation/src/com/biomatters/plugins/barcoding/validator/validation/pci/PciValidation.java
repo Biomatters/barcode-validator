@@ -15,8 +15,10 @@ import com.biomatters.plugins.barcoding.validator.validation.utilities.Alignment
 import com.biomatters.plugins.barcoding.validator.validation.utilities.ImportUtilities;
 import jebl.util.ProgressListener;
 
+import javax.annotation.Nonnull;
 import java.io.*;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author Matthew Cheung
@@ -24,8 +26,6 @@ import java.util.*;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class PciValidation extends SingleSequenceValidation {
-    private static final String UID_PREFIX = "UnknownGenus_UnknownSpecies_";
-
     @Override
     public ValidationOptions getOptions() {
         return new PciValidationOptions();
@@ -43,17 +43,29 @@ public class PciValidation extends SingleSequenceValidation {
             throw new DocumentOperationException("Barcodes file for PCI validation did not exist: " + barcodesFile.getAbsolutePath());
         }
 
-        List<NucleotideSequenceDocument> toAlign = new ArrayList<NucleotideSequenceDocument>();
-        toAlign.addAll(ImportUtilities.importNucleotidesFastaFile(barcodesFile));
-        toAlign.add(sequence);
+        Map<String, NucleotideSequenceDocument> toAlign = new HashMap<String, NucleotideSequenceDocument>();
+        String uidForNewSample = getUid(options.getGenus(), options.getSpecies(), sequence.getName());
+        toAlign.put(uidForNewSample, sequence);
 
-        SequenceAlignmentDocument alignment = AlignmentUtilities.performAlignment(toAlign);
+        List<NucleotideSequenceDocument> imported = ImportUtilities.importNucleotidesFastaFile(barcodesFile);
+        for (NucleotideSequenceDocument importedSeq : imported) {
+            String uid = importedSeq.getName();
+            if(!Pattern.matches(BARCODE_DEF_LINE_REGEX, uid)) {
+                throw new DocumentOperationException(uid + " in Barcodes file for PCI is not in the correct format.  Needs to match Genus_Species_ID");
+            }
+            if(toAlign.containsKey(uid)) {
+                throw new DocumentOperationException("Barcodes file for PCI contains duplicate UID: " + uid);
+            }
+            toAlign.put(uid, importedSeq);
+        }
+
+        SequenceAlignmentDocument alignment = AlignmentUtilities.performAlignment(new ArrayList<NucleotideSequenceDocument>(toAlign.values()));
         try {
-            File inputAlignmentFile = createPciInputFile(alignment);
-            File newUidFile = createNewUidFile(sequence);
+            File inputAlignmentFile = createPciInputFile(alignment, Collections.singletonMap(sequence.getName(), uidForNewSample));
+            File newUidFile = createNewUidFile(uidForNewSample);
 
             File outputFile = runPci(inputAlignmentFile, newUidFile);
-            return getFactFromOutputFile(outputFile, sequence);
+            return getFactFromOutputFile(outputFile, uidForNewSample);
         } catch (IOException e) {
             throw new DocumentOperationException("Failed to write out alignment for input to PCI: " + e.getMessage(), e);
         } catch (PciValidationException e) {
@@ -61,8 +73,8 @@ public class PciValidation extends SingleSequenceValidation {
         }
     }
 
-    private static ResultFact getFactFromOutputFile(File outputFile, NucleotideSequenceDocument sequenceDocument) throws IOException, PciValidationException {
-        double pDistance = getPDistanceFromFile(outputFile, getUid(sequenceDocument.getName()));
+    private static ResultFact getFactFromOutputFile(File outputFile, String uid) throws IOException, PciValidationException {
+        double pDistance = getPDistanceFromFile(outputFile, uid);
         return new PciResultFact(true, pDistance, "");
     }
 
@@ -149,30 +161,38 @@ public class PciValidation extends SingleSequenceValidation {
     /**
      * Produces a file that can be used to specify new samples to the PCI program (using -s).
      *
-     * @param sequence The sequence that should have its UID in the file
-     * @return A plain text file with the UID of the sequence in it. Obtained by calling {@link #getUid(String)}
+     * @param sequenceUid The sequence that should have its UID in the file
+     * @return A plain text file with the UID of the sequence in it. Obtained by calling {@link #getUid(String, String, String)}
      * @throws IOException if there is a problem writing the file
      */
-    private static File createNewUidFile(NucleotideGraphSequenceDocument sequence) throws IOException {
+    private static File createNewUidFile(String sequenceUid) throws IOException {
         File newUids = FileUtilities.createTempFile("new", ".txt", false);
-        FileUtilities.writeTextToFile(newUids, getUid(sequence.getName()));
+        FileUtilities.writeTextToFile(newUids, sequenceUid);
         return newUids;
     }
 
+    private static final String BARCODE_DEF_LINE_REGEX = ".+_.+_.+";
+
     /**
-     * Generates the input file to the PCI program (-i).  The input file will name sequences using {@link #getUid(String)}
+     * Generates the input file to the PCI program (-i).  The input file will name sequences using {@link #getUid(String, String, String)}
      *
      * @param alignment The alignment to write out to the PCI input file
      * @return The PCI input file
      * @throws IOException if there is a problem writing the file
      */
-    private static File createPciInputFile(SequenceAlignmentDocument alignment) throws IOException {
+    private static File createPciInputFile(SequenceAlignmentDocument alignment, Map<String, String> renameMap) throws IOException {
         File outputFile = FileUtilities.createTempFile("alignment", ".fasta", false);
         BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
         try {
             for (SequenceDocument alignedSequence : alignment.getSequences()) {
-                writer.write(">" + getUid(alignedSequence.getName()));
+                String uid = alignedSequence.getName();
+                if(renameMap.containsKey(uid)) {
+                    uid = renameMap.get(uid);
+                }
+
+                writer.write(">" + uid);
                 writer.newLine();
+                System.out.println(uid);
 
                 writer.write(alignedSequence.getSequenceString());
                 writer.newLine();
@@ -186,19 +206,20 @@ public class PciValidation extends SingleSequenceValidation {
     }
 
     /**
-     * The UID consists of Genus_Species_ID.  In our case we use UnknownGenus_UnknownSpecies_SequenceName.  This is
-     * because all the sequences in the alignment need to be compared.  We are not splitting things by species.
+     * The UID consists of Genus_Species_ID.
      *
      * <strong>Note</strong>: Any white space in the sequence name will be replaced by an dash "-".  This is because the
      * compressed barcode format used as input for the PCI program is based on strict FASTA, which does not have spaces
      * in the names of sequences.  <a href="http://www.ncbi.nlm.nih.gov/CBBresearch/Spouge/html_ncbi/html/bib/119.html#The%20Format%20of%20an%20Compressed%20Barcode%20File">Details here.</a>.
      * Underscore is replaced because it is a special character in the UID used as a separator.
      *
+     * @param genus The genus name
+     * @param species The species name
      * @param name The name of the sequence
-     * @return The UID of the sequence as it should appear in the compressed barcode format.  See
+     * @return The UID of the sequence as it should appear in the compressed barcode format.
      *
      */
-    private static String getUid(String name) {
-        return UID_PREFIX + name.replaceAll("[_\\s]+", "-");
+    private static String getUid(@Nonnull String genus, @Nonnull String species, @Nonnull String name) {
+        return genus + "_" + species + "_" + name.replaceAll("[_\\s]+", "-");
     }
 }

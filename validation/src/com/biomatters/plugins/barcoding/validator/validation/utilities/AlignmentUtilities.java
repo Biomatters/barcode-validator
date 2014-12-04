@@ -12,7 +12,9 @@ import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.geneious.publicapi.plugin.PluginUtilities;
 import jebl.util.ProgressListener;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Matthew Cheung
@@ -39,7 +41,7 @@ public class AlignmentUtilities {
 
         AnnotatedPluginDocument[] inputDocs = new AnnotatedPluginDocument[toAlign.size()];
         for(int i=0; i<toAlign.size(); i++) {
-            NucleotideSequenceDocument pluginDoc = toAlign.get(i);
+            SequenceDocument pluginDoc = toAlign.get(i);
             AnnotatedPluginDocument apd = DocumentUtilities.getAnnotatedPluginDocumentThatContains(pluginDoc);
             if(apd == null) {
                 apd = DocumentUtilities.createAnnotatedPluginDocument(pluginDoc);
