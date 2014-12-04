@@ -84,7 +84,7 @@ public class PciValidation extends SingleSequenceValidation {
      */
     private static File createNewUidFile(NucleotideGraphSequenceDocument sequence) throws IOException {
         File newUids = FileUtilities.createTempFile("new", ".txt", false);
-        FileUtilities.writeTextToFile(newUids, UID_PREFIX + sequence.getName());
+        FileUtilities.writeTextToFile(newUids, getUid(sequence.getName()));
         return newUids;
     }
 
