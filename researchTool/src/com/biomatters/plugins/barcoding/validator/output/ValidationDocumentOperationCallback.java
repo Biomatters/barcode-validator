@@ -47,7 +47,7 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
         this.outputRecord = new ValidationOutputRecord();
     }
 
-    private URN saveDocumentAndGetUrn(PluginDocument pluginDocument, ProgressListener progressListener) throws DocumentOperationException {
+    public URN saveDocumentAndGetUrn(PluginDocument pluginDocument, ProgressListener progressListener) throws DocumentOperationException {
         return saveDocument(pluginDocument, progressListener).annotatedPluginDocument.getURN();
     }
 

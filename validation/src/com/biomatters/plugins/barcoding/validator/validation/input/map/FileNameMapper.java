@@ -99,11 +99,7 @@ public class FileNameMapper extends BarcodeToTraceMapper {
             barcodesToTraces.putAll(barcodeToNamePart.getKey(), namePartsToTraces.get(barcodeToNamePart.getValue()));
         }
 
-        Collection<AnnotatedPluginDocument> tracesWithoutAnAssociatedBarcode = getTracesWithoutAnAssociatedBarcode(namePartsToTraces.values(), barcodesToTraces.values());
-
-        if (!tracesWithoutAnAssociatedBarcode.isEmpty()) {
-            throw new DocumentOperationException("Unmapped traces: " + StringUtilities.join(", ", tracesWithoutAnAssociatedBarcode));
-        }
+        throwExceptionIfThereAreTracesWithoutAnAssociatedBarcode(namePartsToTraces.values(), barcodesToTraces.values());
 
         return barcodesToTraces;
     }

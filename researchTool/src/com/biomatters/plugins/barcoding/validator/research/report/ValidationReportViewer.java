@@ -185,19 +185,14 @@ public class ValidationReportViewer extends DocumentViewer {
                 return new Dimension(defaultPrefSize.width, defaultPrefSize.height + 500);
             }
         };
-        final JScrollPane scroll = new JScrollPane(rootPanel);
-        scroll.getViewport().setOpaque(false);
-        scroll.setOpaque(false);
-        scroll.setBorder(null);
 
         rootPanel.add(textPane, BorderLayout.NORTH);
         if (table == null) {
         	table = getTable();
         }
-        
+
         if (table != null) {
-            final JScrollPane tableScrollPane = new JScrollPane(table,
-                    ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            final JScrollPane tableScrollPane = new JScrollPane(table);
 
             // Set the scroll pane's preferred size to the same as the table so scroll bars are never needed
             tableScrollPane.getViewport().setPreferredSize(table.getPreferredSize());
@@ -205,7 +200,7 @@ public class ValidationReportViewer extends DocumentViewer {
                 @Override
                 public void componentResized(ComponentEvent e) {
                     tableScrollPane.getViewport().setPreferredSize(table.getPreferredSize());
-                    scroll.validate();
+                    rootPanel.validate();
                 }
 
                 @Override
@@ -224,19 +219,10 @@ public class ValidationReportViewer extends DocumentViewer {
                 }
             });
 
-
-            // Delegate our mouse wheel events on the table's scroll pane to the root one
-            tableScrollPane.addMouseWheelListener(new MouseWheelListener() {
-                @Override
-                public void mouseWheelMoved(MouseWheelEvent e) {
-                    for (MouseWheelListener mouseWheelListener : scroll.getMouseWheelListeners()) {
-                        mouseWheelListener.mouseWheelMoved(e);
-                    }
-                }
-            });
             rootPanel.add(tableScrollPane, BorderLayout.CENTER);
         }
-        return scroll;
+
+        return rootPanel;
     }
 
     public JTable getTable() {

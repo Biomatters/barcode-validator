@@ -1,8 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
 import com.biomatters.geneious.publicapi.documents.*;
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
-import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.implementations.Percentage;
 import com.biomatters.geneious.publicapi.implementations.SequenceExtractionUtilities;
@@ -22,7 +20,7 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
 
 
     @Override
-    public ResultFact validate(SequenceDocument sequence, SequenceDocument referenceSequence, ValidationOptions options) {
+    public ResultFact validate(SequenceDocument sequence, SequenceDocument referenceSequence, ValidationOptions options, ValidationCallback callback) {
         if (!(options instanceof MuscleAlignmentValidationOptions)) {
             throw new IllegalArgumentException(
                     "Wrong options supplied: " +
@@ -59,7 +57,8 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
 
             result.setSimilarity(similarityOfAlignment);
             result.setAlignmentName(alignmentDocument.getName());
-            result.setAlignmentLinks(Collections.singletonList(alignmentDocument.getURN()));
+            URN urn = callback.saveDocumentAndGetUrn(alignmentDocument.getDocument(), ProgressListener.EMPTY);
+            result.setAlignmentLinks(Collections.singletonList(urn));
 
             if (similarityOfAlignment == -1) {
                 result.setNotes("Failed to align " + sequence.getName() + " and " + referenceSequence.getName());

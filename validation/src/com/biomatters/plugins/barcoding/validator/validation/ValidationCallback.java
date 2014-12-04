@@ -1,5 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.validation;
 
+import com.biomatters.geneious.publicapi.documents.PluginDocument;
+import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
@@ -27,4 +29,5 @@ public interface ValidationCallback {
     public SequenceAlignmentDocument addAssembly(SequenceAlignmentDocument contigAssembly, ProgressListener progressListener) throws DocumentOperationException;
     public NucleotideGraphSequenceDocument addConsensus(NucleotideGraphSequenceDocument consensusSequence, ProgressListener progressListener) throws DocumentOperationException;
     public void addValidationResult(ValidationOptions options, ValidationResult validationResult, ProgressListener progressListener) throws DocumentOperationException;
+    public URN saveDocumentAndGetUrn(PluginDocument pluginDocument, ProgressListener progressListener) throws DocumentOperationException;
 }
