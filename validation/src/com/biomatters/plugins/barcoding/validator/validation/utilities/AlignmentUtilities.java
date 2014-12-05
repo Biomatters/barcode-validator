@@ -50,13 +50,10 @@ public class AlignmentUtilities {
         }
         Options options = alignmentOperation.getOptions(inputDocs);
         List<AnnotatedPluginDocument> annotatedPluginDocuments = alignmentOperation.performOperation(ProgressListener.EMPTY, options, inputDocs);
-        if (annotatedPluginDocuments == null || annotatedPluginDocuments.size() == 0) {
+        if (annotatedPluginDocuments == null || annotatedPluginDocuments.isEmpty()) {
             return null;
         }
 
-        if(annotatedPluginDocuments.isEmpty()) {
-            return null;
-        }
         assert annotatedPluginDocuments.size() == 1 : "Alignment operation should only produce at maximum one alignment document";
 
         AnnotatedPluginDocument alignmentDocument = annotatedPluginDocuments.get(0);
