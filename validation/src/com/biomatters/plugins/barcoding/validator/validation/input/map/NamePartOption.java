@@ -26,7 +26,11 @@ public class NamePartOption extends Options.ComboBoxOption<Options.OptionValue> 
     };
 
     public NamePartOption(String name, String label) {
-        super(name, label, VALUES, VALUES[0]);
+        this(name, label, 0);
+    }
+
+    public NamePartOption(String name, String label, int defaultIndex) {
+        super(name, label, VALUES, VALUES[defaultIndex]);
     }
 
     @Override

@@ -23,7 +23,10 @@ public class BarcodesToTracesMapperFactory {
         } else if (GenbankXmlMapperOptions.class.isAssignableFrom(options.getClass())) {
            GenbankXmlMapperOptions genbankXmlMapperOptions = (GenbankXmlMapperOptions)options;
 
-            return new GenbankXmlMapper(genbankXmlMapperOptions.getGenbankXMLFilePath());
+            return new GenbankXmlMapper(
+                    genbankXmlMapperOptions.getGenbankXMLFilePath(),
+                    genbankXmlMapperOptions.getBarcodeNamePart(),
+                    genbankXmlMapperOptions.getBarcodeNameSeparator());
         } else if (FileNameMapperOptions.class.isAssignableFrom(options.getClass())) {
             FileNameMapperOptions fileNameMapperOptions = (FileNameMapperOptions)options;
 

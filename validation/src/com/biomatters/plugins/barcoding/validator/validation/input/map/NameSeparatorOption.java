@@ -27,9 +27,13 @@ public class NameSeparatorOption extends Options.ComboBoxOption<Options.OptionVa
     };
 
     public NameSeparatorOption(String name, String label) {
-        super(name, label, VALUES, VALUES[0]);
+        this(name, label, 0);
+    }
+
+    public NameSeparatorOption(String name, String label, int defaultIndex) {
+        super(name, label, VALUES, VALUES[defaultIndex]);
         setDescription("The character at which each name is split " +
-                       "(there should be one of these before the identifier in each name).");
+                "(there should be one of these before the identifier in each name).");
     }
 
     public String getSeparatorString() {
