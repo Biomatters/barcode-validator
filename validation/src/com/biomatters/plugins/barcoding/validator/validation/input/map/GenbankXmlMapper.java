@@ -33,6 +33,14 @@ public class GenbankXmlMapper extends BarcodeToTraceMapper {
         setBarcodeNameSeparator(barcodeNameSeparator);
     }
 
+    public void setGenbankTraceInfoFilePath(String genbankTraceInfoFilePath) {
+        this.genbankTraceInfoFilePath = genbankTraceInfoFilePath;
+    }
+
+    public String getGenbankTraceInfoFilePath() {
+        return genbankTraceInfoFilePath;
+    }
+
     public void setPartOfBarcodeName(int partOfBarcodeName) {
         this.partOfBarcodeName = partOfBarcodeName;
     }
@@ -61,14 +69,6 @@ public class GenbankXmlMapper extends BarcodeToTraceMapper {
         }
 
         return map(getBarcodesToAccessions(barcodes), getAccessionsToTraces(traces), traces);
-    }
-
-    public void setGenbankTraceInfoFilePath(String genbankTraceInfoFilePath) {
-        this.genbankTraceInfoFilePath = genbankTraceInfoFilePath;
-    }
-
-    public String getGenbankTraceInfoFilePath() {
-        return genbankTraceInfoFilePath;
     }
 
     private static Multimap<AnnotatedPluginDocument, AnnotatedPluginDocument> map(Map<AnnotatedPluginDocument, String> barcodesToAccessionsMap,
