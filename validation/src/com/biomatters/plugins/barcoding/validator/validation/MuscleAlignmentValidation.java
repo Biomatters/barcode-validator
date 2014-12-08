@@ -60,8 +60,8 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
 
             result.setSimilarity(similarityOfAlignment);
             result.setAlignmentName(alignmentDocument.getName());
-            URN urn = callback.saveDocumentAndGetUrn(alignmentDocument.getDocument(), ProgressListener.EMPTY);
-            result.setAlignmentLinks(Collections.singletonList(urn));
+            PluginDocument pluginDocument = callback.addPluginDocument(alignmentDocument.getDocument(), ProgressListener.EMPTY);
+            result.addAlignmentDocument(pluginDocument);
 
             if (similarityOfAlignment == -1) {
                 result.setNotes("Failed to align " + sequence.getName() + " and " + referenceSequence.getName());

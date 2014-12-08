@@ -76,6 +76,11 @@ public class LinkResultColumn extends ResultColumn<LinkResultColumn.LinkBox> {
 
         private String label;
         private List<URN> links;
+        private List<PluginDocument> pluginDocuments = new ArrayList<PluginDocument>();
+
+        public void addPluginDocument(PluginDocument pluginDocument) {
+            pluginDocuments.add(pluginDocument);
+        }
 
         public LinkBox(String label, List<URN> links) {
             this.label = label;
@@ -94,7 +99,16 @@ public class LinkResultColumn extends ResultColumn<LinkResultColumn.LinkBox> {
         }
 
         public List<URN> getLinks() {
-            if (links == null) links = new ArrayList<URN>();
+            if (links == null || links.size() == 0) {
+                links = new ArrayList<URN>();
+
+                for (PluginDocument pluginDocument : pluginDocuments) {
+                    AnnotatedPluginDocument doc = DocumentUtilities.getAnnotatedPluginDocumentThatContains(pluginDocument);
+                    if (doc != null) {
+                        links.add(doc.getURN());
+                    }
+                }
+            }
             return links;
         }
 
@@ -108,7 +122,7 @@ public class LinkResultColumn extends ResultColumn<LinkResultColumn.LinkBox> {
         }
 
         public void openLink() {
-            if (links != null) DocumentUtilities.selectDocuments(links);
+            DocumentUtilities.selectDocuments(getLinks());
         }
 
         @Override
