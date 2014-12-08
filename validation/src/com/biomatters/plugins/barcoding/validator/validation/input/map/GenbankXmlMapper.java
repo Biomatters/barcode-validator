@@ -37,8 +37,16 @@ public class GenbankXmlMapper extends BarcodeToTraceMapper {
         this.partOfBarcodeName = partOfBarcodeName;
     }
 
+    public int getPartOfBarcodeName() {
+        return partOfBarcodeName;
+    }
+
     public void setBarcodeNameSeparator(String barcodeNameSeparator) {
         this.barcodeNameSeparator = barcodeNameSeparator;
+    }
+
+    public String getBarcodeNameSeparator() {
+        return barcodeNameSeparator;
     }
 
     @Override

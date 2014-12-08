@@ -12,12 +12,16 @@ public class GenbankXmlMapperOptions extends BarcodesToTracesMapperOptions {
     public GenbankXmlMapperOptions(Class cls) {
         super(cls);
 
-        genbankXMLFilePathOption = addFileSelectionOption("xmlFile", "XML File: ", "");
+        addGenbankXMLFilePathOption();
         addNameOptions();
     }
 
     public String getGenbankXMLFilePath() {
         return genbankXMLFilePathOption.getValue();
+    }
+
+    private void addGenbankXMLFilePathOption() {
+        genbankXMLFilePathOption = addFileSelectionOption("xmlFile", "XML File: ", "");
     }
 
     private void addNameOptions() {

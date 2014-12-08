@@ -10,7 +10,6 @@ import com.biomatters.geneious.publicapi.plugin.Options;
  * @version $Id$
  */
 public class NameSeparatorOption extends Options.ComboBoxOption<Options.OptionValue> {
-
     private static final Options.OptionValue[] VALUES = new Options.OptionValue[] {
             new Options.OptionValue("_", "_ (Underscore)"),
             new Options.OptionValue("\\*", "* (Asterisk)"),
@@ -32,8 +31,8 @@ public class NameSeparatorOption extends Options.ComboBoxOption<Options.OptionVa
 
     public NameSeparatorOption(String name, String label, int defaultIndex) {
         super(name, label, VALUES, VALUES[defaultIndex]);
-        setDescription("The character at which each name is split " +
-                "(there should be one of these before the identifier in each name).");
+
+        setDescription("The character at which each name is split (there should be one of these before the identifier in each name).");
     }
 
     public String getSeparatorString() {
@@ -46,10 +45,11 @@ public class NameSeparatorOption extends Options.ComboBoxOption<Options.OptionVa
      */
     public static String getLabelForPartNumber(String separatorString) {
         for (Options.OptionValue value : VALUES) {
-            if(separatorString.equals(value.getName())) {
+            if (separatorString.equals(value.getName())) {
                 return value.getLabel();
             }
         }
+        
         return null;
     }
 }
