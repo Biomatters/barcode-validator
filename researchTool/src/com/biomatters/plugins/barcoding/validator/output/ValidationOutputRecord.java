@@ -239,7 +239,7 @@ public class ValidationOutputRecord implements XMLSerializable {
         return ret;
     }
 
-    public List<ResultColumn> getFixedColumns(URN urn) {
+    public List<ResultColumn> getFixedColumns(URN urn, Double pciValue) {
         List<ResultColumn> fixedColumns = new ArrayList<ResultColumn>();
 
         PluginDocument barcode = DocumentUtilities.getDocumentByURN(getBarcodeSequenceUrn()).getDocumentOrNull();
@@ -273,6 +273,10 @@ public class ValidationOutputRecord implements XMLSerializable {
         IntegerResultColumn sequenceLengthColumn = new IntegerResultColumn("Sequence length");
         sequenceLengthColumn.setData(((SequenceDocument) sequence).getSequenceLength());
         fixedColumns.add(sequenceLengthColumn);
+
+        DoubleResultColumn pciColumn = new DoubleResultColumn("PCI");
+        pciColumn.setData(pciValue == null ? 0 : pciValue);
+        fixedColumns.add(pciColumn);
 
         LinkResultColumn numberOfTracesUsedColumn = new LinkResultColumn("Number of traces used");
         if (urn.equals(consensusUrn)) {
@@ -320,13 +324,14 @@ public class ValidationOutputRecord implements XMLSerializable {
         return fixedColumns;
     }
 
-    public List<List<ResultColumn>> exportTable() {
+    public List<List<ResultColumn>> exportTable(Map<URN, Double> pciValues) {
         List<List<ResultColumn>> ret = new ArrayList<List<ResultColumn>>();
 
         for (URN urn : getDoclist()) {
             List<ResultColumn> row = new ArrayList<ResultColumn>();
 
-            row.addAll(getFixedColumns(urn));
+            Double pciValue = pciValues == null ? null : pciValues.get(urn);
+            row.addAll(getFixedColumns(urn, pciValue));
 
             for (Map<URN, RecordOfValidationResult> entry : validationResults.values()) {
                 RecordOfValidationResult result = entry.get(urn);
@@ -371,7 +376,7 @@ public class ValidationOutputRecord implements XMLSerializable {
         colunmOptionsMap = new HashMap<Integer, ValidationOptions>();
         colunmClassMap = new HashMap<Integer, Class>();
 
-        List<ResultColumn> fixedColumns = getFixedColumns(getOneURN());
+        List<ResultColumn> fixedColumns = getFixedColumns(getOneURN(), null);
         int i = fixedColumns.size();
 
         for (Map.Entry<Class, Map<URN, RecordOfValidationResult>> entry : validationResults.entrySet()) {

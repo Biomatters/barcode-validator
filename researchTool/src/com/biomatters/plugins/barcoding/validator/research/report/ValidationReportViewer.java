@@ -226,7 +226,7 @@ public class ValidationReportViewer extends DocumentViewer {
     public JTable getTable() {
         List<ValidationOutputRecord> records = reportDocument.getRecords();
 
-        final ValidationReportTableModel tableModel = new ValidationReportTableModel(records);
+        final ValidationReportTableModel tableModel = new ValidationReportTableModel(records, reportDocument.getPciValues());
         final JTable table = new GTable(tableModel, new DefaultTableColumnModel(){
             @Override
             public void moveColumn(int columnIndex, int newIndex) {
@@ -379,7 +379,7 @@ public class ValidationReportViewer extends DocumentViewer {
         TableCellRenderer headerRenderer = head.getDefaultRenderer();
         ValidationReportTableModel model = (ValidationReportTableModel) table.getModel();
 
-        int colIndex = record.getFixedColumns(record.getTraceDocumentUrns().get(0)).size();
+        int colIndex = record.getFixedColumns(record.getTraceDocumentUrns().get(0), null).size();
         Map<Class, Map<URN, RecordOfValidationResult>> validationResultsMap = record.getValidationResultsMap();
 
         for (Map.Entry<Class, Map<URN, RecordOfValidationResult>> classMapEntry : validationResultsMap.entrySet()) {
@@ -575,14 +575,14 @@ public class ValidationReportViewer extends DocumentViewer {
 
     public static class ValidationReportTableModel extends AbstractTableModel {
         private List<ValidationOutputRecord> records;
-        private List<List<CellValue<?>>> data = new ArrayList<List<CellValue<?>>>();
+        private List<List<CellValue<?>>> data;
 
-        public ValidationReportTableModel(List<ValidationOutputRecord> records) {
+        public ValidationReportTableModel(List<ValidationOutputRecord> records, Map<URN, Double> pciScores) {
             this.records = new ArrayList<ValidationOutputRecord>();
             for (ValidationOutputRecord record : records) {
                 this.records.add(record);
             }
-            updateTable();
+            data = createTableData(records, pciScores);
         }
 
         @Override
@@ -590,11 +590,12 @@ public class ValidationReportViewer extends DocumentViewer {
             return CellValue.class;
         }
 
-        public void updateTable() {
-            data = new ArrayList<List<CellValue<?>>>();
+
+        private static List<List<CellValue<?>>> createTableData(List<ValidationOutputRecord> records, Map<URN, Double> pciValues) {
+            List<List<CellValue<?>>> data = new ArrayList<List<CellValue<?>>>();
             for (ValidationOutputRecord record : records) {
                 List<ResultColumn> firstRow = null;
-                for (List<ResultColumn> resultColumns : record.exportTable()) {
+                for (List<ResultColumn> resultColumns : record.exportTable(pciValues)) {
                     if(firstRow == null) {
                         firstRow = resultColumns;
                     }
@@ -606,9 +607,10 @@ public class ValidationReportViewer extends DocumentViewer {
                     data.add(values);
                 }
             }
+            return data;
         }
 
-        private <T extends Comparable<T>> CellValue getCellValue(ResultColumn<T> firstRowValue, ResultColumn currentRowValue, int columnIndex) {
+        private static <T extends Comparable<T>> CellValue getCellValue(ResultColumn<T> firstRowValue, ResultColumn currentRowValue, int columnIndex) {
             // Have to cast because getClass() actually returns Class<? extends ResultColumn> due to type erasure :(
             //noinspection unchecked
             Class<ResultColumn<T>> firstRowClass = (Class<ResultColumn<T>>) firstRowValue.getClass();
@@ -709,7 +711,7 @@ public class ValidationReportViewer extends DocumentViewer {
         public int getFixedColumnLength() {
             assert records != null && records.size() > 0;
             ValidationOutputRecord record = records.get(0);
-            return record.getFixedColumns(record.getOneURN()).size();
+            return record.getFixedColumns(record.getOneURN(), null).size();
         }
     }
 }

@@ -193,4 +193,9 @@ public class ValidationReportDocument implements PluginDocument {
     public BarcodeValidatorOptions getOptionsUsed() {
         return optionsUsed;
     }
+
+    @Nullable
+    public Map<URN, Double> getPciValues() {
+        return pciValues != null ? Collections.unmodifiableMap(pciValues) : null;
+    }
 }
