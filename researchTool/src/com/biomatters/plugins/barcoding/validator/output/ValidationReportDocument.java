@@ -4,6 +4,7 @@ import com.biomatters.geneious.publicapi.documents.*;
 import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorOptions;
 import org.jdom.Element;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 
@@ -17,7 +18,6 @@ public class ValidationReportDocument implements PluginDocument {
 
     private static final String NAME_KEY = "name";
     private static final String OUTPUT_KEY = "output";
-    private static final String OPTIONS_DESC_KEY = "optionsUsed";
     private static final String OPTION_VALUES_KEY = "optionsValuesUsed";
     private static final String PCI_VALUES_KEY = "pciValues";
     private static final String PCI_ENTRY_KEY = "entry";
@@ -26,9 +26,7 @@ public class ValidationReportDocument implements PluginDocument {
 
     private String name;
     private List<ValidationOutputRecord> outputs;
-    // One of the following is non-null.  Early version stored only the description.
-    @Nullable private BarcodeValidatorOptions optionsUsed;
-    @Nullable private String optionsDescription;  // todo Can remove this now since we broke backwards compatibility in 0.5
+    @Nonnull private BarcodeValidatorOptions optionsUsed;
     @Nullable private Map<URN, Double> pciValues;
 
     public ValidationReportDocument(String name, List<ValidationOutputRecord> outputs, BarcodeValidatorOptions options, Map<URN, Double> pciValues) {
@@ -81,7 +79,7 @@ public class ValidationReportDocument implements PluginDocument {
             optionsUsed = new BarcodeValidatorOptions();
             optionsUsed.valuesFromXML(optionsElement);
         } else {
-            optionsDescription = element.getChildText(OPTIONS_DESC_KEY);
+            throw new XMLSerializationException("Child element " + OPTION_VALUES_KEY + " is missing");
         }
         outputs = new ArrayList<ValidationOutputRecord>();
         List<Element> children = element.getChildren(OUTPUT_KEY);
@@ -116,13 +114,9 @@ public class ValidationReportDocument implements PluginDocument {
     public Element toXML() {
         Element element = new Element(XMLSerializable.ROOT_ELEMENT_NAME);
         element.addContent(new Element(NAME_KEY).setText(name));
-        if(optionsUsed != null) {
-            // We only serialize the values in case the format changes.  This also means we don't have to worry about
-            // making BarcodeValidationOptions completely serializable.
-            element.addContent(optionsUsed.valuesToXML(OPTION_VALUES_KEY));
-        } else if(optionsDescription != null) {
-            element.addContent(new Element(OPTIONS_DESC_KEY).setText(optionsDescription));
-        }
+        // We only serialize the values in case the format changes.  This also means we don't have to worry about
+        // making BarcodeValidationOptions completely serializable.
+        element.addContent(optionsUsed.valuesToXML(OPTION_VALUES_KEY));
         for (ValidationOutputRecord output : outputs) {
             element.addContent(XMLSerializer.classToXML(OUTPUT_KEY, output));
         }
@@ -192,11 +186,7 @@ public class ValidationReportDocument implements PluginDocument {
      * @return a human readable summary of the options used in the operation that generated this report
      */
     public String getDescriptionOfOptions() {
-        if(optionsDescription == null) {
-            return generateDescriptionFromOptions(optionsUsed);
-        } else {
-            return optionsDescription;
-        }
+        return generateDescriptionFromOptions(optionsUsed);
     }
 
     @Nullable
