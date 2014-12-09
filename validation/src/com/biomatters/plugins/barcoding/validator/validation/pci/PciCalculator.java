@@ -61,7 +61,7 @@ public class PciCalculator {
             String uidForNewSample = getUid(options.getGenus(), options.getSpecies(), doc.getName());
             if(newSamples.containsKey(uidForNewSample)) {
                 // If there are duplicate names, we'll just give it a random UUID
-                uidForNewSample += getUid(options.getGenus(), options.getSpecies(), UUID.randomUUID().toString());
+                uidForNewSample = getUid(options.getGenus(), options.getSpecies(), UUID.randomUUID().toString());
             }
             newSamples.put(uidForNewSample, doc);
         }
