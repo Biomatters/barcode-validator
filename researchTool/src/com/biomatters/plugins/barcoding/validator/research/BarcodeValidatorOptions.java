@@ -4,7 +4,7 @@ import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.plugins.barcoding.validator.validation.Validation;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
-import com.biomatters.plugins.barcoding.validator.validation.pci.PciCalculatorOptions;
+import com.biomatters.plugins.barcoding.validator.validation.pci.PCICalculatorOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
 
 import java.util.*;
@@ -17,7 +17,7 @@ public class BarcodeValidatorOptions extends Options {
     private TrimmingOptions trimmingOptions = new TrimmingOptions(BarcodeValidatorOptions.class);
     private CAP3Options assemblyOptions = new CAP3Options(BarcodeValidatorOptions.class);
     private Options validationOptions = new Options(BarcodeValidatorOptions.class);
-    private PciCalculatorOptions PciCalculatorOptions = new PciCalculatorOptions(BarcodeValidatorOptions.class);
+    private PCICalculatorOptions PCICalculatorOptions = new PCICalculatorOptions(BarcodeValidatorOptions.class);
     
     public BarcodeValidatorOptions() {
         super(BarcodeValidatorOperation.class);
@@ -36,8 +36,8 @@ public class BarcodeValidatorOptions extends Options {
         return assemblyOptions;
     }
 
-    public PciCalculatorOptions getPciCalculatorOptions() {
-        return PciCalculatorOptions;
+    public PCICalculatorOptions getPCICalculatorOptions() {
+        return PCICalculatorOptions;
     }
 
     /**
@@ -78,6 +78,6 @@ public class BarcodeValidatorOptions extends Options {
     }
     
     private void addPCICalculationOptions() {
-        addCollapsibleChildOptions("pciCalculation", "PCI Calculation", "", PciCalculatorOptions, false, true);
+        addCollapsibleChildOptions("pciCalculation", "PCI Calculation", "", PCICalculatorOptions, false, true);
     }
 }
