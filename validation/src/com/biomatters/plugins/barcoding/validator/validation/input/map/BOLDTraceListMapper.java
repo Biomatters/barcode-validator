@@ -224,7 +224,11 @@ public class BOLDTraceListMapper extends BarcodeToTraceMapper {
         traceFileName = traceFileName.substring(traceFileName.lastIndexOf("/") + 1);
 
         int indexOfPlus = traceFileName.indexOf("+");
-        return traceFileName.substring(0, indexOfPlus) + traceFileName.substring(traceFileName.indexOf(".", indexOfPlus + 1));
+        if(indexOfPlus != -1) {
+            return traceFileName.substring(0, indexOfPlus) + traceFileName.substring(traceFileName.indexOf(".", indexOfPlus + 1));
+        } else {
+            return traceFileName;
+        }
     }
 
     /**
