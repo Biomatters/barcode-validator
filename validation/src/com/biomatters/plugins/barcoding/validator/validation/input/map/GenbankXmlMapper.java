@@ -23,14 +23,38 @@ public class GenbankXmlMapper extends BarcodeToTraceMapper {
     private static final String NCBI_TRACE_ARCHIVE_ELEMENT_TAG_NAME = "ncbi_trace_archive";
     private static final String ACCESSION_ELEMENT_TAG_NAME          = "accession";
 
-    private static final String GENBANK_BARCODE_DESCRIPTION_SEPARATOR = "\\|";
-
-    private static final int INDEX_OF_ACCESSION_IN_GENBANK_BARCODE_DESCRIPTION = 3;
-
     private String genbankTraceInfoFilePath;
+    private int partOfBarcodeName;
+    private String barcodeNameSeparator;
 
-    public GenbankXmlMapper(String genbankTraceInfoFilePath) {
+    public GenbankXmlMapper(String genbankTraceInfoFilePath, int partOfBarcodeName, String barcodeNameSeparator) {
         setGenbankTraceInfoFilePath(genbankTraceInfoFilePath);
+        setPartOfBarcodeName(partOfBarcodeName);
+        setBarcodeNameSeparator(barcodeNameSeparator);
+    }
+
+    public void setGenbankTraceInfoFilePath(String genbankTraceInfoFilePath) {
+        this.genbankTraceInfoFilePath = genbankTraceInfoFilePath;
+    }
+
+    public String getGenbankTraceInfoFilePath() {
+        return genbankTraceInfoFilePath;
+    }
+
+    public void setPartOfBarcodeName(int partOfBarcodeName) {
+        this.partOfBarcodeName = partOfBarcodeName;
+    }
+
+    public int getPartOfBarcodeName() {
+        return partOfBarcodeName;
+    }
+
+    public void setBarcodeNameSeparator(String barcodeNameSeparator) {
+        this.barcodeNameSeparator = barcodeNameSeparator;
+    }
+
+    public String getBarcodeNameSeparator() {
+        return barcodeNameSeparator;
     }
 
     @Override
@@ -47,14 +71,6 @@ public class GenbankXmlMapper extends BarcodeToTraceMapper {
         return map(getBarcodesToAccessions(barcodes), getAccessionsToTraces(traces), traces);
     }
 
-    public void setGenbankTraceInfoFilePath(String genbankTraceInfoFilePath) {
-        this.genbankTraceInfoFilePath = genbankTraceInfoFilePath;
-    }
-
-    public String getGenbankTraceInfoFilePath() {
-        return genbankTraceInfoFilePath;
-    }
-
     private static Multimap<AnnotatedPluginDocument, AnnotatedPluginDocument> map(Map<AnnotatedPluginDocument, String> barcodesToAccessionsMap,
                                                                                   Multimap<String, AnnotatedPluginDocument> accessionsToTracesMap,
                                                                                   Collection<AnnotatedPluginDocument> allTraces) throws DocumentOperationException {
@@ -69,7 +85,7 @@ public class GenbankXmlMapper extends BarcodeToTraceMapper {
         return barcodesToTraces;
     }
 
-    private static Map<AnnotatedPluginDocument, String> getBarcodesToAccessions(Collection<AnnotatedPluginDocument> barcodes) throws DocumentOperationException {
+    private Map<AnnotatedPluginDocument, String> getBarcodesToAccessions(Collection<AnnotatedPluginDocument> barcodes) throws DocumentOperationException {
         Map<AnnotatedPluginDocument, String> barcodesToAccessions = new HashMap<AnnotatedPluginDocument, String>();
 
         for (AnnotatedPluginDocument barcode : barcodes) {
@@ -83,8 +99,8 @@ public class GenbankXmlMapper extends BarcodeToTraceMapper {
         return barcodesToAccessions;
     }
 
-    private static String getAccessionFromBarcode(AnnotatedPluginDocument barcode) {
-        String rawAccession = barcode.getName().split(GENBANK_BARCODE_DESCRIPTION_SEPARATOR)[INDEX_OF_ACCESSION_IN_GENBANK_BARCODE_DESCRIPTION];
+    private String getAccessionFromBarcode(AnnotatedPluginDocument barcode) {
+        String rawAccession = barcode.getName().split(barcodeNameSeparator)[partOfBarcodeName];
 
         int indexOfPeriod = rawAccession.indexOf(".");
 

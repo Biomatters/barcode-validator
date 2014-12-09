@@ -47,7 +47,7 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
         this.outputRecord = new ValidationOutputRecord();
     }
 
-    public URN saveDocumentAndGetUrn(PluginDocument pluginDocument, ProgressListener progressListener) throws DocumentOperationException {
+    private URN saveDocumentAndGetUrn(PluginDocument pluginDocument, ProgressListener progressListener) throws DocumentOperationException {
         return saveDocument(pluginDocument, progressListener).annotatedPluginDocument.getURN();
     }
 
@@ -142,6 +142,12 @@ public class ValidationDocumentOperationCallback implements ValidationCallback {
             assert apd != null : "Input sequence should have been saved to the database";
             outputRecord.addValidationResult(apd.getURN(), new RecordOfValidationResult(options, fact.getPass(), fact));
         }
+    }
+
+    @Override
+    public PluginDocument addPluginDocument(PluginDocument pluginDocument, ProgressListener progressListener) throws DocumentOperationException {
+        AnnotatedAndPluginDocument<PluginDocument> saved = saveDocument(pluginDocument, progressListener);
+        return saved.pluginDocument;
     }
 
 

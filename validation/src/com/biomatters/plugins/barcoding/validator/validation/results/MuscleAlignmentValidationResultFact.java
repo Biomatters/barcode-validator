@@ -1,5 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.validation.results;
 
+import com.biomatters.geneious.publicapi.documents.PluginDocument;
 import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.documents.XMLSerializationException;
 import org.jdom.Element;
@@ -79,6 +80,10 @@ public class MuscleAlignmentValidationResultFact extends ResultFact {
 
     public void setAlignmentLinks(List<URN> alignmentLinks) {
         alignmentColumn.getData().setLinks(alignmentLinks);
+    }
+
+    public void addAlignmentDocument(PluginDocument pluginDocument) {
+        alignmentColumn.getData().addPluginDocument(pluginDocument);
     }
 
     public void setNotes(String notes) {
