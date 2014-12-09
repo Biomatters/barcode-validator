@@ -19,7 +19,7 @@ import com.biomatters.plugins.barcoding.validator.validation.*;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputProcessor;
 import com.biomatters.plugins.barcoding.validator.validation.pci.PCICalculatorOptions;
-import com.biomatters.plugins.barcoding.validator.validation.pci.PciCalculator;
+import com.biomatters.plugins.barcoding.validator.validation.pci.PCICalculator;
 import com.biomatters.plugins.barcoding.validator.validation.SlidingWindowQualityValidationResultFact;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
@@ -285,7 +285,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
         if (!runPCICalculation) {
             validationProgress.beginSubtask("Calculating PCI...");
-            PCIValues = PciCalculator.calculate(
+            PCIValues = PCICalculator.calculate(
                     getUniqueConsensusURNs(outputs),
                     pciCalculatorOptions.getGenus(),
                     pciCalculatorOptions.getSpecies(),
