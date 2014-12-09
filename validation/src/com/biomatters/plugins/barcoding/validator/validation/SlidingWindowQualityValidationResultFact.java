@@ -1,6 +1,7 @@
-package com.biomatters.plugins.barcoding.validator.validation.results;
+package com.biomatters.plugins.barcoding.validator.validation;
 
 import com.biomatters.geneious.publicapi.documents.XMLSerializationException;
+import com.biomatters.plugins.barcoding.validator.validation.results.*;
 import org.jdom.Element;
 
 import java.util.Arrays;

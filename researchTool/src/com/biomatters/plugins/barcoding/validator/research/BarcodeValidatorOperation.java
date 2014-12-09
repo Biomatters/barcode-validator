@@ -19,7 +19,8 @@ import com.biomatters.plugins.barcoding.validator.validation.*;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputProcessor;
 import com.biomatters.plugins.barcoding.validator.validation.pci.PciCalculator;
-import com.biomatters.plugins.barcoding.validator.validation.results.SlidingWindowQualityValidationResultFact;
+import com.biomatters.plugins.barcoding.validator.validation.pci.PciCalculatorOptions;
+import com.biomatters.plugins.barcoding.validator.validation.SlidingWindowQualityValidationResultFact;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Multimap;
@@ -225,8 +226,9 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                                                OperationCallback operationCallback,
                                                BarcodeValidatorOptions barcodeValidatorOptions,
                                                ProgressListener progressListener) throws DocumentOperationException {
-
-        CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, suppliedBarcodesToSuppliedTraces.size() + 2);
+        PciCalculatorOptions pciCalculatorOptions = barcodeValidatorOptions.getPciCalculatorOptions();
+        boolean runPCICalculation = pciCalculatorOptions.canPerformPCICalculation();
+        CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, suppliedBarcodesToSuppliedTraces.size() + (runPCICalculation ? 2 : 1));
 
         List<ValidationOutputRecord> outputs = new ArrayList<ValidationOutputRecord>();
         for (AnnotatedPluginDocument suppliedBarcode : suppliedBarcodesToSuppliedTraces.keySet()) {
@@ -279,19 +281,36 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             outputs.add(record);
         }
 
-        validationProgress.beginSubtask("Calculating PCI...");
-        Set<URN> urnsOfSeqsToCalculatePci = new HashSet<URN>();
-        for (ValidationOutputRecord output : outputs) {
-            URN consensusUrn = output.getConsensusUrn();
-            if(consensusUrn != null) {
-                urnsOfSeqsToCalculatePci.add(consensusUrn);
-            }
-            urnsOfSeqsToCalculatePci.addAll(output.getTrimmedDocumentUrns());
+        Map<URN, Double> PCIValues = new HashMap<URN, Double>();
+
+        if (!runPCICalculation) {
+            validationProgress.beginSubtask("Calculating PCI...");
+            PCIValues = PciCalculator.calculate(
+                    getUniqueConsensusURNs(outputs),
+                    pciCalculatorOptions.getGenus(),
+                    pciCalculatorOptions.getSpecies(),
+                    pciCalculatorOptions.getPathToBarcodesFile()
+            );
         }
-        Map<URN, Double> pciValues = PciCalculator.calculate(urnsOfSeqsToCalculatePci, barcodeValidatorOptions.getPciCalculationOptions());
 
         validationProgress.beginSubtask("Saving Report...");
-        operationCallback.addDocument(new ValidationReportDocument(parameterSetName + VALIDATION_REPORT_NAME_SUFFIX, outputs, barcodeValidatorOptions, pciValues), false, validationProgress);
+        operationCallback.addDocument(new ValidationReportDocument(parameterSetName + VALIDATION_REPORT_NAME_SUFFIX, outputs, barcodeValidatorOptions, PCIValues), false, validationProgress);
+    }
+
+    private static Set<URN> getUniqueConsensusURNs(List<ValidationOutputRecord> outputRecords) {
+        Set<URN> getUniqueConsensusURNs = new HashSet<URN>();
+
+        for (ValidationOutputRecord output : outputRecords) {
+            URN consensusUrn = output.getConsensusUrn();
+
+            if (consensusUrn != null) {
+                getUniqueConsensusURNs.add(consensusUrn);
+            }
+
+            getUniqueConsensusURNs.addAll(output.getTrimmedDocumentUrns());
+        }
+
+        return getUniqueConsensusURNs;
     }
 
     private static void saveChangesToSequencesMadeByValidationPipeline(ValidationOutputRecord record) {

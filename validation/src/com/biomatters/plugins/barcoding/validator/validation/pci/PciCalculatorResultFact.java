@@ -10,16 +10,16 @@ import java.util.List;
  * @author Matthew Cheung
  *         Created on 3/12/14 2:51 PM
  */
-public class PciResultFact extends ResultFact {
+public class PciCalculatorResultFact extends ResultFact {
 
     private static final String PASS_COLUMN_NAME = "Pass";
 
     @SuppressWarnings("UnusedDeclaration")
-    public PciResultFact() {
+    public PciCalculatorResultFact() {
         // For de-serialization
     }
 
-    public PciResultFact(@Nonnull boolean pass, @Nonnull double pDistance, @Nonnull String errorMessage) {
+    public PciCalculatorResultFact(@Nonnull boolean pass, @Nonnull double pDistance, @Nonnull String errorMessage) {
         // ResultColumn crashes serializing with null values :(
         BooleanResultColumn passColumn = new BooleanResultColumn(PASS_COLUMN_NAME);
         passColumn.setData(pass);

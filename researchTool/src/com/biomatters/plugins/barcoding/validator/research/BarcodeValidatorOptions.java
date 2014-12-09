@@ -4,7 +4,7 @@ import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.plugins.barcoding.validator.validation.Validation;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
-import com.biomatters.plugins.barcoding.validator.validation.pci.PciCalculationOptions;
+import com.biomatters.plugins.barcoding.validator.validation.pci.PciCalculatorOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
 
 import java.util.*;
@@ -14,29 +14,30 @@ import java.util.*;
  *         Created on 3/09/14 2:42 PM
  */
 public class BarcodeValidatorOptions extends Options {
-    private static final String TRIMMING_OPTIONS_NAME   = "trimming";
-    private static final String ASSEMBLY_OPTIONS_NAME   = "assembly";
-    private static final String PCI_OPTIONS_NAME   = "pci";
-    private static final String VALIDATION_OPTIONS_NAME = "validation";
-
+    private TrimmingOptions trimmingOptions = new TrimmingOptions(BarcodeValidatorOptions.class);
+    private CAP3Options assemblyOptions = new CAP3Options(BarcodeValidatorOptions.class);
+    private Options validationOptions = new Options(BarcodeValidatorOptions.class);
+    private PciCalculatorOptions PciCalculatorOptions = new PciCalculatorOptions(BarcodeValidatorOptions.class);
+    
     public BarcodeValidatorOptions() {
         super(BarcodeValidatorOperation.class);
-        addCollapsibleChildOptions(TRIMMING_OPTIONS_NAME, "Trimming", "", new TrimmingOptions(BarcodeValidatorOptions.class), false, false);
-        addCollapsibleChildOptions(ASSEMBLY_OPTIONS_NAME, "Assembly", "", new CAP3Options(BarcodeValidatorOptions.class), false, true);
-        addCollapsibleChildOptions(PCI_OPTIONS_NAME, "PCI Calculation", "", new PciCalculationOptions(), false, true);
+
+        addTrimmingOptions();
+        addAssemblyOptions();
         addValidationOptions();
+        addPCICalculationOptions();
     }
 
     public TrimmingOptions getTrimmingOptions() {
-        return (TrimmingOptions)getChildOptions().get(TRIMMING_OPTIONS_NAME);
+        return trimmingOptions;
     }
 
     public CAP3Options getAssemblyOptions() {
-        return (CAP3Options)getChildOptions().get(ASSEMBLY_OPTIONS_NAME);
+        return assemblyOptions;
     }
 
-    public PciCalculationOptions getPciCalculationOptions() {
-        return (PciCalculationOptions)getChildOptions().get(PCI_OPTIONS_NAME);
+    public PciCalculatorOptions getPciCalculatorOptions() {
+        return PciCalculatorOptions;
     }
 
     /**
@@ -45,29 +46,38 @@ public class BarcodeValidatorOptions extends Options {
      * {@link com.biomatters.plugins.barcoding.validator.validation.Validation} objects.
      */
     public Map<String, ValidationOptions> getValidationOptions() {
-        Options validationOptions = getChildOptions().get(VALIDATION_OPTIONS_NAME);
-        Map<String, ValidationOptions> result = new HashMap<String, ValidationOptions>();
+        Map<String, ValidationOptions> identifiersToValidationOptions = new HashMap<String, ValidationOptions>();
 
         for (Map.Entry<String, Options> entry : validationOptions.getChildOptions().entrySet()) {
-            result.put(entry.getKey(), (ValidationOptions) entry.getValue());
+            identifiersToValidationOptions.put(entry.getKey(), (ValidationOptions)entry.getValue());
         }
 
-        return Collections.unmodifiableMap(result);
+        return Collections.unmodifiableMap(identifiersToValidationOptions);
+    }
+
+    private void addTrimmingOptions() {
+        addCollapsibleChildOptions("trimming", "Trimming", "", trimmingOptions, false, false);
     }
 
     private void addValidationOptions() {
-        Options validationOptions = new Options(BarcodeValidatorOptions.class);
         List<Validation> validations = Validation.getValidations();
-
-        for (Validation validation : Validation.getValidations()) {
-            ValidationOptions options = validation.getOptions();
-            validationOptions.addChildOptions(options.getIdentifier(), options.getLabel(), options.getDescription(), options, true);
-        }
-
         if (!validations.isEmpty()) {
+            for (Validation validation : Validation.getValidations()) {
+                ValidationOptions options = validation.getOptions();
+                validationOptions.addChildOptions(options.getIdentifier(), options.getLabel(), options.getDescription(), options, true);
+            }
+
             validationOptions.addChildOptionsPageChooser("validationChooser", "Validation steps: ", Collections.<String>emptyList(), PageChooserType.BUTTONS, true);
         }
 
-        addCollapsibleChildOptions(VALIDATION_OPTIONS_NAME, "Validation", "", validationOptions, false, true);
+        addCollapsibleChildOptions("validation", "Validation", "", validationOptions, false, true);
+    }
+
+    private void addAssemblyOptions() {
+        addCollapsibleChildOptions("assembly", "Assembly", "", assemblyOptions, false, true);
+    }
+    
+    private void addPCICalculationOptions() {
+        addCollapsibleChildOptions("pciCalculation", "PCI Calculation", "", PciCalculatorOptions, false, true);
     }
 }

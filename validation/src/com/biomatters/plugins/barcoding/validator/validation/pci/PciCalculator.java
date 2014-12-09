@@ -15,8 +15,6 @@ import com.biomatters.geneious.publicapi.utilities.GeneralUtilities;
 import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.biomatters.plugins.barcoding.validator.validation.utilities.AlignmentUtilities;
 import com.biomatters.plugins.barcoding.validator.validation.utilities.ImportUtilities;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import jebl.util.ProgressListener;
 
 import javax.annotation.Nonnull;
@@ -34,12 +32,13 @@ public class PciCalculator {
      * Calculates the PCI values for new samples compared with a reference barcode database.
      *
      * @param sequenceUrns The document {@link URN}s of the new samples
-     * @param options See {@link com.biomatters.plugins.barcoding.validator.validation.pci.PciCalculationOptions}
+     * @param genus
+     * @param species
+     * @param pathToBarcodesFile
      * @return a map from {@link URN} to PCI value.  Or null  if the calculation was not run.
      * @throws DocumentOperationException if something goes wrong running the PCI calculation
      */
-    public static Map<URN, Double> calculate(Set<URN> sequenceUrns, PciCalculationOptions options) throws DocumentOperationException {
-        String pathToBarcodesFile = options.getPathToBarcodesFile();
+    public static Map<URN, Double> calculate(Set<URN> sequenceUrns, String genus, String species, String pathToBarcodesFile) throws DocumentOperationException {
         if(pathToBarcodesFile.trim().isEmpty()) {
             return null;
         }
@@ -56,13 +55,9 @@ public class PciCalculator {
             }
             inputDocs.add(apd);
         }
-        BiMap<String, AnnotatedPluginDocument> newSamples = HashBiMap.create();
+        Map<String, AnnotatedPluginDocument> newSamples = new HashMap<String, AnnotatedPluginDocument>();
         for (AnnotatedPluginDocument doc : inputDocs) {
-            String uidForNewSample = getUid(options.getGenus(), options.getSpecies(), doc.getName());
-            if(newSamples.containsKey(uidForNewSample)) {
-                // If there are duplicate names, we'll just give it a random UUID
-                uidForNewSample = getUid(options.getGenus(), options.getSpecies(), UUID.randomUUID().toString());
-            }
+            String uidForNewSample = getUid(genus, species, doc.getName());
             newSamples.put(uidForNewSample, doc);
         }
 
@@ -93,7 +88,7 @@ public class PciCalculator {
 
         SequenceAlignmentDocument alignment = AlignmentUtilities.performAlignment(new ArrayList<NucleotideSequenceDocument>(toAlign.values()));
         try {
-            File inputAlignmentFile = createPciInputFile(alignment, newSamples.inverse());
+            File inputAlignmentFile = createPciInputFile(alignment, getRenameMap(newSamples));
             File newUidFile = createNewUidFile(newSamples.keySet());
 
             File outputFile = runPci(inputAlignmentFile, newUidFile);
@@ -113,6 +108,16 @@ public class PciCalculator {
             result.put(newSamples.get(uid).getURN(), scores.get(uid));
         }
         return result;
+    }
+
+    private static Map<String, String> getRenameMap(Map<String, AnnotatedPluginDocument> newSamples) {
+        Map<String, String> renameMap = new HashMap<String, String>();
+
+        for (Map.Entry<String, AnnotatedPluginDocument> entry : newSamples.entrySet()) {
+            renameMap.put(entry.getValue().getName(), entry.getKey());
+        }
+
+        return renameMap;
     }
 
     private static Map<String, Double> getPDistancesFromFile(File outputFile, Collection<String> uids) throws IOException, PciValidationException {
@@ -216,21 +221,17 @@ public class PciCalculator {
      * Generates the input file to the PCI program (-i).  The input file will name sequences using {@link #getUid(String, String, String)}
      *
      * @param alignment The alignment to write out to the PCI input file
-     * @param renameMap A mapping from {@link com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument} to the UUID
-     *                  if the sequence name should not be used
      * @return The PCI input file
      * @throws IOException if there is a problem writing the file
      */
-    private static File createPciInputFile(SequenceAlignmentDocument alignment, Map<AnnotatedPluginDocument, String> renameMap) throws IOException {
+    private static File createPciInputFile(SequenceAlignmentDocument alignment, Map<String, String> renameMap) throws IOException {
         File outputFile = FileUtilities.createTempFile("alignment", ".fasta", false);
         BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
         try {
-            for (int i = 0; i < alignment.getNumberOfSequences(); i++) {
-                SequenceDocument alignedSequence = alignment.getSequence(i);
-                AnnotatedPluginDocument refDoc = alignment.getReferencedDocument(i);
-                String uid = renameMap.get(refDoc);
-                if(uid == null) {
-                    uid = alignedSequence.getName();
+            for (SequenceDocument alignedSequence : alignment.getSequences()) {
+                String uid = alignedSequence.getName();
+                if(renameMap.containsKey(uid)) {
+                    uid = renameMap.get(uid);
                 }
 
                 writer.write(">" + uid);
