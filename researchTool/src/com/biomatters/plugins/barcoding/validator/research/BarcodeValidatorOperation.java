@@ -18,6 +18,7 @@ import com.biomatters.plugins.barcoding.validator.output.ValidationReportDocumen
 import com.biomatters.plugins.barcoding.validator.validation.*;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputProcessor;
+import com.biomatters.plugins.barcoding.validator.validation.pci.PciCalculator;
 import com.biomatters.plugins.barcoding.validator.validation.results.SlidingWindowQualityValidationResultFact;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
@@ -224,8 +225,10 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                                                OperationCallback operationCallback,
                                                BarcodeValidatorOptions barcodeValidatorOptions,
                                                ProgressListener progressListener) throws DocumentOperationException {
+
+        CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, suppliedBarcodesToSuppliedTraces.size() + 2);
+
         List<ValidationOutputRecord> outputs = new ArrayList<ValidationOutputRecord>();
-        CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, suppliedBarcodesToSuppliedTraces.size() + 1);
         for (AnnotatedPluginDocument suppliedBarcode : suppliedBarcodesToSuppliedTraces.keySet()) {
             NucleotideSequenceDocument barcode = (NucleotideSequenceDocument)suppliedBarcode.getDocument();
             String barcodeName = barcode.getName();
@@ -276,9 +279,16 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             outputs.add(record);
         }
 
-        validationProgress.beginSubtask();
+        validationProgress.beginSubtask("Calculating PCI...");
+        Set<URN> urnsOfSeqsToCalculatePci = new HashSet<URN>();
+        for (ValidationOutputRecord output : outputs) {
+            urnsOfSeqsToCalculatePci.add(output.getConsensusUrn());
+            urnsOfSeqsToCalculatePci.addAll(output.getTrimmedDocumentUrns());
+        }
+        Map<URN, Double> pciValues = PciCalculator.calculate(urnsOfSeqsToCalculatePci, barcodeValidatorOptions.getPciCalculationOptions());
 
-        operationCallback.addDocument(new ValidationReportDocument(parameterSetName + VALIDATION_REPORT_NAME_SUFFIX, outputs, barcodeValidatorOptions), false, validationProgress);
+        validationProgress.beginSubtask("Saving Report...");
+        operationCallback.addDocument(new ValidationReportDocument(parameterSetName + VALIDATION_REPORT_NAME_SUFFIX, outputs, barcodeValidatorOptions, pciValues), false, validationProgress);
     }
 
     private static void saveChangesToSequencesMadeByValidationPipeline(ValidationOutputRecord record) {

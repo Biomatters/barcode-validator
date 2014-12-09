@@ -214,6 +214,10 @@ public class ValidationOutputRecord implements XMLSerializable {
         return assemblyUrn;
     }
 
+    public URN getConsensusUrn() {
+        return consensusUrn;
+    }
+
     public void addValidationResult(URN targetSequenceUrn, RecordOfValidationResult result) {
         Class<? extends ResultFact> factClass = result.getFact().getClass();
         Map<URN, RecordOfValidationResult> factMap = validationResults.get(factClass);

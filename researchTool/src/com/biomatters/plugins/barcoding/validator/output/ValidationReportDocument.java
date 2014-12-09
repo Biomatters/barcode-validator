@@ -5,10 +5,7 @@ import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorOptio
 import org.jdom.Element;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Represents the result of running the validation pipeline on a set of barcode sequences and their associated traces.
@@ -22,17 +19,23 @@ public class ValidationReportDocument implements PluginDocument {
     private static final String OUTPUT_KEY = "output";
     private static final String OPTIONS_DESC_KEY = "optionsUsed";
     private static final String OPTION_VALUES_KEY = "optionsValuesUsed";
+    private static final String PCI_VALUES_KEY = "pciValues";
+    private static final String PCI_ENTRY_KEY = "entry";
+    private static final String URN_KEY = "urn";
+    private static final String VALUE_KEY = "pci";
 
     private String name;
     private List<ValidationOutputRecord> outputs;
     // One of the following is non-null.  Early version stored only the description.
     @Nullable private BarcodeValidatorOptions optionsUsed;
-    @Nullable private String optionsDescription;
+    @Nullable private String optionsDescription;  // todo Can remove this now since we broke backwards compatibility in 0.5
+    @Nullable private Map<URN, Double> pciValues;
 
-    public ValidationReportDocument(String name, List<ValidationOutputRecord> outputs, BarcodeValidatorOptions options) {
+    public ValidationReportDocument(String name, List<ValidationOutputRecord> outputs, BarcodeValidatorOptions options, Map<URN, Double> pciValues) {
         this.name = name;
         this.outputs = outputs;
         optionsUsed = options;
+        this.pciValues = pciValues;
     }
 
     private static String generateDescriptionFromOptions(BarcodeValidatorOptions options) {
@@ -85,6 +88,28 @@ public class ValidationReportDocument implements PluginDocument {
         for (Element child : children) {
             outputs.add(XMLSerializer.classFromXML(child, ValidationOutputRecord.class));
         }
+        Element pciElement = element.getChild(PCI_VALUES_KEY);
+        if(pciElement != null) {
+            pciValues = pciValuesMapFromXml(pciElement);
+        }
+    }
+
+    private static Map<URN, Double> pciValuesMapFromXml(Element pciElement) throws XMLSerializationException {
+        Map<URN, Double> result = new HashMap<URN, Double>();
+        List<Element> entryElements = pciElement.getChildren(PCI_ENTRY_KEY);
+        for (Element entryElement : entryElements) {
+            String valueText = entryElement.getChildText(VALUE_KEY);
+            try {
+                URN urn = URN.fromXML(entryElement.getChild(URN_KEY));
+                Double pci = Double.valueOf(valueText);
+                result.put(urn, pci);
+            } catch (MalformedURNException e) {
+                throw new XMLSerializationException("Bad URN stored in report document: " + e.getMessage(), e);
+            } catch (NumberFormatException e) {
+                throw new XMLSerializationException("Bad PCI value (" + valueText + ") stored in report document: " + e.getMessage(), e);
+            }
+        }
+        return result;
     }
 
     @Override
@@ -101,7 +126,21 @@ public class ValidationReportDocument implements PluginDocument {
         for (ValidationOutputRecord output : outputs) {
             element.addContent(XMLSerializer.classToXML(OUTPUT_KEY, output));
         }
+        if(pciValues != null) {
+            element.addContent(pciValuesToXml(pciValues));
+        }
         return element;
+    }
+
+    private static Element pciValuesToXml(Map<URN, Double> pciValues) {
+        Element pciElement = new Element(PCI_VALUES_KEY);
+        for (Map.Entry<URN, Double> entry : pciValues.entrySet()) {
+            Element valueElement = new Element(PCI_ENTRY_KEY);
+            valueElement.addContent(entry.getKey().toXML(URN_KEY));
+            valueElement.addContent(new Element(VALUE_KEY).setText(String.valueOf(entry.getValue())));
+            pciElement.addContent(valueElement);
+        }
+        return pciElement;
     }
 
     @Override

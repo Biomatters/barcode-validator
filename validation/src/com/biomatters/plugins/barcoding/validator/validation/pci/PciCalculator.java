@@ -1,6 +1,10 @@
 package com.biomatters.plugins.barcoding.validator.validation.pci;
 
-import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
+import com.biomatters.geneious.publicapi.components.Dialogs;
+import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
+import com.biomatters.geneious.publicapi.documents.DocumentUtilities;
+import com.biomatters.geneious.publicapi.documents.PluginDocument;
+import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
@@ -24,20 +28,49 @@ import java.util.regex.Pattern;
  */
 public class PciCalculator {
 
-    public Map<NucleotideGraphSequenceDocument, Double> calculate(List<NucleotideGraphSequenceDocument> sequences, PciCalculationOptions options) throws DocumentOperationException {
-        File barcodesFile = new File(options.getPathToBarcodesFile());
+    /**
+     * Calculates the PCI values for new samples compared with a reference barcode database.
+     *
+     * @param sequenceUrns The document {@link URN}s of the new samples
+     * @param options See {@link com.biomatters.plugins.barcoding.validator.validation.pci.PciCalculationOptions}
+     * @return a map from {@link URN} to PCI value.  Or null  if the calculation was not run.
+     * @throws DocumentOperationException if something goes wrong running the PCI calculation
+     */
+    public static Map<URN, Double> calculate(Set<URN> sequenceUrns, PciCalculationOptions options) throws DocumentOperationException {
+        String pathToBarcodesFile = options.getPathToBarcodesFile();
+        if(pathToBarcodesFile.trim().isEmpty()) {
+            return null;
+        }
+        File barcodesFile = new File(pathToBarcodesFile);
         if(!barcodesFile.exists()) {
             throw new DocumentOperationException("Barcodes file for PCI validation did not exist: " + barcodesFile.getAbsolutePath());
         }
 
-        Map<String, NucleotideGraphSequenceDocument> newSamples = new HashMap<String, NucleotideGraphSequenceDocument>();
-        for (NucleotideGraphSequenceDocument sequence : sequences) {
-            String uidForNewSample = getUid(options.getGenus(), options.getSpecies(), sequence.getName());
-            newSamples.put(uidForNewSample, sequence);
+        List<AnnotatedPluginDocument> inputDocs = new ArrayList<AnnotatedPluginDocument>();
+        for (URN urn : sequenceUrns) {
+            AnnotatedPluginDocument apd = DocumentUtilities.getDocumentByURN(urn);
+            if(apd == null) {
+                throw new IllegalStateException("Failed to locate document for URN=" + urn.toString());
+            }
+            inputDocs.add(apd);
+        }
+        Map<String, AnnotatedPluginDocument> newSamples = new HashMap<String, AnnotatedPluginDocument>();
+        for (AnnotatedPluginDocument doc : inputDocs) {
+            String uidForNewSample = getUid(options.getGenus(), options.getSpecies(), doc.getName());
+            newSamples.put(uidForNewSample, doc);
         }
 
         Map<String, NucleotideSequenceDocument> toAlign = new HashMap<String, NucleotideSequenceDocument>();
-        toAlign.putAll(newSamples);
+        for (Map.Entry<String, AnnotatedPluginDocument> entry : newSamples.entrySet()) {
+            AnnotatedPluginDocument apd = entry.getValue();
+            PluginDocument seqDoc = apd.getDocumentOrNull();
+            if(seqDoc == null) {
+                throw new DocumentOperationException("Failed to load document: " + apd.getName());
+            } else if(!(seqDoc instanceof NucleotideSequenceDocument)) {
+                throw new IllegalStateException("Input document " + apd.getName() + " was not a NucleotideSequenceDocument");
+            }
+            toAlign.put(entry.getKey(), (NucleotideSequenceDocument)seqDoc);
+        }
 
 
         List<NucleotideSequenceDocument> imported = ImportUtilities.importNucleotidesFastaFile(barcodesFile);
@@ -62,23 +95,24 @@ public class PciCalculator {
         } catch (IOException e) {
             throw new DocumentOperationException("Failed to write out alignment for input to PCI: " + e.getMessage(), e);
         } catch (PciValidationException e) {
-            return null; // todo
+            Dialogs.showMessageDialog("Encountered the following error while attempting to calculate PCI values: " + e.getMessage(), "Failed to Calculate PCI Values");
+            return null;
         }
     }
 
-    private Map<NucleotideGraphSequenceDocument, Double> getPciScoresForDocuments(Map<String, NucleotideGraphSequenceDocument> newSamples, File outputFile) throws IOException, PciValidationException {
+    private static Map<URN, Double> getPciScoresForDocuments(Map<String, AnnotatedPluginDocument> newSamples, File outputFile) throws IOException, PciValidationException {
         Map<String, Double> scores = getPDistancesFromFile(outputFile, newSamples.keySet());
-        Map<NucleotideGraphSequenceDocument, Double> result = new HashMap<NucleotideGraphSequenceDocument, Double>();
+        Map<URN, Double> result = new HashMap<URN, Double>();
         for (String uid : newSamples.keySet()) {
-            result.put(newSamples.get(uid), scores.get(uid));
+            result.put(newSamples.get(uid).getURN(), scores.get(uid));
         }
         return result;
     }
 
-    private Map<String, String> getRenameMap(Map<String, NucleotideGraphSequenceDocument> newSamples) {
+    private static Map<String, String> getRenameMap(Map<String, AnnotatedPluginDocument> newSamples) {
         Map<String, String> renameMap = new HashMap<String, String>();
 
-        for (Map.Entry<String, NucleotideGraphSequenceDocument> entry : newSamples.entrySet()) {
+        for (Map.Entry<String, AnnotatedPluginDocument> entry : newSamples.entrySet()) {
             renameMap.put(entry.getValue().getName(), entry.getKey());
         }
 
@@ -124,7 +158,7 @@ public class PciCalculator {
         }
     }
 
-    private File runPci(File inputAlignmentFile, File newUidFile) throws IOException, DocumentOperationException, PciValidationException {
+    private static File runPci(File inputAlignmentFile, File newUidFile) throws IOException, DocumentOperationException, PciValidationException {
         File output = FileUtilities.createTempFile("output", ".txt", false);
 
         File programFolder = FileUtilities.getResourceForClass(PciCalculator.class, "program");
