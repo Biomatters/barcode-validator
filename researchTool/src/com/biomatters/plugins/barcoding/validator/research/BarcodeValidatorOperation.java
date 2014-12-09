@@ -282,7 +282,10 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         validationProgress.beginSubtask("Calculating PCI...");
         Set<URN> urnsOfSeqsToCalculatePci = new HashSet<URN>();
         for (ValidationOutputRecord output : outputs) {
-            urnsOfSeqsToCalculatePci.add(output.getConsensusUrn());
+            URN consensusUrn = output.getConsensusUrn();
+            if(consensusUrn != null) {
+                urnsOfSeqsToCalculatePci.add(consensusUrn);
+            }
             urnsOfSeqsToCalculatePci.addAll(output.getTrimmedDocumentUrns());
         }
         Map<URN, Double> pciValues = PciCalculator.calculate(urnsOfSeqsToCalculatePci, barcodeValidatorOptions.getPciCalculationOptions());
