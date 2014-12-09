@@ -4,6 +4,7 @@ import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.plugins.barcoding.validator.validation.Validation;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
+import com.biomatters.plugins.barcoding.validator.validation.pci.PciCalculationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
 
 import java.util.*;
@@ -15,12 +16,14 @@ import java.util.*;
 public class BarcodeValidatorOptions extends Options {
     private static final String TRIMMING_OPTIONS_NAME   = "trimming";
     private static final String ASSEMBLY_OPTIONS_NAME   = "assembly";
+    private static final String PCI_OPTIONS_NAME   = "pci";
     private static final String VALIDATION_OPTIONS_NAME = "validation";
 
     public BarcodeValidatorOptions() {
         super(BarcodeValidatorOperation.class);
-        addTrimmingOptions();
-        addAssemblyOptions();
+        addCollapsibleChildOptions(TRIMMING_OPTIONS_NAME, "Trimming", "", new TrimmingOptions(BarcodeValidatorOptions.class), false, false);
+        addCollapsibleChildOptions(ASSEMBLY_OPTIONS_NAME, "Assembly", "", new CAP3Options(BarcodeValidatorOptions.class), false, true);
+        addCollapsibleChildOptions(PCI_OPTIONS_NAME, "PCI Calculation", "", new PciCalculationOptions(), false, true);
         addValidationOptions();
     }
 
@@ -30,6 +33,10 @@ public class BarcodeValidatorOptions extends Options {
 
     public CAP3Options getAssemblyOptions() {
         return (CAP3Options)getChildOptions().get(ASSEMBLY_OPTIONS_NAME);
+    }
+
+    public PciCalculationOptions getPciCalculationOptions() {
+        return (PciCalculationOptions)getChildOptions().get(PCI_OPTIONS_NAME);
     }
 
     /**
@@ -42,14 +49,10 @@ public class BarcodeValidatorOptions extends Options {
         Map<String, ValidationOptions> result = new HashMap<String, ValidationOptions>();
 
         for (Map.Entry<String, Options> entry : validationOptions.getChildOptions().entrySet()) {
-            result.put(entry.getKey(), (ValidationOptions)entry.getValue());
+            result.put(entry.getKey(), (ValidationOptions) entry.getValue());
         }
 
         return Collections.unmodifiableMap(result);
-    }
-
-    private void addTrimmingOptions() {
-        addCollapsibleChildOptions(TRIMMING_OPTIONS_NAME, "Trimming", "", new TrimmingOptions(BarcodeValidatorOptions.class), false, false);
     }
 
     private void addValidationOptions() {
@@ -66,9 +69,5 @@ public class BarcodeValidatorOptions extends Options {
         }
 
         addCollapsibleChildOptions(VALIDATION_OPTIONS_NAME, "Validation", "", validationOptions, false, true);
-    }
-
-    private void addAssemblyOptions() {
-        addCollapsibleChildOptions(ASSEMBLY_OPTIONS_NAME, "Assembly", "", new CAP3Options(BarcodeValidatorOptions.class), false, true);
     }
 }

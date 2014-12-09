@@ -8,9 +8,7 @@ import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.utilities.Execution;
 import com.biomatters.geneious.publicapi.utilities.FileUtilities;
 import com.biomatters.geneious.publicapi.utilities.GeneralUtilities;
-import com.biomatters.plugins.barcoding.validator.validation.SingleSequenceValidation;
-import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
-import com.biomatters.plugins.barcoding.validator.validation.results.*;
+import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.biomatters.plugins.barcoding.validator.validation.utilities.AlignmentUtilities;
 import com.biomatters.plugins.barcoding.validator.validation.utilities.ImportUtilities;
 import jebl.util.ProgressListener;
@@ -24,28 +22,23 @@ import java.util.regex.Pattern;
  * @author Matthew Cheung
  *         Created on 3/12/14 12:59 PM
  */
-@SuppressWarnings("UnusedDeclaration")
-public class PciValidation extends SingleSequenceValidation {
-    @Override
-    public ValidationOptions getOptions() {
-        return new PciValidationOptions();
-    }
+public class PciCalculator {
 
-    @Override
-    public ResultFact validate(NucleotideGraphSequenceDocument sequence, ValidationOptions _options) throws DocumentOperationException {
-        if(!(_options instanceof PciValidationOptions)) {
-            throw new IllegalStateException("validate() must be called with Options obtained from getOptions()");
-        }
-
-        PciValidationOptions options = (PciValidationOptions) _options;
+    public Map<NucleotideGraphSequenceDocument, Double> calculate(List<NucleotideGraphSequenceDocument> sequences, PciCalculationOptions options) throws DocumentOperationException {
         File barcodesFile = new File(options.getPathToBarcodesFile());
         if(!barcodesFile.exists()) {
             throw new DocumentOperationException("Barcodes file for PCI validation did not exist: " + barcodesFile.getAbsolutePath());
         }
 
+        Map<String, NucleotideGraphSequenceDocument> newSamples = new HashMap<String, NucleotideGraphSequenceDocument>();
+        for (NucleotideGraphSequenceDocument sequence : sequences) {
+            String uidForNewSample = getUid(options.getGenus(), options.getSpecies(), sequence.getName());
+            newSamples.put(uidForNewSample, sequence);
+        }
+
         Map<String, NucleotideSequenceDocument> toAlign = new HashMap<String, NucleotideSequenceDocument>();
-        String uidForNewSample = getUid(options.getGenus(), options.getSpecies(), sequence.getName());
-        toAlign.put(uidForNewSample, sequence);
+        toAlign.putAll(newSamples);
+
 
         List<NucleotideSequenceDocument> imported = ImportUtilities.importNucleotidesFastaFile(barcodesFile);
         for (NucleotideSequenceDocument importedSeq : imported) {
@@ -61,24 +54,40 @@ public class PciValidation extends SingleSequenceValidation {
 
         SequenceAlignmentDocument alignment = AlignmentUtilities.performAlignment(new ArrayList<NucleotideSequenceDocument>(toAlign.values()));
         try {
-            File inputAlignmentFile = createPciInputFile(alignment, Collections.singletonMap(sequence.getName(), uidForNewSample));
-            File newUidFile = createNewUidFile(uidForNewSample);
+            File inputAlignmentFile = createPciInputFile(alignment, getRenameMap(newSamples));
+            File newUidFile = createNewUidFile(newSamples.keySet());
 
             File outputFile = runPci(inputAlignmentFile, newUidFile);
-            return getFactFromOutputFile(outputFile, uidForNewSample);
+            return getPciScoresForDocuments(newSamples, outputFile);
         } catch (IOException e) {
             throw new DocumentOperationException("Failed to write out alignment for input to PCI: " + e.getMessage(), e);
         } catch (PciValidationException e) {
-            return new PciResultFact(false, 0.0, e.getMessage());
+            return null; // todo
         }
     }
 
-    private static ResultFact getFactFromOutputFile(File outputFile, String uid) throws IOException, PciValidationException {
-        double pDistance = getPDistanceFromFile(outputFile, uid);
-        return new PciResultFact(true, pDistance, "");
+    private Map<NucleotideGraphSequenceDocument, Double> getPciScoresForDocuments(Map<String, NucleotideGraphSequenceDocument> newSamples, File outputFile) throws IOException, PciValidationException {
+        Map<String, Double> scores = getPDistancesFromFile(outputFile, newSamples.keySet());
+        Map<NucleotideGraphSequenceDocument, Double> result = new HashMap<NucleotideGraphSequenceDocument, Double>();
+        for (String uid : newSamples.keySet()) {
+            result.put(newSamples.get(uid), scores.get(uid));
+        }
+        return result;
     }
 
-    private static double getPDistanceFromFile(File outputFile, String uid) throws IOException, PciValidationException {
+    private Map<String, String> getRenameMap(Map<String, NucleotideGraphSequenceDocument> newSamples) {
+        Map<String, String> renameMap = new HashMap<String, String>();
+
+        for (Map.Entry<String, NucleotideGraphSequenceDocument> entry : newSamples.entrySet()) {
+            renameMap.put(entry.getValue().getName(), entry.getKey());
+        }
+
+        return renameMap;
+    }
+
+    private static Map<String, Double> getPDistancesFromFile(File outputFile, Collection<String> uids) throws IOException, PciValidationException {
+        Map<String, Double> result = new HashMap<String, Double>();
+
         BufferedReader reader = new BufferedReader(new FileReader(outputFile));
         try {
             String currentLine;
@@ -88,9 +97,9 @@ public class PciValidation extends SingleSequenceValidation {
                     continue;
                 }
                 String lineUid = lineParts[0];
-                if(lineUid.equals(uid)) {
+                if(uids.contains(lineUid)) {
                     try {
-                        return Double.parseDouble(lineParts[1]);
+                        result.put(lineUid, Double.parseDouble(lineParts[1]));
                     } catch (NumberFormatException e) {
                         throw new PciValidationException("PCI program produced invalid output.  " + lineParts[1] + " was not a numerical value.", e);
                     }
@@ -99,7 +108,7 @@ public class PciValidation extends SingleSequenceValidation {
         } finally {
             GeneralUtilities.attemptClose(reader);
         }
-        return 0;
+        return result;
     }
 
     /**
@@ -118,7 +127,7 @@ public class PciValidation extends SingleSequenceValidation {
     private File runPci(File inputAlignmentFile, File newUidFile) throws IOException, DocumentOperationException, PciValidationException {
         File output = FileUtilities.createTempFile("output", ".txt", false);
 
-        File programFolder = FileUtilities.getResourceForClass(PciValidation.class, "program");
+        File programFolder = FileUtilities.getResourceForClass(PciCalculator.class, "program");
         if(!programFolder.exists()) {
             throw new DocumentOperationException("PCI program missing from Barcode Validator plugin.  Please re-install.  " +
                     "Contact Biomatters if this still occurs after re-installing the plugin.");
@@ -161,13 +170,13 @@ public class PciValidation extends SingleSequenceValidation {
     /**
      * Produces a file that can be used to specify new samples to the PCI program (using -s).
      *
-     * @param sequenceUid The sequence that should have its UID in the file
+     * @param sequenceUids The UIDs of sequences that are new samples
      * @return A plain text file with the UID of the sequence in it. Obtained by calling {@link #getUid(String, String, String)}
      * @throws IOException if there is a problem writing the file
      */
-    private static File createNewUidFile(String sequenceUid) throws IOException {
+    private static File createNewUidFile(Collection<String> sequenceUids) throws IOException {
         File newUids = FileUtilities.createTempFile("new", ".txt", false);
-        FileUtilities.writeTextToFile(newUids, sequenceUid);
+        FileUtilities.writeTextToFile(newUids, StringUtilities.join("\n", sequenceUids));
         return newUids;
     }
 
@@ -192,7 +201,6 @@ public class PciValidation extends SingleSequenceValidation {
 
                 writer.write(">" + uid);
                 writer.newLine();
-                System.out.println(uid);
 
                 writer.write(alignedSequence.getSequenceString());
                 writer.newLine();

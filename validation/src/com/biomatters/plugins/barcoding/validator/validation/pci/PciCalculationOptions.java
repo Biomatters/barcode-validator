@@ -1,21 +1,21 @@
 package com.biomatters.plugins.barcoding.validator.validation.pci;
 
 import com.biomatters.geneious.publicapi.documents.XMLSerializationException;
-import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
+import com.biomatters.geneious.publicapi.plugin.Options;
 import org.jdom.Element;
 
 /**
  * @author Matthew Cheung
  *         Created on 3/12/14 1:02 PM
  */
-public class PciValidationOptions extends ValidationOptions {
+public class PciCalculationOptions extends Options {
 
     private static final String BARCODES_OPTION = "barcodesFile";
     private static final String GENUS_OPTION = "genus";
     private static final String SPECIES_OPTION = "species";
 
-    public PciValidationOptions() {
-        super(PciValidationOptions.class);
+    public PciCalculationOptions() {
+        super(PciCalculationOptions.class);
 
         addStringOption(GENUS_OPTION, "Genus to Test:", "");
         addStringOption(SPECIES_OPTION, "Species to Test:", "");
@@ -27,23 +27,8 @@ public class PciValidationOptions extends ValidationOptions {
         endAlignHorizontally();
     }
 
-    public PciValidationOptions(Element element) throws XMLSerializationException {
+    public PciCalculationOptions(Element element) throws XMLSerializationException {
         super(element);
-    }
-
-    @Override
-    public String getIdentifier() {
-        return "pci";
-    }
-
-    @Override
-    public String getLabel() {
-        return "PCI";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Determines if adding a sequence to the set of barcode sequences improves the probability of correct identification.";
     }
 
     public String getPathToBarcodesFile() {
