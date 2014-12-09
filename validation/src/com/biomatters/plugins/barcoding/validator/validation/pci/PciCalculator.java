@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  * @author Matthew Cheung
  *         Created on 3/12/14 12:59 PM
  */
-public class PciCalculator {
+public class PCICalculator {
 
     /**
      * Calculates the PCI values for new samples compared with a reference barcode database.
@@ -162,7 +162,7 @@ public class PciCalculator {
     private static File runPci(File inputAlignmentFile, File newUidFile) throws IOException, DocumentOperationException, PciValidationException {
         File output = FileUtilities.createTempFile("output", ".txt", false);
 
-        File programFolder = FileUtilities.getResourceForClass(PciCalculator.class, "program");
+        File programFolder = FileUtilities.getResourceForClass(PCICalculator.class, "program");
         if(!programFolder.exists()) {
             throw new DocumentOperationException("PCI program missing from Barcode Validator plugin.  Please re-install.  " +
                     "Contact Biomatters if this still occurs after re-installing the plugin.");
