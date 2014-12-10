@@ -24,8 +24,8 @@ public class BarcodeValidatorOptions extends Options {
 
         addTrimmingOptions();
         addAssemblyOptions();
-        addValidationOptions();
         addPCICalculationOptions();
+        addValidationOptions();
     }
 
     public TrimmingOptions getTrimmingOptions() {
@@ -59,6 +59,14 @@ public class BarcodeValidatorOptions extends Options {
         addCollapsibleChildOptions("trimming", "Trimming", "", trimmingOptions, false, false);
     }
 
+    private void addAssemblyOptions() {
+        addCollapsibleChildOptions("assembly", "Assembly", "", assemblyOptions, false, true);
+    }
+    
+    private void addPCICalculationOptions() {
+        addCollapsibleChildOptions("pciCalculation", "PCI Calculation", "", PCICalculatorOptions, false, true);
+    }
+
     private void addValidationOptions() {
         List<Validation> validations = Validation.getValidations();
         if (!validations.isEmpty()) {
@@ -71,13 +79,5 @@ public class BarcodeValidatorOptions extends Options {
         }
 
         addCollapsibleChildOptions("validation", "Validation", "", validationOptions, false, true);
-    }
-
-    private void addAssemblyOptions() {
-        addCollapsibleChildOptions("assembly", "Assembly", "", assemblyOptions, false, true);
-    }
-    
-    private void addPCICalculationOptions() {
-        addCollapsibleChildOptions("pciCalculation", "PCI Calculation", "", PCICalculatorOptions, false, true);
     }
 }

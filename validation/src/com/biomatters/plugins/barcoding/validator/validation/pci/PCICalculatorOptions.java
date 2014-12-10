@@ -4,9 +4,7 @@ import com.biomatters.geneious.publicapi.documents.XMLSerializationException;
 import com.biomatters.geneious.publicapi.utilities.Execution;
 import com.biomatters.geneious.publicapi.plugin.Options;
 import jebl.util.ProgressListener;
-
 import org.jdom.Element;
-
 import java.io.IOException;
 
 /**
@@ -27,7 +25,10 @@ public class PCICalculatorOptions extends Options {
         addSpeciesSelectionOption();
         addBarcodesFileSelectionOption();
 
-        setEnabled(canPerformPCICalculation);
+        if (!canPerformPCICalculation) {
+            setEnabled(canPerformPCICalculation);
+            addLabel("PCI calculation is disabled as an installation of perl could not be detected.");
+        }
     }
 
     public PCICalculatorOptions(Element element) throws XMLSerializationException {
@@ -65,8 +66,8 @@ public class PCICalculatorOptions extends Options {
         addHelpButton(
                 "Help",
                 "Please select a fasta file that contains reference barcode sequences for PCI calculation. " +
-                        "Barcode sequences must be named in the format: genus_species_id. " +
-                        "Ids must not contain spaces."
+                "Barcode sequences must be named in the format: genus_species_id. " +
+                "Ids must not contain spaces."
         );
 
         endAlignHorizontally();
