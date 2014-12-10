@@ -34,13 +34,12 @@ public class PCICalculator {
      * Calculates the PCI values for new samples compared with a reference barcode database.
      *
      * @param sequenceUrns The document {@link URN}s of the new samples
-     * @param genus
-     * @param species
-     * @param pathToBarcodesFile
+     * @param options See {@link com.biomatters.plugins.barcoding.validator.validation.pci.PCICalculatorOptions}
      * @return a map from {@link URN} to PCI value.  Or null  if the calculation was not run.
      * @throws DocumentOperationException if something goes wrong running the PCI calculation
      */
-    public static Map<URN, Double> calculate(Set<URN> sequenceUrns, String genus, String species, String pathToBarcodesFile) throws DocumentOperationException {
+    public static Map<URN, Double> calculate(Set<URN> sequenceUrns, PCICalculatorOptions options) throws DocumentOperationException {
+        String pathToBarcodesFile = options.getPathToBarcodesFile();
         if(pathToBarcodesFile.trim().isEmpty()) {
             return null;
         }
@@ -59,10 +58,10 @@ public class PCICalculator {
         }
         BiMap<String, AnnotatedPluginDocument> newSamples = HashBiMap.create();
         for (AnnotatedPluginDocument doc : inputDocs) {
-            String uidForNewSample = getUid(genus, species, doc.getName());
+            String uidForNewSample = getUid(options.getGenus(), options.getSpecies(), doc.getName());
             if(newSamples.containsKey(uidForNewSample)) {
                 // If there are duplicate names, we'll just give it a random UUID
-                uidForNewSample = getUid(genus, species, UUID.randomUUID().toString());
+                uidForNewSample = getUid(options.getGenus(), options.getSpecies(), UUID.randomUUID().toString());
             }
             newSamples.put(uidForNewSample, doc);
         }

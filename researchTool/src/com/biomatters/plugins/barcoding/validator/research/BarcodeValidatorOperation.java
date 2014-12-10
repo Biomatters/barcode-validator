@@ -285,12 +285,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
         if (!runPCICalculation) {
             validationProgress.beginSubtask("Calculating PCI...");
-            PCIValues = PCICalculator.calculate(
-                    getUniqueConsensusURNs(outputs),
-                    pciCalculatorOptions.getGenus(),
-                    pciCalculatorOptions.getSpecies(),
-                    pciCalculatorOptions.getPathToBarcodesFile()
-            );
+            PCIValues = PCICalculator.calculate(getUniqueConsensusURNs(outputs), pciCalculatorOptions);
         }
 
         validationProgress.beginSubtask("Saving Report...");

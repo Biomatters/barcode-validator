@@ -26,11 +26,12 @@ public class PCICalculatorOptions extends Options {
         addBarcodesFileSelectionOption();
 
         if (!canPerformPCICalculation) {
-            setEnabled(canPerformPCICalculation);
+            setEnabled(false);
             addLabel("PCI calculation is disabled as an installation of perl could not be detected.");
         }
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public PCICalculatorOptions(Element element) throws XMLSerializationException {
         super(element);
     }
@@ -66,13 +67,13 @@ public class PCICalculatorOptions extends Options {
         addHelpButton(
                 "Help",
                 "Please select a fasta file that contains reference barcode sequences for PCI calculation. " +
-                "Barcode sequences must be named in the format: genus_species_id. " +
-                "Ids must not contain spaces."
+                "Barcode sequences must be named in the format: genus_species_id. Ids must not contain spaces."
         );
 
         endAlignHorizontally();
     }
 
+    @SuppressWarnings("EmptyCatchBlock")
     private static boolean testRunPerlFromWithinWorkingDirectoryOnCommandLine() {
         boolean canRunPerlFromWithinWorkingDirectoryOnCommandLine = false;
         Execution printPerlVersion = new Execution(
