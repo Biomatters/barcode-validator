@@ -5,6 +5,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotation;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationInterval;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocumentWithEditableAnnotations;
 import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
+import com.biomatters.plugins.barcoding.validator.validation.results.SlidingWindowQualityValidationResultFact;
 
 import java.util.ArrayList;
 import java.util.List;

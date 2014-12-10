@@ -1,4 +1,4 @@
-package com.biomatters.plugins.barcoding.validator.validation;
+package com.biomatters.plugins.barcoding.validator.validation.results;
 
 import com.biomatters.geneious.publicapi.documents.XMLSerializationException;
 import com.biomatters.plugins.barcoding.validator.validation.results.*;

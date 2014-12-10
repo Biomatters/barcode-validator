@@ -8,6 +8,7 @@ import com.biomatters.geneious.publicapi.implementations.Percentage;
 import com.biomatters.geneious.publicapi.implementations.SequenceExtractionUtilities;
 import com.biomatters.geneious.publicapi.implementations.sequence.DefaultSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
+import com.biomatters.plugins.barcoding.validator.validation.results.MuscleAlignmentValidationResultFact;
 import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
 import com.biomatters.plugins.barcoding.validator.validation.utilities.AlignmentUtilities;
 import jebl.util.ProgressListener;
