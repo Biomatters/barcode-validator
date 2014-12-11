@@ -20,6 +20,7 @@ import com.google.common.collect.HashBiMap;
 import jebl.util.ProgressListener;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.*;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -38,7 +39,7 @@ public class PCICalculator {
      * @return a map from {@link URN} to PCI value.  Or null  if the calculation was not run.
      * @throws DocumentOperationException if something goes wrong running the PCI calculation
      */
-    public static Map<URN, Double> calculate(Set<URN> sequenceUrns, PCICalculatorOptions options) throws DocumentOperationException {
+    public static Map<URN, Double> calculate(Map<URN, GenusAndSpecies> sequenceUrns, PCICalculatorOptions options) throws DocumentOperationException {
         String pathToBarcodesFile = options.getPathToBarcodesFile();
         if(pathToBarcodesFile.trim().isEmpty()) {
             return null;
@@ -48,22 +49,21 @@ public class PCICalculator {
             throw new DocumentOperationException("Barcodes file for PCI validation did not exist: " + barcodesFile.getAbsolutePath());
         }
 
-        List<AnnotatedPluginDocument> inputDocs = new ArrayList<AnnotatedPluginDocument>();
-        for (URN urn : sequenceUrns) {
+        BiMap<String, AnnotatedPluginDocument> newSamples = HashBiMap.create();
+        for (Map.Entry<URN, GenusAndSpecies> entry : sequenceUrns.entrySet()) {
+            URN urn = entry.getKey();
             AnnotatedPluginDocument apd = DocumentUtilities.getDocumentByURN(urn);
             if(apd == null) {
                 throw new IllegalStateException("Failed to locate document for URN=" + urn.toString());
             }
-            inputDocs.add(apd);
-        }
-        BiMap<String, AnnotatedPluginDocument> newSamples = HashBiMap.create();
-        for (AnnotatedPluginDocument doc : inputDocs) {
-            String uidForNewSample = getUid(options.getGenus(), options.getSpecies(), doc.getName());
+
+            GenusAndSpecies genusAndSpecies = entry.getValue();
+            String uidForNewSample = getUid(genusAndSpecies, apd.getName());
             if(newSamples.containsKey(uidForNewSample)) {
                 // If there are duplicate names, we'll just give it a random UUID
-                uidForNewSample = getUid(options.getGenus(), options.getSpecies(), UUID.randomUUID().toString());
+                uidForNewSample = getUid(genusAndSpecies, UUID.randomUUID().toString());
             }
-            newSamples.put(uidForNewSample, doc);
+            newSamples.put(uidForNewSample, apd);
         }
 
         Map<String, NucleotideSequenceDocument> toAlign = new HashMap<String, NucleotideSequenceDocument>();
@@ -201,7 +201,7 @@ public class PCICalculator {
      * Produces a file that can be used to specify new samples to the PCI program (using -s).
      *
      * @param sequenceUids The UIDs of sequences that are new samples
-     * @return A plain text file with the UID of the sequence in it. Obtained by calling {@link #getUid(String, String, String)}
+     * @return A plain text file with the UID of the sequence in it. Obtained by calling {@link #getUid(com.biomatters.plugins.barcoding.validator.validation.pci.PCICalculator.GenusAndSpecies, String)}
      * @throws IOException if there is a problem writing the file
      */
     private static File createNewUidFile(Collection<String> sequenceUids) throws IOException {
@@ -213,7 +213,7 @@ public class PCICalculator {
     private static final String BARCODE_DEF_LINE_REGEX = ".+_.+_.+";
 
     /**
-     * Generates the input file to the PCI program (-i).  The input file will name sequences using {@link #getUid(String, String, String)}
+     * Generates the input file to the PCI program (-i).  The input file will name sequences using {@link #getUid(com.biomatters.plugins.barcoding.validator.validation.pci.PCICalculator.GenusAndSpecies, String)}
      *
      * @param alignment The alignment to write out to the PCI input file
      * @param renameMap A mapping from {@link com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument} to the UUID
@@ -255,13 +255,27 @@ public class PCICalculator {
      * in the names of sequences.  <a href="http://www.ncbi.nlm.nih.gov/CBBresearch/Spouge/html_ncbi/html/bib/119.html#The%20Format%20of%20an%20Compressed%20Barcode%20File">Details here.</a>.
      * Underscore is replaced because it is a special character in the UID used as a separator.
      *
-     * @param genus The genus name
-     * @param species The species name
+     * @param genusAndSpecies The genus and species
      * @param name The name of the sequence
      * @return The UID of the sequence as it should appear in the compressed barcode format.
      *
      */
-    private static String getUid(@Nonnull String genus, @Nonnull String species, @Nonnull String name) {
-        return genus + "_" + species + "_" + name.replaceAll("[_\\s]+", "-");
+    private static String getUid(@Nullable GenusAndSpecies genusAndSpecies, @Nonnull String name) {
+        String sanitizedName = name.replaceAll("[_\\s]+", "-");
+        if(genusAndSpecies == null) {
+            return "Unknown_Unknown_" + sanitizedName;
+        } else {
+            return genusAndSpecies.genus + "_" + genusAndSpecies.species + "_" + sanitizedName;
+        }
+    }
+
+    public static class GenusAndSpecies {
+        final String genus;
+        final String species;
+
+        public GenusAndSpecies(String genus, String species) {
+            this.genus = genus;
+            this.species = species;
+        }
     }
 }

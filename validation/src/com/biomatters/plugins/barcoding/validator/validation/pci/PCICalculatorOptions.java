@@ -5,6 +5,10 @@ import com.biomatters.geneious.publicapi.utilities.Execution;
 import com.biomatters.geneious.publicapi.plugin.Options;
 import jebl.util.ProgressListener;
 import org.jdom.Element;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -12,17 +16,15 @@ import java.io.IOException;
  *         Created on 3/12/14 1:02 PM
  */
 public class PCICalculatorOptions extends Options {
-    private StringOption genusSelectionOption;
-    private StringOption speciesSelectionOption;
+    private TaxonMappingOptions taxonMappingOptions;
     private FileSelectionOption barcodesSelectionOption;
 
     private final boolean canPerformPCICalculation = testRunPerlFromWithinWorkingDirectoryOnCommandLine();
 
     public PCICalculatorOptions(Class cls) {
         super(cls);
-
-        addGenusSelectionOption();
-        addSpeciesSelectionOption();
+        taxonMappingOptions = new TaxonMappingOptions();
+        addChildOptions("input", "Input Barcodes", "", taxonMappingOptions);
         addBarcodesFileSelectionOption();
 
         if (!canPerformPCICalculation) {
@@ -36,14 +38,6 @@ public class PCICalculatorOptions extends Options {
         super(element);
     }
 
-    public String getGenus() {
-        return genusSelectionOption.getValue();
-    }
-
-    public String getSpecies() {
-        return speciesSelectionOption.getValue();
-    }
-
     public String getPathToBarcodesFile() {
         return barcodesSelectionOption.getValue();
     }
@@ -52,18 +46,10 @@ public class PCICalculatorOptions extends Options {
         return canPerformPCICalculation;
     }
 
-    private void addGenusSelectionOption() {
-        genusSelectionOption = addStringOption("genusSelection", "Genus to test:", "");
-    }
-
-    private void addSpeciesSelectionOption() {
-        speciesSelectionOption = addStringOption("speciesSelection", "Species to test:", "");
-    }
-
     private void addBarcodesFileSelectionOption() {
         beginAlignHorizontally(null, false);
 
-        barcodesSelectionOption = addFileSelectionOption("barcodesSelection", "Barcodes:", "");
+        barcodesSelectionOption = addFileSelectionOption("barcodesSelection", "Reference Barcodes:", "");
         addHelpButton(
                 "Help",
                 "Please select a fasta file that contains reference barcode sequences for PCI calculation. " +
@@ -101,5 +87,46 @@ public class PCICalculatorOptions extends Options {
         }
 
         return canRunPerlFromWithinWorkingDirectoryOnCommandLine;
+    }
+
+    @Nullable
+    public PCICalculator.GenusAndSpecies getGenusAndSpeciesFromLine(String line) {
+        String genus = taxonMappingOptions.getGenus(line);
+        String species = taxonMappingOptions.getSpecies(line);
+        if(genus == null || species == null) {
+            return null;
+        } else {
+            return new PCICalculator.GenusAndSpecies(genus, species);
+        }
+    }
+
+    @Nonnull
+    public String getNameFromLine(@Nonnull String line) {
+        return line.split(taxonMappingOptions.separatorOption.getSeparatorString())[0];
+    }
+
+    public boolean isUseInputFile() {
+        return taxonMappingOptions.useInputFiles.getValue();
+    }
+
+    /**
+     *
+     * @return The map file if specified by the user.  null if no file has been specified.
+     */
+    @Nullable
+    public File getTaxonMappingFile() {
+        if(!taxonMappingOptions.mapFileOption.isEnabled()) {
+            return null;
+        }
+        String path = taxonMappingOptions.mapFileOption.getValue();
+        if(path == null) {
+            return null;
+        }
+        File file = new File(path);
+        if(!file.exists()) {
+            return null;
+        }
+        return file;
+
     }
 }

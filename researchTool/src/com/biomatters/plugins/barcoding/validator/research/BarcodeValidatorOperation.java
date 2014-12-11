@@ -10,6 +10,7 @@ import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideGraphSequenceDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.*;
+import com.biomatters.geneious.publicapi.utilities.GeneralUtilities;
 import com.biomatters.geneious.publicapi.utilities.StringUtilities;
 import com.biomatters.plugins.barcoding.validator.output.RecordOfValidationResult;
 import com.biomatters.plugins.barcoding.validator.output.ValidationDocumentOperationCallback;
@@ -29,6 +30,7 @@ import jebl.util.ProgressListener;
 
 import javax.annotation.Nullable;
 import javax.swing.*;
+import java.io.*;
 import java.net.URL;
 import java.util.*;
 
@@ -166,6 +168,37 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         composite.setComplete();
     }
 
+    private static Map<String, PCICalculator.GenusAndSpecies> getNameToGenusAndSpeciesMap(
+            PCICalculatorOptions pciCalculatorOptions, Collection<AnnotatedPluginDocument> barcodeSequences
+    ) throws DocumentOperationException {
+
+        Map<String, PCICalculator.GenusAndSpecies> nameToGenusAndSpecies = new HashMap<String, PCICalculator.GenusAndSpecies>();
+        File taxonMappingFile = pciCalculatorOptions.getTaxonMappingFile();
+        if(pciCalculatorOptions.isUseInputFile()) {
+            for (AnnotatedPluginDocument barcode : barcodeSequences) {
+                String barcodeName = barcode.getName();
+                PCICalculator.GenusAndSpecies genusAndSpecies = pciCalculatorOptions.getGenusAndSpeciesFromLine(barcodeName);
+                if (genusAndSpecies != null) {
+                    nameToGenusAndSpecies.put(barcodeName, genusAndSpecies);
+                }
+            }
+        } else if(taxonMappingFile != null) {
+            BufferedReader reader = null;
+            try {
+                reader = new BufferedReader(new FileReader(taxonMappingFile));
+                String currentLine;
+                while((currentLine = reader.readLine()) != null) {
+                    nameToGenusAndSpecies.put(pciCalculatorOptions.getNameFromLine(currentLine), pciCalculatorOptions.getGenusAndSpeciesFromLine(currentLine));
+                }
+            } catch (IOException e) {
+                throw new DocumentOperationException("Failed to read from mapping file");
+            } finally {
+                GeneralUtilities.attemptClose(reader);
+            }
+        }
+        return nameToGenusAndSpecies;
+    }
+
     private static void moveSubSubFoldersToCorrectLocation(WritableDatabaseService resultsFolder, String parameterSetName) throws DocumentOperationException {
         try {
             String prefix = parameterSetName + SUB_SUB_FOLDER_SEPARATOR;
@@ -231,7 +264,8 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, suppliedBarcodesToSuppliedTraces.size() + (runPCICalculation ? 2 : 1));
 
         List<ValidationOutputRecord> outputs = new ArrayList<ValidationOutputRecord>();
-        for (AnnotatedPluginDocument suppliedBarcode : suppliedBarcodesToSuppliedTraces.keySet()) {
+        Set<AnnotatedPluginDocument> barcodes = suppliedBarcodesToSuppliedTraces.keySet();
+        for (AnnotatedPluginDocument suppliedBarcode : barcodes) {
             NucleotideSequenceDocument barcode = (NucleotideSequenceDocument)suppliedBarcode.getDocument();
             String barcodeName = barcode.getName();
             ValidationDocumentOperationCallback callback = new ValidationDocumentOperationCallback(operationCallback, false);
@@ -285,27 +319,47 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
         if (runPCICalculation) {
             validationProgress.beginSubtask("Calculating PCI...");
-            PCIValues = PCICalculator.calculate(getUniqueConsensusURNs(outputs), pciCalculatorOptions);
+            Map<String, PCICalculator.GenusAndSpecies> nameToGenusAndSpecies = getNameToGenusAndSpeciesMap(pciCalculatorOptions, barcodes);
+            Map<URN, PCICalculator.GenusAndSpecies> input = getUrnToGenusAndSpecies(outputs, nameToGenusAndSpecies);
+            PCIValues = PCICalculator.calculate(input, pciCalculatorOptions);
         }
 
         validationProgress.beginSubtask("Saving Report...");
-        operationCallback.addDocument(new ValidationReportDocument(parameterSetName + VALIDATION_REPORT_NAME_SUFFIX, outputs, barcodeValidatorOptions, PCIValues), false, validationProgress);
+        operationCallback.addDocument(new ValidationReportDocument(parameterSetName + VALIDATION_REPORT_NAME_SUFFIX,
+                outputs, barcodeValidatorOptions, PCIValues), false, validationProgress);
     }
 
-    private static Set<URN> getUniqueConsensusURNs(List<ValidationOutputRecord> outputRecords) {
-        Set<URN> getUniqueConsensusURNs = new HashSet<URN>();
+    /**
+     *
+     * @param outputRecords Records of the output from running the validation pipeline
+     * @param genusAndSpeciesMap A map from barcode name to genus and species
+     * @return A map of all URNs to genus and species for the documents that will be validated.  This includes the
+     * trimmed traces and any consensus sequences assembled from them.
+     */
+    private static Map<URN, PCICalculator.GenusAndSpecies> getUrnToGenusAndSpecies(List<ValidationOutputRecord> outputRecords, Map<String, PCICalculator.GenusAndSpecies> genusAndSpeciesMap) throws DocumentOperationException {
+        Map<URN, PCICalculator.GenusAndSpecies> result = new HashMap<URN, PCICalculator.GenusAndSpecies>();
 
         for (ValidationOutputRecord output : outputRecords) {
-            URN consensusUrn = output.getConsensusUrn();
-
-            if (consensusUrn != null) {
-                getUniqueConsensusURNs.add(consensusUrn);
+            if(output.getBarcodeSequenceUrn() == null) {
+                throw new IllegalStateException("No barcode URN for output record");
+            }
+            AnnotatedPluginDocument barcodeDoc = DocumentUtilities.getDocumentByURN(output.getBarcodeSequenceUrn());
+            if(barcodeDoc == null) {
+                throw new DocumentOperationException("Failed to find barcode sequence (" +
+                        output.getBarcodeSequenceUrn().toString() + ").  This should have been saved to the database.");
             }
 
-            getUniqueConsensusURNs.addAll(output.getTrimmedDocumentUrns());
+            PCICalculator.GenusAndSpecies genusAndSpecies = genusAndSpeciesMap.get(barcodeDoc.getName());
+            URN consensusUrn = output.getConsensusUrn();
+            if (consensusUrn != null) {
+                result.put(consensusUrn, genusAndSpecies);
+            }
+            for (URN urn : output.getTrimmedDocumentUrns()) {
+                result.put(urn, genusAndSpecies);
+            }
         }
 
-        return getUniqueConsensusURNs;
+        return result;
     }
 
     private static void saveChangesToSequencesMadeByValidationPipeline(ValidationOutputRecord record) {

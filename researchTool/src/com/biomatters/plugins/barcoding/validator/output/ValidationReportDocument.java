@@ -29,7 +29,15 @@ public class ValidationReportDocument implements PluginDocument {
     @Nonnull private BarcodeValidatorOptions optionsUsed;
     @Nullable private Map<URN, Double> pciValues;
 
-    public ValidationReportDocument(String name, List<ValidationOutputRecord> outputs, BarcodeValidatorOptions options, Map<URN, Double> pciValues) {
+    /**
+     *
+     * @param name The name to give the report document
+     * @param outputs All output records for the validator operation.
+     * @param options The options used to run the validation pipeline.
+     * @param pciValues PCI scores for the input sequences obtained from running {@link com.biomatters.plugins.barcoding.validator.validation.pci.PCICalculator}.
+     *                  May be null if the calculation was not run for any reason.
+     */
+    public ValidationReportDocument(String name, List<ValidationOutputRecord> outputs, BarcodeValidatorOptions options, @Nullable Map<URN, Double> pciValues) {
         this.name = name;
         this.outputs = outputs;
         optionsUsed = options;

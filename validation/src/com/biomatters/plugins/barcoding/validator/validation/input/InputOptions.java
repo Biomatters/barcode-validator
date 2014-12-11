@@ -51,7 +51,10 @@ public class InputOptions extends Options {
                         ButtonOption.RIGHT).addActionListener(new ActionListener() {
                             @Override
                             public void actionPerformed(ActionEvent e) {
-                                Dialogs.showMessageDialog("Help text describing input formats and options");
+                                Dialogs.showMessageDialog("Input files may be specified individually or by selecting a folder.\n\n" +
+                                        "<u>Supported File Formats</u>\n" +
+                                        "<strong>Barcode sequences</strong>: FASTA\n" +
+                                        "<strong>Traces</strong>: ab1 or scf.");
                             }
                         });
 
