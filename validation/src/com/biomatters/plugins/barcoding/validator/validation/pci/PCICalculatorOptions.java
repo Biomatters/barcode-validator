@@ -23,9 +23,9 @@ public class PCICalculatorOptions extends Options {
 
     public PCICalculatorOptions(Class cls) {
         super(cls);
-        taxonMappingOptions = new TaxonMappingOptions();
-        addChildOptions("input", "Input Barcodes", "", taxonMappingOptions);
         addBarcodesFileSelectionOption();
+        taxonMappingOptions = new TaxonMappingOptions();
+        addChildOptions("input", "Genus and Species for Input Barcodes", "", taxonMappingOptions);
 
         if (!canPerformPCICalculation) {
             setEnabled(false);

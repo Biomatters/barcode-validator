@@ -22,13 +22,13 @@ public class TaxonMappingOptions extends Options {
         super(TaxonMappingOptions.class);
 
         beginAlignHorizontally(null, false);
-        mapFileOption = addFileSelectionOption("taxonMap", "Taxon Mapping File:", "");
+        mapFileOption = addFileSelectionOption("taxonMap", "Mapping File:", "");
         addHelpButton("Help", "This file should contain the mapping from your barcode sequence names as they appear in " +
                 "your FASTA files to the genus and species of the barcode.  You may choose your own separator and where " +
                 "the taxons fall in each line.\n\n<strong>Note</strong>: The name must always be the first element.");
         endAlignHorizontally();
 
-        useInputFiles = addBooleanOption("useFasta", "Use names from my input files", false);
+        useInputFiles = addBooleanOption("useFasta", "Map using the sequence names in my input files", false);
         useInputFiles.setDescription("This option causes the names of sequences contained in your FASTA file to be used " +
                 "to obtain the mapping instead of a separate mapping file");
 
