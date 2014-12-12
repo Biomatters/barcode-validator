@@ -17,6 +17,8 @@ import com.biomatters.plugins.barcoding.validator.validation.utilities.Alignment
 import com.biomatters.plugins.barcoding.validator.validation.utilities.ImportUtilities;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import jebl.util.Cancelable;
+import jebl.util.CompositeProgressListener;
 import jebl.util.ProgressListener;
 
 import javax.annotation.Nonnull;
@@ -34,12 +36,17 @@ public class PCICalculator {
     /**
      * Calculates the PCI values for new samples compared with a reference barcode database.
      *
-     * @param sequenceUrns The document {@link URN}s of the new samples
-     * @param options See {@link com.biomatters.plugins.barcoding.validator.validation.pci.PCICalculatorOptions}
+     * @param sequenceUrns The document {@link com.biomatters.geneious.publicapi.documents.URN}s of the new samples
+     * @param options See {@link PCICalculatorOptions}
+     * @param progressListener to report progress to and to check cancellation status
      * @return a map from {@link URN} to PCI value.  Or null  if the calculation was not run.
      * @throws DocumentOperationException if something goes wrong running the PCI calculation
      */
-    public static Map<URN, Double> calculate(Map<URN, GenusAndSpecies> sequenceUrns, PCICalculatorOptions options) throws DocumentOperationException {
+    public static Map<URN, Double> calculate(Map<URN, GenusAndSpecies> sequenceUrns, PCICalculatorOptions options, ProgressListener progressListener) throws DocumentOperationException {
+
+        CompositeProgressListener overallProgress = new CompositeProgressListener(progressListener, 0.1, 0.6, 0.3);
+
+        overallProgress.beginSubtask("Importing reference barcodes");
         String pathToBarcodesFile = options.getPathToBarcodesFile();
         if(pathToBarcodesFile.trim().isEmpty()) {
             return null;
@@ -90,13 +97,21 @@ public class PCICalculator {
             }
             toAlign.put(uid, importedSeq);
         }
+        if(overallProgress.isCanceled()) {
+            throw new DocumentOperationException.Canceled();
+        }
 
-        SequenceAlignmentDocument alignment = AlignmentUtilities.performAlignment(new ArrayList<NucleotideSequenceDocument>(toAlign.values()));
+        overallProgress.beginSubtask();
+        SequenceAlignmentDocument alignment = AlignmentUtilities.performAlignment(new ArrayList<NucleotideSequenceDocument>(toAlign.values()), overallProgress);
+        if(overallProgress.isCanceled()) {
+            throw new DocumentOperationException.Canceled();
+        }
+
+        overallProgress.beginSubtask("Computing PCI values");
         try {
             File inputAlignmentFile = createPciInputFile(alignment, newSamples.inverse());
             File newUidFile = createNewUidFile(newSamples.keySet());
-
-            File outputFile = runPci(inputAlignmentFile, newUidFile);
+            File outputFile = runPci(inputAlignmentFile, newUidFile, overallProgress);
             return getPciScoresForDocuments(newSamples, outputFile);
         } catch (IOException e) {
             throw new DocumentOperationException("Failed to write out alignment for input to PCI: " + e.getMessage(), e);
@@ -154,7 +169,7 @@ public class PCICalculator {
         }
     }
 
-    private static File runPci(File inputAlignmentFile, File newUidFile) throws IOException, DocumentOperationException, PciValidationException {
+    private static File runPci(File inputAlignmentFile, File newUidFile, Cancelable cancelable) throws IOException, DocumentOperationException, PciValidationException {
         File output = FileUtilities.createTempFile("output", ".txt", false);
 
         File programFolder = FileUtilities.getResourceForClass(PCICalculator.class, "program");
@@ -175,7 +190,7 @@ public class PCICalculator {
                 output.getAbsolutePath(),
                 "-s",
                 newUidFile.getAbsolutePath()
-        }, ProgressListener.EMPTY, new Execution.OutputListener() {
+        }, cancelable, new Execution.OutputListener() {
             @Override
             public void stdoutWritten(String s) {
             }

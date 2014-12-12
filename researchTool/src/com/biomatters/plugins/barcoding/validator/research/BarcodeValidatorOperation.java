@@ -259,12 +259,18 @@ public class BarcodeValidatorOperation extends DocumentOperation {
                                                OperationCallback operationCallback,
                                                BarcodeValidatorOptions barcodeValidatorOptions,
                                                ProgressListener progressListener) throws DocumentOperationException {
+
+
         PCICalculatorOptions pciCalculatorOptions = barcodeValidatorOptions.getPCICalculatorOptions();
         boolean runPCICalculation = pciCalculatorOptions.canPerformPCICalculation();
-        CompositeProgressListener validationProgress = new CompositeProgressListener(progressListener, suppliedBarcodesToSuppliedTraces.size() + (runPCICalculation ? 2 : 1));
+        double[] progressFractions = runPCICalculation ? new double[]{0.65, 0.3, 0.05} : new double[]{0.9, 0.1};
+        CompositeProgressListener overallProgress = new CompositeProgressListener(progressListener, progressFractions);
+
+        overallProgress.beginSubtask();
+        Set<AnnotatedPluginDocument> barcodes = suppliedBarcodesToSuppliedTraces.keySet();
+        CompositeProgressListener validationProgress = new CompositeProgressListener(overallProgress, barcodes.size());
 
         List<ValidationOutputRecord> outputs = new ArrayList<ValidationOutputRecord>();
-        Set<AnnotatedPluginDocument> barcodes = suppliedBarcodesToSuppliedTraces.keySet();
         for (AnnotatedPluginDocument suppliedBarcode : barcodes) {
             NucleotideSequenceDocument barcode = (NucleotideSequenceDocument)suppliedBarcode.getDocument();
             String barcodeName = barcode.getName();
@@ -318,15 +324,15 @@ public class BarcodeValidatorOperation extends DocumentOperation {
         Map<URN, Double> PCIValues = null;
 
         if (runPCICalculation) {
-            validationProgress.beginSubtask("Calculating PCI...");
+            overallProgress.beginSubtask("Calculating PCI");
             Map<String, PCICalculator.GenusAndSpecies> nameToGenusAndSpecies = getNameToGenusAndSpeciesMap(pciCalculatorOptions, barcodes);
             Map<URN, PCICalculator.GenusAndSpecies> input = getUrnToGenusAndSpecies(outputs, nameToGenusAndSpecies);
-            PCIValues = PCICalculator.calculate(input, pciCalculatorOptions);
+            PCIValues = PCICalculator.calculate(input, pciCalculatorOptions, overallProgress);
         }
 
-        validationProgress.beginSubtask("Saving Report...");
+        overallProgress.beginSubtask("Saving Report...");
         operationCallback.addDocument(new ValidationReportDocument(parameterSetName + VALIDATION_REPORT_NAME_SUFFIX,
-                outputs, barcodeValidatorOptions, PCIValues), false, validationProgress);
+                outputs, barcodeValidatorOptions, PCIValues), false, overallProgress);
     }
 
     /**

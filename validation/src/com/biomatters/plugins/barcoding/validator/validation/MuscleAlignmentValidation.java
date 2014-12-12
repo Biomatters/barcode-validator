@@ -88,7 +88,7 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
 
         NucleotideSequenceDocument seq1 = getNucleotideSeqFromApd(sequenceOneDocument);
         NucleotideSequenceDocument seq2 = getNucleotideSeqFromApd(sequenceTwoDocument);
-        SequenceAlignmentDocument alignment = AlignmentUtilities.performAlignment(Arrays.asList(seq1, seq2));
+        SequenceAlignmentDocument alignment = AlignmentUtilities.performAlignment(Arrays.asList(seq1, seq2), ProgressListener.EMPTY);
 
         if (alignment == null) {
             return -1;

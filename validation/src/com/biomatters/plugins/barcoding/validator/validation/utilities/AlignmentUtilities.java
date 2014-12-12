@@ -30,10 +30,11 @@ public class AlignmentUtilities {
      * This method currently uses the Geneious Muscle Alignment plugin to perform an alignment.  However in the future
      * it needs to be changed to work independently of the Geneious run time.
      * @param toAlign List of sequences to align
+     * @param progressListener
      * @return A {@link com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument} or null if there was no alignment
      * @throws DocumentOperationException
      */
-    public static SequenceAlignmentDocument performAlignment(List<NucleotideSequenceDocument> toAlign) throws DocumentOperationException {
+    public static SequenceAlignmentDocument performAlignment(List<NucleotideSequenceDocument> toAlign, ProgressListener progressListener) throws DocumentOperationException {
         DocumentOperation alignmentOperation = PluginUtilities.getAlignmentOperation(MUSCLE_OPERATION_ID, SequenceDocument.Alphabet.NUCLEOTIDE);
         if(alignmentOperation == null) {
             throw new DocumentOperationException("The Muscle Alignment plugin must be enabled");
@@ -49,7 +50,7 @@ public class AlignmentUtilities {
             inputDocs[i] = apd;
         }
         Options options = alignmentOperation.getOptions(inputDocs);
-        List<AnnotatedPluginDocument> annotatedPluginDocuments = alignmentOperation.performOperation(ProgressListener.EMPTY, options, inputDocs);
+        List<AnnotatedPluginDocument> annotatedPluginDocuments = alignmentOperation.performOperation(progressListener, options, inputDocs);
         if (annotatedPluginDocuments == null || annotatedPluginDocuments.isEmpty()) {
             return null;
         }
