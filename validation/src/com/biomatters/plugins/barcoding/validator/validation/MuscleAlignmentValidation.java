@@ -23,7 +23,7 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
 
 
     @Override
-    public ResultFact validate(SequenceDocument sequence, SequenceDocument referenceSequence, ValidationOptions options, ValidationCallback callback) {
+    public ResultFact validate(SequenceDocument originalSequence, SequenceDocument sequenceToValidate, ValidationOptions options, ValidationCallback callback) {
         if (!(options instanceof MuscleAlignmentValidationOptions)) {
             throw new IllegalArgumentException(
                     "Wrong options supplied: " +
@@ -33,27 +33,21 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
         }
 
         MuscleAlignmentValidationOptions muscleAlignmentValidationOptions = (MuscleAlignmentValidationOptions)options;
-        String sequenceName = sequence.getName();
+        String sequenceName = originalSequence.getName();
         float minimumSimilarity = muscleAlignmentValidationOptions.getMinimumSimilarity();
         Map<Float, AnnotatedPluginDocument> similarityToIntermediateDocument = new HashMap<Float, AnnotatedPluginDocument>();
 
-        AnnotatedPluginDocument sequenceDocument = DocumentUtilities.getAnnotatedPluginDocumentThatContains(sequence);
-        if (sequenceDocument == null) {
-            sequenceDocument = DocumentUtilities.createAnnotatedPluginDocument(sequence);
-        }
-        AnnotatedPluginDocument referenceSequenceDocument = DocumentUtilities.getAnnotatedPluginDocumentThatContains(referenceSequence);
-        if (referenceSequenceDocument == null) {
-            referenceSequenceDocument = DocumentUtilities.createAnnotatedPluginDocument(referenceSequence);
-        }
-        DefaultSequenceDocument sequenceReversed = SequenceExtractionUtilities.reverseComplement(sequence);
+        AnnotatedPluginDocument referenceBarcodeDoc = getOrCreateAnnotatedPluginDocument(originalSequence);
+        AnnotatedPluginDocument sequenceDoc = getOrCreateAnnotatedPluginDocument(sequenceToValidate);
+        DefaultSequenceDocument sequenceReversed = SequenceExtractionUtilities.reverseComplement(sequenceToValidate);
         AnnotatedPluginDocument sequenceReversedDocument = DocumentUtilities.createAnnotatedPluginDocument(sequenceReversed);
         sequenceReversedDocument.setName(sequenceName + " (reversed)");
 
         MuscleAlignmentValidationResultFact result = new MuscleAlignmentValidationResultFact(false, 0.0, "", Collections.<URN>emptyList(), "");
 
         try {
-            float similarityBetweenSequenceOneAndSequenceTwo = getSimilarity(sequenceDocument, referenceSequenceDocument, similarityToIntermediateDocument);
-            float similarityBetweenSequenceOneReversedAndSequenceTwo = getSimilarity(sequenceDocument, sequenceReversedDocument, similarityToIntermediateDocument);
+            float similarityBetweenSequenceOneAndSequenceTwo = getSimilarity(referenceBarcodeDoc, sequenceDoc, similarityToIntermediateDocument);
+            float similarityBetweenSequenceOneReversedAndSequenceTwo = getSimilarity(referenceBarcodeDoc, sequenceReversedDocument, similarityToIntermediateDocument);
 
             float similarityOfAlignment = Math.max(similarityBetweenSequenceOneAndSequenceTwo, similarityBetweenSequenceOneReversedAndSequenceTwo);
             AnnotatedPluginDocument alignmentDocument = similarityToIntermediateDocument.get(similarityOfAlignment);
@@ -64,7 +58,7 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
             result.addAlignmentDocument(pluginDocument);
 
             if (similarityOfAlignment == -1) {
-                result.setNotes("Failed to align " + sequence.getName() + " and " + referenceSequence.getName());
+                result.setNotes("Failed to align " + originalSequence.getName() + " and " + sequenceToValidate.getName());
             } else if (similarityOfAlignment < minimumSimilarity) {
                 result.setNotes("Similarity was below the minimum threshold. Minimum similarity: " + minimumSimilarity + "%, actual similarity: " + similarityOfAlignment + "%");
             } else {
@@ -75,6 +69,14 @@ public class MuscleAlignmentValidation extends SequenceCompareValidation {
         }
 
         return result;
+    }
+
+    private AnnotatedPluginDocument getOrCreateAnnotatedPluginDocument(PluginDocument pluginDocument) {
+        AnnotatedPluginDocument referenceDoc = DocumentUtilities.getAnnotatedPluginDocumentThatContains(pluginDocument);
+        if (referenceDoc == null) {
+            referenceDoc = DocumentUtilities.createAnnotatedPluginDocument(pluginDocument);
+        }
+        return referenceDoc;
     }
 
     @Override
