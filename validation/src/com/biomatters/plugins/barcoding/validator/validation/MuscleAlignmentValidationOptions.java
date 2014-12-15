@@ -11,8 +11,8 @@ import java.util.Arrays;
  */
 public class MuscleAlignmentValidationOptions extends ValidationOptions {
     private static final String IDENTIFIER  = "muscleAlignmentValidation";
-    private static final String LABEL       = "Muscle alignment";
-    private static final String DESCRIPTION = "Validates the similarity between two sequences using the MUSCLE alignment.";
+    private static final String LABEL       = "Barcode Similarity";
+    private static final String DESCRIPTION = "Validates the similarity between two sequences using the MUSCLE alignment program.";
 
     private static final String MINIMUM_SIMILARITY_OPTIONS_NAME = "similarity";
 
