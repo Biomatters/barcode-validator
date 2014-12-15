@@ -259,11 +259,7 @@ public class ValidationOutputRecord implements XMLSerializable {
         fixedColumns.add(setColumn);
 
         StringResultColumn barcodeLengthColumn = new StringResultColumn("Barcode length");
-        if (urn.equals(consensusUrn)) {
-            barcodeLengthColumn.setData(String.valueOf(((SequenceDocument)barcode).getSequenceLength()));
-        } else {
-            barcodeLengthColumn.setData("");
-        }
+        barcodeLengthColumn.setData(String.valueOf(((SequenceDocument)barcode).getSequenceLength()));
         fixedColumns.add(barcodeLengthColumn);
 
         LinkResultColumn sequenceColumns = new LinkResultColumn("Sequence");
