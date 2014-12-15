@@ -8,6 +8,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.jdom.Element;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 
 /**
@@ -239,14 +240,18 @@ public class ValidationOutputRecord implements XMLSerializable {
         return ret;
     }
 
-    public List<ResultColumn> getFixedColumns(URN urn, Double pciValue) {
+    public List<ResultColumn> getFixedColumns(@Nonnull URN urn, Double pciValue) {
+        URN firstTraceUrn = validationResults.entrySet().iterator().next().getValue().keySet().iterator().next();
+        boolean firstRowOfSet = urn.equals(consensusUrn) ||
+                (consensusUrn == null && urn.equals(firstTraceUrn));
+
         List<ResultColumn> fixedColumns = new ArrayList<ResultColumn>();
 
         PluginDocument barcode = DocumentUtilities.getDocumentByURN(getBarcodeSequenceUrn()).getDocumentOrNull();
         PluginDocument sequence = DocumentUtilities.getDocumentByURN(urn).getDocumentOrNull();
 
         LinkResultColumn setColumn = new LinkResultColumn("Barcode");
-        if (urn.equals(consensusUrn) || (consensusUrn == null && !trimmedDocumentUrnsMap.isEmpty() && trimmedDocumentUrnsMap.values().iterator().next().equals(urn))) {
+        if (firstRowOfSet) {
             List<URN> links = new ArrayList<URN>();
             links.add(getBarcodeSequenceUrn());
             for (URN urn1 : getTraceDocumentUrns()) {
@@ -275,7 +280,7 @@ public class ValidationOutputRecord implements XMLSerializable {
         fixedColumns.add(pciColumn);
 
         LinkResultColumn numberOfTracesUsedColumn = new LinkResultColumn("# Traces");
-        if (urn.equals(consensusUrn)) {
+        if (firstRowOfSet) {
             numberOfTracesUsedColumn.setData(new LinkResultColumn.LinkBox(String.valueOf(getTrimmedDocumentUrns().size()), getTrimmedDocumentUrns()));
         } else {
             numberOfTracesUsedColumn.setData(new LinkResultColumn.LinkBox("", null));
@@ -284,10 +289,12 @@ public class ValidationOutputRecord implements XMLSerializable {
 
         LinkResultColumn tracesAssembledColumn = new LinkResultColumn("# Assembled");
         LinkResultColumn numberOfTracesNotUsedColumn = new LinkResultColumn("# Failed Assembly");
-        if (urn.equals(consensusUrn)) {
+        URN assemblyUrn = getAssemblyUrn();
+        if (firstRowOfSet) {
             List<URN> traceUrnsNotUsed = new ArrayList<URN>();
             List<URN> traceUrnsUsed = new ArrayList<URN>();
-            Set<URN> assembles = DocumentUtilities.getDocumentByURN(getAssemblyUrn()).getReferencedDocuments();
+
+            Set<URN> assembles = assemblyUrn == null ? null : DocumentUtilities.getDocumentByURN(assemblyUrn).getReferencedDocuments();
 
             if (assembles != null) {
                 for (URN urn2 : getTrimmedDocumentUrns()) {
@@ -311,13 +318,12 @@ public class ValidationOutputRecord implements XMLSerializable {
         fixedColumns.add(numberOfTracesNotUsedColumn);
 
         StringResultColumn isAssembledColumn = new StringResultColumn("Assembled");
-        if (urn.equals(consensusUrn)) {
+        if (firstRowOfSet) {
             isAssembledColumn.setData("");
         } else {
-            URN assemblyUrn1 = getAssemblyUrn();
-            if (assemblyUrn1 == null
-                    || DocumentUtilities.getDocumentByURN(assemblyUrn1) == null
-                    || !DocumentUtilities.getDocumentByURN(assemblyUrn1).getReferencedDocuments().contains(urn)) {
+            if (assemblyUrn == null
+                    || DocumentUtilities.getDocumentByURN(assemblyUrn) == null
+                    || !DocumentUtilities.getDocumentByURN(assemblyUrn).getReferencedDocuments().contains(urn)) {
                 isAssembledColumn.setData("No");
             } else {
                 isAssembledColumn.setData("Yes");
