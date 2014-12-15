@@ -564,7 +564,18 @@ public class ValidationReportViewer extends DocumentViewer {
 
         @Override
         public int compareTo(CellValue<T> o) {
-            int consensusCompareResult = consensusValue.getData().compareTo(o.consensusValue.getData());
+            T value = consensusValue.getData();
+            T value2 = o.consensusValue.getData();
+
+            if (value == null && value2 == null) {
+                return 0;
+            } else if(value == null) {
+                return -1;
+            } else if(value2 == null) {
+                return 1;
+            }
+
+            int consensusCompareResult = value.compareTo(value2);
             if(consensusCompareResult == 0) {
                 return index.compareTo(o.index);
             } else {
