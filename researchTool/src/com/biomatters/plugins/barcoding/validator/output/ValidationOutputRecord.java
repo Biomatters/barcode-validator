@@ -274,7 +274,7 @@ public class ValidationOutputRecord implements XMLSerializable {
         pciColumn.setData(pciValue);
         fixedColumns.add(pciColumn);
 
-        LinkResultColumn numberOfTracesUsedColumn = new LinkResultColumn("Number of traces used");
+        LinkResultColumn numberOfTracesUsedColumn = new LinkResultColumn("# Traces");
         if (urn.equals(consensusUrn)) {
             numberOfTracesUsedColumn.setData(new LinkResultColumn.LinkBox(String.valueOf(getTrimmedDocumentUrns().size()), getTrimmedDocumentUrns()));
         } else {
@@ -282,25 +282,32 @@ public class ValidationOutputRecord implements XMLSerializable {
         }
         fixedColumns.add(numberOfTracesUsedColumn);
 
-        LinkResultColumn numberOfTracesNotUsedColumn = new LinkResultColumn("Number of traces not used");
+        LinkResultColumn tracesAssembledColumn = new LinkResultColumn("# Assembled");
+        LinkResultColumn numberOfTracesNotUsedColumn = new LinkResultColumn("# Failed Assembly");
         if (urn.equals(consensusUrn)) {
-            List<URN> links = new ArrayList<URN>();
+            List<URN> traceUrnsNotUsed = new ArrayList<URN>();
+            List<URN> traceUrnsUsed = new ArrayList<URN>();
             Set<URN> assembles = DocumentUtilities.getDocumentByURN(getAssemblyUrn()).getReferencedDocuments();
 
             if (assembles != null) {
                 for (URN urn2 : getTrimmedDocumentUrns()) {
                     if (!assembles.contains(urn2)) {
-                        links.add(urn2);
+                        traceUrnsNotUsed.add(urn2);
+                    } else {
+                        traceUrnsUsed.add(urn2);
                     }
                 }
             } else {
-                links.addAll(getTrimmedDocumentUrns());
+                traceUrnsNotUsed.addAll(getTrimmedDocumentUrns());
             }
 
-            numberOfTracesNotUsedColumn.setData(new LinkResultColumn.LinkBox(String.valueOf(links.size()), links));
+            tracesAssembledColumn.setData(new LinkResultColumn.LinkBox(String.valueOf(traceUrnsUsed.size()), traceUrnsUsed));
+            numberOfTracesNotUsedColumn.setData(new LinkResultColumn.LinkBox(String.valueOf(traceUrnsNotUsed.size()), traceUrnsNotUsed));
         } else {
+            tracesAssembledColumn.setData(new LinkResultColumn.LinkBox("", null));
             numberOfTracesNotUsedColumn.setData(new LinkResultColumn.LinkBox("", null));
         }
+        fixedColumns.add(tracesAssembledColumn);
         fixedColumns.add(numberOfTracesNotUsedColumn);
 
         StringResultColumn isAssembledColumn = new StringResultColumn("Assembled");
