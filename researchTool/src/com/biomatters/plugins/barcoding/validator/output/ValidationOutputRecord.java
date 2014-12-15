@@ -271,7 +271,7 @@ public class ValidationOutputRecord implements XMLSerializable {
         fixedColumns.add(sequenceLengthColumn);
 
         DoubleResultColumn pciColumn = new DoubleResultColumn("PCI");
-        pciColumn.setData(pciValue == null ? 0 : pciValue);
+        pciColumn.setData(pciValue);
         fixedColumns.add(pciColumn);
 
         LinkResultColumn numberOfTracesUsedColumn = new LinkResultColumn("Number of traces used");

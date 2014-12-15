@@ -20,11 +20,15 @@ public class DoubleResultColumn extends ResultColumn<Double> {
 
     @Override
     protected void setDataFromString(String str) {
-        setData(Double.valueOf(str));
+        if(str == null || "null".equals(str)) {
+            setData(null);
+        } else {
+            setData(Double.valueOf(str));
+        }
     }
 
     @Override
     public Object getDisplayValue() {
-        return Double.parseDouble(String.format("%.2f",data));
+        return data == null ? "" : Double.parseDouble(String.format("%.2f",data));
     }
 }

@@ -43,21 +43,27 @@ public abstract class ResultColumn<T> implements XMLSerializable {
 
     @SuppressWarnings("UnusedDeclaration")
     public ResultColumn(Element element) throws XMLSerializationException {
-        name = element.getChildText(NAME);
-        setDataFromString(element.getChildText(DATA));
+        fromXML(element);
     }
 
     @Override
     public Element toXML() {
         Element root = new Element(XMLSerializable.ROOT_ELEMENT_NAME);
         root.addContent(new Element(NAME).setText(getName()));
-        root.addContent(new Element(DATA).setText(data.toString()));
+        Element dataElement = new Element(DATA);
+        if(data != null) {
+            dataElement.setText(data.toString());
+        }
+        root.addContent(dataElement);
         return root;
     }
 
     @Override
     public void fromXML(Element element) throws XMLSerializationException {
         name = element.getChildText(NAME);
-        setDataFromString(element.getChildText(DATA));
+        String childText = element.getChildText(DATA);
+        if(childText != null) {
+            setDataFromString(childText);
+        }
     }
 }
