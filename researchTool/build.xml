@@ -97,6 +97,9 @@
         <copy todir="${build}/${plugin-name}">
             <fileset dir="resources"/>
         </copy>
+        <copy todir="${build}/${plugin-name}">
+            <fileset dir="${validation-base-dir}/resources"/>
+        </copy>
         <jar jarfile="${build}/${plugin-name}/${plugin-name}.jar">
             <fileset dir="${classes}"/>
         </jar>
