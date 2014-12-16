@@ -1,7 +1,9 @@
 package com.biomatters.plugins.barcoding.validator.output;
 
 import com.biomatters.geneious.publicapi.documents.*;
+import com.biomatters.geneious.publicapi.plugin.Geneious;
 import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorOptions;
+import jebl.util.ProgressListener;
 import org.jdom.Element;
 
 import javax.annotation.Nonnull;
@@ -14,7 +16,7 @@ import java.util.*;
  * @author Matthew Cheung
  *         Created on 30/09/14 3:03 PM
  */
-public class ValidationReportDocument implements PluginDocument {
+public class ValidationReportDocument implements PluginDocument, XMLSerializable.OldVersionCompatible {
 
     private static final String NAME_KEY = "name";
     private static final String OUTPUT_KEY = "output";
@@ -120,11 +122,16 @@ public class ValidationReportDocument implements PluginDocument {
 
     @Override
     public Element toXML() {
+        return toXML(Geneious.getMajorVersion(), ProgressListener.EMPTY);
+    }
+
+    @Override
+    public Element toXML(Geneious.MajorVersion majorVersion, ProgressListener progressListener) {
         Element element = new Element(XMLSerializable.ROOT_ELEMENT_NAME);
         element.addContent(new Element(NAME_KEY).setText(name));
         // We only serialize the values in case the format changes.  This also means we don't have to worry about
         // making BarcodeValidationOptions completely serializable.
-        element.addContent(optionsUsed.valuesToXML(OPTION_VALUES_KEY));
+        element.addContent(optionsUsed.valuesToXML(majorVersion, OPTION_VALUES_KEY));
         for (ValidationOutputRecord output : outputs) {
             element.addContent(XMLSerializer.classToXML(OUTPUT_KEY, output));
         }
@@ -205,5 +212,11 @@ public class ValidationReportDocument implements PluginDocument {
     @Nullable
     public Map<URN, Double> getPciValues() {
         return pciValues != null ? Collections.unmodifiableMap(pciValues) : null;
+    }
+
+    @Override
+    public Geneious.MajorVersion getVersionSupport(VersionSupportType versionType) {
+        // Max of: The API version we develop to (7.1) and the oldest version supported by valuesToXML().
+        return Geneious.MajorVersion.max(Geneious.MajorVersion.Version7_1, optionsUsed.getVersionSupportForValuesToXML(versionType));
     }
 }
