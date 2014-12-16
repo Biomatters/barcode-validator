@@ -18,7 +18,6 @@
     <property name="lib" location="lib"/>
     <property name="test" location="test"/>
     <property name="test-classes" location="test-classes"/>
-    <property name="junit" location="junit"/>
     <property name="report" location="report"/>
     <property name="geneious-runtime-dependencies" location="GeneiousFiles"/>
 
@@ -37,7 +36,7 @@
 
 
     <target name="run-tests" depends="compile-tests, retrieve-geneious-runtime-dependencies">
-        <junit dir="${junit}" fork="true" maxmemory="1024M" printsummary="on" timeout="180000">
+        <junit dir="${geneious-runtime-dependencies}" fork="true" maxmemory="1024M" printsummary="on" timeout="180000">
             <batchtest todir="${report}">
                 <fileset dir="${test-classes}">
                     <include name="**/*Test.class"/>
@@ -118,7 +117,6 @@
     <target name="create-test-folders">
         <mkdir dir="${test-classes}"/>
         <mkdir dir="${report}"/>
-        <mkdir dir="${junit}"/>
     </target>
 
     <target name="remove-module-folders">
@@ -128,7 +126,6 @@
 
     <target name="remove-test-folders">
         <delete dir="${test-classes}"/>
-        <delete dir="${junit}"/>
         <delete dir="${report}"/>
     </target>
 </project>
