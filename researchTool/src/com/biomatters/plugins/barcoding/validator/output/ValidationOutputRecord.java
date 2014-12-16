@@ -318,7 +318,7 @@ public class ValidationOutputRecord implements XMLSerializable {
         fixedColumns.add(numberOfTracesNotUsedColumn);
 
         StringResultColumn isAssembledColumn = new StringResultColumn("Assembled");
-        if (firstRowOfSet) {
+        if (urn.equals(consensusUrn)) {
             isAssembledColumn.setData("");
         } else {
             if (assemblyUrn == null
