@@ -1,8 +1,10 @@
 package com.biomatters.plugins.barcoding.validator.validation.pci;
 
 import com.biomatters.geneious.publicapi.documents.XMLSerializationException;
+import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.utilities.Execution;
 import com.biomatters.geneious.publicapi.plugin.Options;
+import com.biomatters.plugins.barcoding.validator.validation.utilities.AlignmentUtilities;
 import jebl.util.ProgressListener;
 import org.jdom.Element;
 
@@ -18,14 +20,17 @@ import java.io.IOException;
 public class PCICalculatorOptions extends Options {
     private TaxonMappingOptions taxonMappingOptions;
     private FileSelectionOption barcodesSelectionOption;
+    private Options alignmentOptions;
 
     private final boolean canPerformPCICalculation = testRunPerlFromWithinWorkingDirectoryOnCommandLine();
 
-    public PCICalculatorOptions(Class cls) {
+    public PCICalculatorOptions(Class cls) throws DocumentOperationException {
         super(cls);
         addBarcodesFileSelectionOption();
         taxonMappingOptions = new TaxonMappingOptions();
         addChildOptions("input", "Genus and Species for Input Barcodes", "", taxonMappingOptions);
+        alignmentOptions = AlignmentUtilities.getOptions();
+        addChildOptions("alignment", "Alignment", "", alignmentOptions, false);
 
         if (!canPerformPCICalculation) {
             setEnabled(false);
@@ -36,6 +41,10 @@ public class PCICalculatorOptions extends Options {
     @SuppressWarnings("UnusedDeclaration")
     public PCICalculatorOptions(Element element) throws XMLSerializationException {
         super(element);
+    }
+
+    public Options getAlignmentOptions() {
+        return alignmentOptions;
     }
 
     public String getPathToBarcodesFile() {

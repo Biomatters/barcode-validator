@@ -1,6 +1,7 @@
 package com.biomatters.plugins.barcoding.validator.output;
 
 import com.biomatters.geneious.publicapi.documents.*;
+import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.Geneious;
 import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorOptions;
 import jebl.util.ProgressListener;
@@ -86,8 +87,12 @@ public class ValidationReportDocument implements PluginDocument, XMLSerializable
 
         Element optionsElement = element.getChild(OPTION_VALUES_KEY);
         if(optionsElement != null) {
-            optionsUsed = new BarcodeValidatorOptions();
-            optionsUsed.valuesFromXML(optionsElement);
+            try {
+                optionsUsed = new BarcodeValidatorOptions();
+                optionsUsed.valuesFromXML(optionsElement);
+            } catch (DocumentOperationException e) {
+                throw new XMLSerializationException("Could not re-create stored options: " + e.getMessage(), e);
+            }
         } else {
             throw new XMLSerializationException("Child element " + OPTION_VALUES_KEY + " is missing");
         }

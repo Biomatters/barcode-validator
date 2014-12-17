@@ -12,9 +12,8 @@ import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.geneious.publicapi.plugin.PluginUtilities;
 import jebl.util.ProgressListener;
 
-import java.util.Collection;
+import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Matthew Cheung
@@ -27,18 +26,31 @@ public class AlignmentUtilities {
     private static final String MUSCLE_OPERATION_ID = "MUSCLE";
 
     /**
+     *
+     * @return Options that can be used to specify the parameters of the alignment to {@link #performAlignment(java.util.List, com.biomatters.geneious.publicapi.plugin.Options, jebl.util.ProgressListener)}
+     * @throws DocumentOperationException
+     */
+    public static Options getOptions() throws DocumentOperationException {
+        Options options = getMuscleOperation().getGeneralOptions();
+        // We'll use a default of 2 iterations because that is typically sufficient for barcode data since you'll be
+        // typically aligning sequences from the same locus.
+        Options.Option iterationsOption = options.getOption("-maxiters");
+        if(iterationsOption instanceof Options.IntegerOption) {
+            ((Options.IntegerOption)iterationsOption).setDefaultValue(2);
+        }
+        return options;
+    }
+
+    /**
      * This method currently uses the Geneious Muscle Alignment plugin to perform an alignment.  However in the future
      * it needs to be changed to work independently of the Geneious run time.
      * @param toAlign List of sequences to align
-     * @param progressListener
-     * @return A {@link com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument} or null if there was no alignment
+     * @param options The options for running the alignment.  May be null to use the defaults.
+     *@param progressListener  @return A {@link com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument} or null if there was no alignment
      * @throws DocumentOperationException
      */
-    public static SequenceAlignmentDocument performAlignment(List<NucleotideSequenceDocument> toAlign, ProgressListener progressListener) throws DocumentOperationException {
-        DocumentOperation alignmentOperation = PluginUtilities.getAlignmentOperation(MUSCLE_OPERATION_ID, SequenceDocument.Alphabet.NUCLEOTIDE);
-        if(alignmentOperation == null) {
-            throw new DocumentOperationException("The Muscle Alignment plugin must be enabled");
-        }
+    public static SequenceAlignmentDocument performAlignment(List<NucleotideSequenceDocument> toAlign, @Nullable Options options, ProgressListener progressListener) throws DocumentOperationException {
+        DocumentOperation alignmentOperation = getMuscleOperation();
 
         AnnotatedPluginDocument[] inputDocs = new AnnotatedPluginDocument[toAlign.size()];
         for(int i=0; i<toAlign.size(); i++) {
@@ -49,7 +61,9 @@ public class AlignmentUtilities {
             }
             inputDocs[i] = apd;
         }
-        Options options = alignmentOperation.getOptions(inputDocs);
+        if(options == null) {
+            options = alignmentOperation.getOptions(inputDocs);
+        }
         List<AnnotatedPluginDocument> annotatedPluginDocuments = alignmentOperation.performOperation(progressListener, options, inputDocs);
         if (annotatedPluginDocuments == null || annotatedPluginDocuments.isEmpty()) {
             return null;
@@ -64,5 +78,13 @@ public class AlignmentUtilities {
         } else {
             throw new IllegalStateException("Alignment produced a " + pluginDoc.getClass());
         }
+    }
+
+    private static DocumentOperation getMuscleOperation() throws DocumentOperationException {
+        DocumentOperation alignmentOperation = PluginUtilities.getAlignmentOperation(MUSCLE_OPERATION_ID, SequenceDocument.Alphabet.NUCLEOTIDE);
+        if(alignmentOperation == null) {
+            throw new DocumentOperationException("The Muscle Alignment plugin must be enabled");
+        }
+        return alignmentOperation;
     }
 }

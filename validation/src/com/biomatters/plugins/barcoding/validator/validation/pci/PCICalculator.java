@@ -102,7 +102,9 @@ public class PCICalculator {
         }
 
         overallProgress.beginSubtask();
-        SequenceAlignmentDocument alignment = AlignmentUtilities.performAlignment(new ArrayList<NucleotideSequenceDocument>(toAlign.values()), overallProgress);
+        SequenceAlignmentDocument alignment = AlignmentUtilities.performAlignment(
+                new ArrayList<NucleotideSequenceDocument>(toAlign.values()),
+                options.getAlignmentOptions(), overallProgress);
         if(overallProgress.isCanceled()) {
             throw new DocumentOperationException.Canceled();
         }

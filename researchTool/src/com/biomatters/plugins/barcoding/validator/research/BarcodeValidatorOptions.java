@@ -1,11 +1,13 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
+import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.plugins.barcoding.validator.validation.Validation;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
 import com.biomatters.plugins.barcoding.validator.validation.pci.PCICalculatorOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
+import com.biomatters.plugins.barcoding.validator.validation.utilities.AlignmentUtilities;
 
 import java.util.*;
 
@@ -19,7 +21,7 @@ public class BarcodeValidatorOptions extends Options {
     private Options validationOptions = new Options(BarcodeValidatorOptions.class);
     private PCICalculatorOptions PCICalculatorOptions = new PCICalculatorOptions(BarcodeValidatorOptions.class);
     
-    public BarcodeValidatorOptions() {
+    public BarcodeValidatorOptions() throws DocumentOperationException {
         super(BarcodeValidatorOperation.class);
 
         addTrimmingOptions();

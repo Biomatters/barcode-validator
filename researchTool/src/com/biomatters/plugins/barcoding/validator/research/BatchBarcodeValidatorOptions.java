@@ -1,5 +1,6 @@
 package com.biomatters.plugins.barcoding.validator.research;
 
+import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.plugins.barcoding.validator.research.options.BatchOptions;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
 
@@ -13,7 +14,7 @@ public class BatchBarcodeValidatorOptions extends BatchOptions<BarcodeValidatorO
 
     private static final String INPUT_OPTIONS_NAME = "input";
 
-    public BatchBarcodeValidatorOptions() {
+    public BatchBarcodeValidatorOptions() throws DocumentOperationException {
         super(new BarcodeValidatorOptions());
     }
 
