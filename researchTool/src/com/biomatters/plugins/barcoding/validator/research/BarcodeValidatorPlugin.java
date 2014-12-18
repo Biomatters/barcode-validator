@@ -11,7 +11,7 @@ import com.biomatters.plugins.barcoding.validator.research.report.ValidationRepo
  *         Created on 20/08/14 3:06 PM
  */
 public class BarcodeValidatorPlugin extends GeneiousPlugin {
-    private static final String PLUGIN_VERSION = "1.0.0";
+    private static final String PLUGIN_VERSION = "1.0.1";
 
     @Override
     public String getName() {
