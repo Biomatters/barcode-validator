@@ -86,7 +86,6 @@
             <jvmarg value="-Xss512K"/>
             <formatter type="brief" usefile="false"/>
             <sysproperty key="report.dir" value="${report}"/>
-            <sysproperty key="user.dir" value="${build}"/>
         </junit>
     </target>
 
