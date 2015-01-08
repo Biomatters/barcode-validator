@@ -39,10 +39,6 @@ public class AlignmentUtilities {
             ((Options.IntegerOption)iterationsOption).setDefaultValue(2);
         }
 
-        for (Options.Option option : options.getOptions()) {
-            option.setAdvanced(false);
-        }
-
         return options;
     }
 

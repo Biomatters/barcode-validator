@@ -70,6 +70,7 @@ public abstract class BatchOptions<T extends Options> extends Options {
                 // At this stage we don't want to deal with batches of advanced options.
                 // The advanced options at the moment are only for MUSCLE and there are a lot of them
                 // which would bloat the interface too much if we added them all on one line as a MultiValueOption
+                option.setAdvanced(false);      //add advanced option back to basic panel, since there is a layout issue on small screen
                 continue;
             }
 

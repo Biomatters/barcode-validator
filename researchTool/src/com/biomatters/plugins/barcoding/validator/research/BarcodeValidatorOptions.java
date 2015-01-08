@@ -5,6 +5,7 @@ import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.plugins.barcoding.validator.validation.Validation;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
+import com.biomatters.plugins.barcoding.validator.validation.pci.PCICalculatorAlignmentOptions;
 import com.biomatters.plugins.barcoding.validator.validation.pci.PCICalculatorOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
 
@@ -22,6 +23,7 @@ public class BarcodeValidatorOptions extends Options {
     private CAP3Options assemblyOptions = new CAP3Options(BarcodeValidatorOptions.class);
     private Options validationOptions = new Options(BarcodeValidatorOptions.class);
     private PCICalculatorOptions PCICalculatorOptions = new PCICalculatorOptions(BarcodeValidatorOptions.class);
+    private PCICalculatorAlignmentOptions PCICalculatorAlignmentOptions = new PCICalculatorAlignmentOptions(BarcodeValidatorOptions.class);
     
     public BarcodeValidatorOptions() throws DocumentOperationException {
         super(BarcodeValidatorOperation.class);
@@ -29,6 +31,7 @@ public class BarcodeValidatorOptions extends Options {
         addTrimmingOptions();
         addAssemblyOptions();
         addPCICalculationOptions();
+        addPCICalculationAlignmentOptions();
         addValidationOptions();
     }
 
@@ -42,6 +45,10 @@ public class BarcodeValidatorOptions extends Options {
 
     public PCICalculatorOptions getPCICalculatorOptions() {
         return PCICalculatorOptions;
+    }
+
+    public PCICalculatorAlignmentOptions getPCICalculatorAlignmentOptions() {
+        return PCICalculatorAlignmentOptions;
     }
 
     /**
@@ -69,6 +76,10 @@ public class BarcodeValidatorOptions extends Options {
     
     private void addPCICalculationOptions() {
         addCollapsibleChildOptions("pciCalculation", "PCI Calculation", "", PCICalculatorOptions, false, true);
+    }
+
+    private void addPCICalculationAlignmentOptions() {
+        addCollapsibleChildOptions("pciCalculationAlignment", "PCI Calculation Alignment", "", PCICalculatorAlignmentOptions, false, true);
     }
 
     private void addValidationOptions() {
