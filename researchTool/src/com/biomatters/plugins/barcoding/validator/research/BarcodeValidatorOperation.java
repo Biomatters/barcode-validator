@@ -19,7 +19,6 @@ import com.biomatters.plugins.barcoding.validator.output.ValidationReportDocumen
 import com.biomatters.plugins.barcoding.validator.validation.*;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputOptions;
 import com.biomatters.plugins.barcoding.validator.validation.input.InputProcessor;
-import com.biomatters.plugins.barcoding.validator.validation.pci.PCICalculatorAlignmentOptions;
 import com.biomatters.plugins.barcoding.validator.validation.pci.PCICalculatorOptions;
 import com.biomatters.plugins.barcoding.validator.validation.pci.PCICalculator;
 import com.biomatters.plugins.barcoding.validator.validation.results.SlidingWindowQualityValidationResultFact;
@@ -263,7 +262,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
 
 
         PCICalculatorOptions pciCalculatorOptions = barcodeValidatorOptions.getPCICalculatorOptions();
-        PCICalculatorAlignmentOptions pciCalculatorAlignmentOptions = barcodeValidatorOptions.getPCICalculatorAlignmentOptions();
+        Options pciCalculatorAlignmentOptions = barcodeValidatorOptions.getPCICalculatorAlignmentOptions();
         boolean runPCICalculation = pciCalculatorOptions.canPerformPCICalculation();
         double[] progressFractions = runPCICalculation ? new double[]{0.65, 0.3, 0.05} : new double[]{0.9, 0.1};
         CompositeProgressListener overallProgress = new CompositeProgressListener(progressListener, progressFractions);

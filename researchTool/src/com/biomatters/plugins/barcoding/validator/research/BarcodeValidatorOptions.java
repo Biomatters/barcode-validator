@@ -5,9 +5,9 @@ import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.plugins.barcoding.validator.validation.Validation;
 import com.biomatters.plugins.barcoding.validator.validation.ValidationOptions;
 import com.biomatters.plugins.barcoding.validator.validation.assembly.CAP3Options;
-import com.biomatters.plugins.barcoding.validator.validation.pci.PCICalculatorAlignmentOptions;
 import com.biomatters.plugins.barcoding.validator.validation.pci.PCICalculatorOptions;
 import com.biomatters.plugins.barcoding.validator.validation.trimming.TrimmingOptions;
+import com.biomatters.plugins.barcoding.validator.validation.utilities.AlignmentUtilities;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,7 +23,7 @@ public class BarcodeValidatorOptions extends Options {
     private CAP3Options assemblyOptions = new CAP3Options(BarcodeValidatorOptions.class);
     private Options validationOptions = new Options(BarcodeValidatorOptions.class);
     private PCICalculatorOptions PCICalculatorOptions = new PCICalculatorOptions(BarcodeValidatorOptions.class);
-    private PCICalculatorAlignmentOptions PCICalculatorAlignmentOptions = new PCICalculatorAlignmentOptions(BarcodeValidatorOptions.class);
+    private Options PCICalculatorAlignmentOptions = AlignmentUtilities.getOptions();
     
     public BarcodeValidatorOptions() throws DocumentOperationException {
         super(BarcodeValidatorOperation.class);
@@ -47,7 +47,7 @@ public class BarcodeValidatorOptions extends Options {
         return PCICalculatorOptions;
     }
 
-    public PCICalculatorAlignmentOptions getPCICalculatorAlignmentOptions() {
+    public Options getPCICalculatorAlignmentOptions() {
         return PCICalculatorAlignmentOptions;
     }
 
@@ -79,6 +79,7 @@ public class BarcodeValidatorOptions extends Options {
     }
 
     private void addPCICalculationAlignmentOptions() {
+        PCICalculatorAlignmentOptions.setEnabled(PCICalculatorOptions.isEnabled());
         addCollapsibleChildOptions("pciCalculationAlignment", "PCI Calculation Alignment", "", PCICalculatorAlignmentOptions, false, true);
     }
 

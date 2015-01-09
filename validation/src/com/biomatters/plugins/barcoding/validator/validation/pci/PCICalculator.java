@@ -9,6 +9,7 @@ import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDo
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
+import com.biomatters.geneious.publicapi.plugin.Options;
 import com.biomatters.geneious.publicapi.utilities.Execution;
 import com.biomatters.geneious.publicapi.utilities.FileUtilities;
 import com.biomatters.geneious.publicapi.utilities.GeneralUtilities;
@@ -42,7 +43,7 @@ public class PCICalculator {
      * @return a map from {@link URN} to PCI value.  Or null  if the calculation was not run.
      * @throws DocumentOperationException if something goes wrong running the PCI calculation
      */
-    public static Map<URN, Double> calculate(Map<URN, GenusAndSpecies> sequenceUrns, PCICalculatorOptions options, PCICalculatorAlignmentOptions alignmentOptions, ProgressListener progressListener) throws DocumentOperationException {
+    public static Map<URN, Double> calculate(Map<URN, GenusAndSpecies> sequenceUrns, PCICalculatorOptions options, Options alignmentOptions, ProgressListener progressListener) throws DocumentOperationException {
 
         CompositeProgressListener overallProgress = new CompositeProgressListener(progressListener, 0.1, 0.6, 0.3);
 
@@ -104,7 +105,7 @@ public class PCICalculator {
         overallProgress.beginSubtask();
         SequenceAlignmentDocument alignment = AlignmentUtilities.performAlignment(
                 new ArrayList<NucleotideSequenceDocument>(toAlign.values()),
-                alignmentOptions.getAlignmentOptions(), overallProgress);
+                alignmentOptions, overallProgress);
         if(overallProgress.isCanceled()) {
             throw new DocumentOperationException.Canceled();
         }
