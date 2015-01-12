@@ -1,0 +1,7 @@
+dependencies {
+    compile project(':validation')
+    testCompile "junit:junit:4.+"
+    testRuntime group: "com.biomatters", name: "geneious.publicapi", version: "7.1.5", configuration: "runtime"
+}
+
+ant.importBuild 'build.xml'
