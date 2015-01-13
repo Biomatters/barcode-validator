@@ -328,7 +328,7 @@ public class BarcodeValidatorOperation extends DocumentOperation {
             overallProgress.beginSubtask("Calculating PCI");
             Map<String, PCICalculator.GenusAndSpecies> nameToGenusAndSpecies = getNameToGenusAndSpeciesMap(pciCalculatorOptions, barcodes);
             Map<URN, PCICalculator.GenusAndSpecies> input = getUrnToGenusAndSpecies(outputs, nameToGenusAndSpecies);
-            PCIValues = PCICalculator.calculate(input, pciCalculatorOptions, pciCalculatorAlignmentOptions, overallProgress);
+            PCIValues = PCICalculator.calculate(input, pciCalculatorOptions, pciCalculatorAlignmentOptions, overallProgress, new ValidationDocumentOperationCallback(operationCallback, false));
         }
 
         overallProgress.beginSubtask("Saving Report...");

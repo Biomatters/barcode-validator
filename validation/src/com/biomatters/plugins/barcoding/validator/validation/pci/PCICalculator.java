@@ -14,6 +14,7 @@ import com.biomatters.geneious.publicapi.utilities.Execution;
 import com.biomatters.geneious.publicapi.utilities.FileUtilities;
 import com.biomatters.geneious.publicapi.utilities.GeneralUtilities;
 import com.biomatters.geneious.publicapi.utilities.StringUtilities;
+import com.biomatters.plugins.barcoding.validator.validation.ValidationCallback;
 import com.biomatters.plugins.barcoding.validator.validation.utilities.AlignmentUtilities;
 import com.biomatters.plugins.barcoding.validator.validation.utilities.ImportUtilities;
 import com.google.common.collect.BiMap;
@@ -43,7 +44,7 @@ public class PCICalculator {
      * @return a map from {@link URN} to PCI value.  Or null  if the calculation was not run.
      * @throws DocumentOperationException if something goes wrong running the PCI calculation
      */
-    public static Map<URN, Double> calculate(Map<URN, GenusAndSpecies> sequenceUrns, PCICalculatorOptions options, Options alignmentOptions, ProgressListener progressListener) throws DocumentOperationException {
+    public static Map<URN, Double> calculate(Map<URN, GenusAndSpecies> sequenceUrns, PCICalculatorOptions options, Options alignmentOptions, ProgressListener progressListener, ValidationCallback callback) throws DocumentOperationException {
 
         CompositeProgressListener overallProgress = new CompositeProgressListener(progressListener, 0.1, 0.6, 0.3);
 
@@ -106,6 +107,7 @@ public class PCICalculator {
         SequenceAlignmentDocument alignment = AlignmentUtilities.performAlignment(
                 new ArrayList<NucleotideSequenceDocument>(toAlign.values()),
                 alignmentOptions, overallProgress);
+        callback.addPluginDocument(alignment, ProgressListener.EMPTY);
         if(overallProgress.isCanceled()) {
             throw new DocumentOperationException.Canceled();
         }
