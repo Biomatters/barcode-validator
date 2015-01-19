@@ -1,6 +1,5 @@
-<project name="Shared" xmlns:ivy="antlib:org.apache.ivy.ant" basedir="."
-         description="Shared build script to be imported by all Barcode Validator modules">
-
+<project name="Shared" xmlns:ivy="antlib:org.apache.ivy.ant" basedir=".">
+ <!-- Shared build script to be imported by all Barcode Validator modules -->
 
     <!-- Shared folders -->
     <dirname property="Shared.basedir" file="${ant.file.Shared}"/>
