@@ -6,5 +6,8 @@
     </configurations>
     <dependencies>
         <dependency name="validation" rev="latest.integration" conf="build->build;test->test"/>
+        <dependency org="com.google.guava" name="guava" rev="15.0"/>
+        <!-- For tests -->
+        <dependency org="junit" name="junit" rev="4.11" />
     </dependencies>
 </ivy-module>
