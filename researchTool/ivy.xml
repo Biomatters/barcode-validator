@@ -1,9 +1,10 @@
 <ivy-module version="1.0">
-    <info organisation="com.biomatters" module="researchTool"/>
+    <info organisation="com.biomatters" module="researchTool" revision="integration"/>
+    <configurations>
+        <conf name="build" description="For building the gplugin file."/>
+        <conf name="test" description="For running tests.  Includes the Geneious runtime and test environment."/>
+    </configurations>
     <dependencies>
-        <dependency org="com.biomatters" name="geneious.publicapi" rev="7.1.5"/>
-        <dependency org="com.google.guava" name="guava" rev="15.0"/>
-        <!-- For tests -->
-        <dependency org="junit" name="junit" rev="4.11"/>
+        <dependency name="validation" rev="latest.integration" conf="build->build;test->test"/>
     </dependencies>
 </ivy-module>

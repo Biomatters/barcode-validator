@@ -1,7 +1,15 @@
 <ivy-module version="1.0">
-    <info organisation="com.biomatters" module="validation"/>
+    <info organisation="com.biomatters" module="validation" revision="1.1"/>
+    <configurations>
+        <conf name="build" description="For building the jar file."/>
+        <conf name="test" description="For running tests.  Includes the Geneious runtime and test environment."/>
+    </configurations>
+    <publications>
+        <artifact name="validation" type="jar"/>
+        <artifact name="resources" type="zip"/>
+    </publications>
     <dependencies>
-        <dependency org="com.biomatters" name="geneious.publicapi" rev="7.1.5"/>
+        <dependency org="com.biomatters" name="geneious.publicapi" rev="7.1.5" conf="build->api;test->runtime"/>
         <dependency org="com.google.guava" name="guava" rev="15.0"/>
         <!-- For tests -->
         <dependency org="junit" name="junit" rev="4.11" />

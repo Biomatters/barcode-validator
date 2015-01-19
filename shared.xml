@@ -1,0 +1,152 @@
+<project name="Shared" xmlns:ivy="antlib:org.apache.ivy.ant" basedir="."
+         description="Shared build script to be imported by all Barcode Validator modules">
+
+
+    <!-- Shared folders -->
+    <dirname property="Shared.basedir" file="${ant.file.Shared}"/>
+    <property name="repository" value="${Shared.basedir}/repository"/>
+    <property name="validation" value="${Shared.basedir}/validation"/>
+    <property name="researchTool" value="${Shared.basedir}/researchTool"/>
+    <property name="geneious-runtime-dependencies" location="${Shared.basedir}/GeneiousFiles"/>
+
+    <!-- Per project folders -->
+    <property name="src" location="src"/>
+    <property name="classes" location="classes"/>
+    <property name="resources" location="resources"/>
+    <property name="build" location="build"/>
+    <property name="lib" location="lib"/>
+    <property name="test" location="test"/>
+    <property name="test-classes" location="test-classes"/>
+    <property name="report" location="report"/>
+
+    <!-- setup reference to the Ivy Ant tasks library -->
+    <path id="ivy.lib.path">
+        <fileset dir="${Shared.basedir}/tools" includes="ivy*.jar"/>
+    </path>
+
+    <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+
+    <!-- load ivy settings -->
+    <ivy:settings file="${Shared.basedir}/ivysettings.xml" id="ivy.config"/>
+
+
+    <path id="classpath">
+        <fileset dir="${lib}"/>
+    </path>
+
+
+
+    <target name="build-module" depends="compile-module">
+        <jar jarfile="${build}/${ant.project.name}.jar">
+            <fileset dir="${classes}"/>
+        </jar>
+        <zip destfile="${build}/resources.zip">
+            <fileset dir="${resources}"/>
+        </zip>
+    </target>
+
+
+
+    <target name="run-tests" depends="compile-tests, retrieve-geneious-runtime-dependencies">
+        <junit dir="${geneious-runtime-dependencies}" fork="true" maxmemory="1024M" printsummary="on" timeout="180000">
+            <batchtest todir="${report}">
+                <fileset dir="${test-classes}">
+                    <include name="**/*Test.class"/>
+                </fileset>
+            </batchtest>
+            <classpath>
+                <path refid="classpath"/>
+                <file file="${geneious-runtime-dependencies}/iSeek.jar"/>
+                <fileset dir="${geneious-runtime-dependencies}/lib"/>
+                <pathelement location="${test-classes}"/>
+                <pathelement location="${classes}"/>
+                <pathelement location="${geneious-runtime-dependencies}/resources"/>
+                <pathelement location="${geneious-runtime-dependencies}/bundledPlugins"/>
+            </classpath>
+            <env key="DISPLAY" value=":0.0"/>
+            <env key="DYLD_LIBRARY_PATH" value="/Library/Application Support/Geneious/Frameworks"/>
+            <jvmarg value="-Xms256M"/>
+            <jvmarg value="-ea"/>
+            <jvmarg value="-XX:MaxNewSize=40M"/>
+            <jvmarg value="-XX:MaxPermSize=256M"/>
+            <jvmarg value="-XX:ReservedCodeCacheSize=128m"/>
+            <jvmarg value="-Xss512K"/>
+            <formatter type="brief" usefile="false"/>
+            <sysproperty key="report.dir" value="${report}"/>
+        </junit>
+    </target>
+
+
+
+    <target name="compile-module" depends="remove-module-folders, create-module-folders, publish-dependencies, retrieve-dependencies">
+        <javac target="1.6" source="1.6" destdir="${classes}" debug="true">
+            <classpath refid="classpath"/>
+            <src path="${src}"/>
+        </javac>
+    </target>
+
+    <target name="compile-tests" depends="remove-test-folders, create-test-folders, compile-module">
+        <javac target="1.6" source="1.6" destdir="${test-classes}" debug="true">
+            <classpath>
+                <path refid="classpath"/>
+                <pathelement location="${classes}"/>
+            </classpath>
+            <src path="${test}"/>
+        </javac>
+    </target>
+
+    <target name="evaluate-geneious-runtime-dependencies-exists"
+            description="Checks if the Geneious runtime files have already been created.
+            Ivy already handles caching the zip file, but we don't want to unzip it again.">
+        <condition property="geneious-runtime-dependencies.exists">
+            <available file="${geneious-runtime-dependencies}" type="dir"/>
+        </condition>
+    </target>
+
+    <target name="retrieve-dependencies" description="Retrieve dependencies with ivy">
+        <ivy:retrieve settingsref="ivy.config" type="jar,bundle" conf="build"/>
+        <ivy:retrieve settingsref="ivy.config" type="zip" conf="build" pattern="${basedir}/[artifact].[ext]"/>
+    </target>
+
+    <target name="retrieve-geneious-runtime-dependencies" description="Retrieve the Geneious runtime for running the tests" depends="evaluate-geneious-runtime-dependencies-exists" unless="geneious-runtime-dependencies.exists">
+        <ivy:retrieve settingsref="ivy.config" type="jar,bundle" conf="test"/>
+        <ivy:retrieve type="resource" settingsref="ivy.config" pattern="${Shared.basedir}/[artifact].[ext]" conf="test"/>
+        <unzip src="GeneiousFiles.zip" dest="${Shared.basedir}"/>
+    </target>
+
+
+
+    <target name="create-module-folders">
+        <mkdir dir="${classes}"/>
+        <mkdir dir="${build}"/>
+    </target>
+
+    <target name="create-test-folders">
+        <mkdir dir="${test-classes}"/>
+        <mkdir dir="${report}"/>
+    </target>
+
+    <target name="remove-module-folders">
+        <delete dir="${classes}"/>
+        <delete dir="${build}"/>
+    </target>
+
+    <target name="remove-test-folders">
+        <delete dir="${test-classes}"/>
+        <delete dir="${report}"/>
+    </target>
+
+    <target name="clean" depends="remove-test-folders, remove-module-folders">
+        <delete dir="${lib}"/>
+    </target>
+
+    <target name="publish" depends="build-module">
+        <ivy:resolve file="ivy.xml" settingsref="ivy.config"/>
+        <ivy:publish artifactspattern="${build}/[artifact].[ext]" resolver="local" status="integration"
+                      forcedeliver="true" overwrite="true"/>
+
+    </target>
+
+    <!-- Override if you want to publish any local dependencies before using Ivy to retrieve -->
+    <target name="publish-dependencies"/>
+</project>
