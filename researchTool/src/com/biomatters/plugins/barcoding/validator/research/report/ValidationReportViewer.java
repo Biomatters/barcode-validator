@@ -22,7 +22,9 @@ import com.biomatters.plugins.barcoding.validator.validation.results.ResultColum
 import com.biomatters.plugins.barcoding.validator.validation.results.ResultFact;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.HyperlinkListener;
+import javax.swing.event.MouseInputAdapter;
+import javax.swing.event.MouseInputListener;
 import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.*;
 import java.awt.*;
@@ -48,6 +50,7 @@ import java.util.regex.Pattern;
 public class ValidationReportViewer extends DocumentViewer {
     ValidationReportDocument reportDocument;
     JTable table = null;
+
     public ValidationReportViewer(ValidationReportDocument reportDocument) {
         this.reportDocument = reportDocument;
     }
@@ -59,40 +62,23 @@ public class ValidationReportViewer extends DocumentViewer {
     public static final String OPTION_PREFIX = "option:";
 
     public HyperlinkListener getHyperlinkListener() {
-        final Map<String, ValidationOptions> optionsMap = getOptionMap(reportDocument);
         return new DocumentOpeningHyperlinkListener("ReportDocumentFactory",
                 Collections.<String, DocumentOpeningHyperlinkListener.UrlProcessor>singletonMap(OPTION_PREFIX,
                 new DocumentOpeningHyperlinkListener.UrlProcessor() {
                     @Override
                     void process(String url) {
-                        final String optionLable = url.substring(OPTION_PREFIX.length());
-                        final ValidationOptions options = optionsMap.get(optionLable);
-
-                        SwingUtilities.invokeLater(new Runnable() {
-                            public void run() {
-                                options.setEnabled(false);
-                                Dialogs.DialogOptions dialogOptions = new Dialogs.DialogOptions(Dialogs.OK_ONLY, "Options");
-                                Dialogs.showMoreOptionsDialog(dialogOptions, options.getPanel(), options.getAdvancedPanel());
-                            }
-                        });
+                        if (url.startsWith(OPTION_PREFIX)) {
+                            new Thread(new Runnable() {
+                                public void run() {
+                                    Dialogs.DialogOptions dialogOptions = new Dialogs.DialogOptions(Dialogs.OK_ONLY, "Validation options", null, Dialogs.DialogIcon.INFORMATION);
+                                    JTextPane textPane = getTextPane(getHtml());
+                                    textPane.addHyperlinkListener(getHyperlinkListener());
+                                    Dialogs.showDialog(dialogOptions, textPane);
+                                }
+                            }).start();
+                        }
                     }
                 }));
-    }
-
-    private static Map<String, ValidationOptions> getOptionMap(ValidationReportDocument reportDocument) {
-        Map<String, ValidationOptions> ret = new HashMap<String, ValidationOptions>();
-        if (reportDocument == null || reportDocument.getRecords() == null)
-            return ret;
-
-        List<ValidationOutputRecord> records = reportDocument.getRecords();
-        for (ValidationOutputRecord record : records) {
-            for (RecordOfValidationResult result : record.getValidationResults()) {
-                ValidationOptions options = result.getOptions();
-                ret.put(options.getLabel(), options);
-            }
-        }
-
-        return ret;
     }
 
     private static String generateHtml(ValidationReportDocument reportDocument) {
@@ -114,7 +100,7 @@ public class ValidationReportViewer extends DocumentViewer {
         boolean allPassed = recordsThatPassedAll.size() == records.size();
         boolean allFailed = recordsThatFailedAtLeastOnce.size() == records.size();
 
-        StringBuilder headerBuilder = new StringBuilder("<h1>Validation Report</h1>");
+        StringBuilder headerBuilder = new StringBuilder();
         headerBuilder.append(descriptionOfOptionUsed);
 
         headerBuilder.append("<br><br>").append(
@@ -154,9 +140,8 @@ public class ValidationReportViewer extends DocumentViewer {
         return "<a href=\"" + StringUtilities.join(",", urnStrings) + "\">" + label + "</a>";
     }
 
-    private JTextPane getTextPane() {
-        String html = getHtml();
-        if(html == null || html.isEmpty()) {
+    private JTextPane getTextPane(String html) {
+        if (html == null || html.isEmpty()) {
             return null;
         }
         final JTextPane textPane = new GTextPane();
@@ -164,7 +149,7 @@ public class ValidationReportViewer extends DocumentViewer {
         textPane.setEditable(false);
 
         HyperlinkListener hyperlinkListener = getHyperlinkListener();
-        if(hyperlinkListener != null) {
+        if (hyperlinkListener != null) {
             textPane.addHyperlinkListener(hyperlinkListener);
         }
         textPane.setText(html);
@@ -173,7 +158,7 @@ public class ValidationReportViewer extends DocumentViewer {
 
     @Override
     public JComponent getComponent() {
-        JComponent textPane = getTextPane();
+        JTextPane textPane = getTextPane(getReportTitle());
 
         final GPanel rootPanel = new GPanel(new BorderLayout()) {
             @Override
@@ -420,6 +405,10 @@ public class ValidationReportViewer extends DocumentViewer {
             }
         };
 
+    }
+
+    public String getReportTitle() {
+        return "<h1>Validation Report</h1><h2><a href=\"" + OPTION_PREFIX + "summery\">options</a></h2>";
     }
 
     protected static class ExportReportAction extends GeneiousAction {
