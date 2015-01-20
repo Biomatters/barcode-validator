@@ -110,7 +110,7 @@
     <target name="retrieve-geneious-runtime-dependencies" description="Retrieve the Geneious runtime for running the tests" depends="evaluate-geneious-runtime-dependencies-exists" unless="geneious-runtime-dependencies.exists">
         <ivy:retrieve settingsref="ivy.config" type="jar,bundle" conf="test"/>
         <ivy:retrieve type="resource" settingsref="ivy.config" pattern="${Shared.basedir}/[artifact].[ext]" conf="test"/>
-        <unzip src="GeneiousFiles.zip" dest="${Shared.basedir}"/>
+        <unzip src="${Shared.basedir}/GeneiousFiles.zip" dest="${Shared.basedir}"/>
     </target>
 
 
