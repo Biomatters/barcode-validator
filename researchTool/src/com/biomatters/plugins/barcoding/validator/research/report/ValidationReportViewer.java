@@ -70,10 +70,7 @@ public class ValidationReportViewer extends DocumentViewer {
                         if (url.startsWith(OPTION_PREFIX)) {
                             new Thread(new Runnable() {
                                 public void run() {
-                                    Dialogs.DialogOptions dialogOptions = new Dialogs.DialogOptions(Dialogs.OK_ONLY, "Validation options", null, Dialogs.DialogIcon.INFORMATION);
-                                    JTextPane textPane = getTextPane(getHtml());
-                                    textPane.addHyperlinkListener(getHyperlinkListener());
-                                    Dialogs.showDialog(dialogOptions, textPane);
+                                    Dialogs.showMessageDialog(getHtml());
                                 }
                             }).start();
                         }
@@ -82,11 +79,10 @@ public class ValidationReportViewer extends DocumentViewer {
     }
 
     private static String generateHtml(ValidationReportDocument reportDocument) {
-        List<ValidationOutputRecord> records = reportDocument.getRecords();
-        return getHeaderOfReport(records, reportDocument.getDescriptionOfOptions());
+        return reportDocument.getDescriptionOfOptions();
     }
 
-    private static String getHeaderOfReport(List<ValidationOutputRecord> records, String descriptionOfOptionUsed) {
+    private static String getHeaderOfReport(List<ValidationOutputRecord> records) {
         List<ValidationOutputRecord> recordsThatPassedAll = new ArrayList<ValidationOutputRecord>();
         List<ValidationOutputRecord> recordsThatFailedAtLeastOnce = new ArrayList<ValidationOutputRecord>();
         for (ValidationOutputRecord record : records) {
@@ -100,10 +96,8 @@ public class ValidationReportViewer extends DocumentViewer {
         boolean allPassed = recordsThatPassedAll.size() == records.size();
         boolean allFailed = recordsThatFailedAtLeastOnce.size() == records.size();
 
-        StringBuilder headerBuilder = new StringBuilder();
-        headerBuilder.append(descriptionOfOptionUsed);
-
-        headerBuilder.append("<br><br>").append(
+        StringBuilder headerBuilder = new StringBuilder("<h1>Validation Report  <small><a href=\"" + OPTION_PREFIX + "summery\">Show Options</a></small></h1>");
+        headerBuilder.append(
                 "Ran validations on <strong>").append(records.size()).append("</strong> sets of barcode data:");
 
         headerBuilder.append("<ul>");
@@ -408,7 +402,7 @@ public class ValidationReportViewer extends DocumentViewer {
     }
 
     public String getReportTitle() {
-        return "<h1>Validation Report</h1><h2><a href=\"" + OPTION_PREFIX + "summery\">options</a></h2>";
+        return  getHeaderOfReport(reportDocument.getRecords());
     }
 
     protected static class ExportReportAction extends GeneiousAction {
