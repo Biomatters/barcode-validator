@@ -19,6 +19,7 @@ import java.io.IOException;
 public class PCICalculatorOptions extends Options {
     private TaxonMappingOptions taxonMappingOptions;
     private FileSelectionOption barcodesSelectionOption;
+    private Option barcodesSelectionHelpOption;
 
     private final boolean canPerformPCICalculation = testRunPerlFromWithinWorkingDirectoryOnCommandLine();
 
@@ -43,6 +44,11 @@ public class PCICalculatorOptions extends Options {
         return barcodesSelectionOption.getValue();
     }
 
+    public void setBarcodesSelectionVisable(boolean visible) {
+        barcodesSelectionOption.setVisible(visible);
+        barcodesSelectionHelpOption.setVisible(visible);
+    }
+
     public boolean canPerformPCICalculation() {
         return canPerformPCICalculation;
     }
@@ -51,7 +57,7 @@ public class PCICalculatorOptions extends Options {
         beginAlignHorizontally(null, false);
 
         barcodesSelectionOption = addFileSelectionOption("barcodesSelection", "Reference Barcodes:", "");
-        addHelpButton(
+        barcodesSelectionHelpOption = addHelpButtonOption(
                 "Help",
                 "Please select a fasta file that contains reference barcode sequences for PCI calculation. " +
                 "Barcode sequences must be named in the format: genus_species_id. Ids must not contain spaces."

@@ -112,6 +112,10 @@ public class PCICalculator {
             throw new DocumentOperationException.Canceled();
         }
 
+        return parseAlignment(alignment, newSamples, overallProgress);
+    }
+
+    public static Map<URN, Double> parseAlignment(SequenceAlignmentDocument alignment, BiMap<String, AnnotatedPluginDocument> newSamples, CompositeProgressListener overallProgress) throws DocumentOperationException {
         overallProgress.beginSubtask("Computing PCI values");
         try {
             File inputAlignmentFile = createPciInputFile(alignment, newSamples.inverse());
@@ -267,6 +271,16 @@ public class PCICalculator {
         return outputFile;
     }
 
+    public static class GenusAndSpecies {
+        public final String genus;
+        public final String species;
+
+        public GenusAndSpecies(String genus, String species) {
+            this.genus = genus;
+            this.species = species;
+        }
+    }
+
     /**
      * The UID consists of Genus_Species_ID.
      *
@@ -280,22 +294,12 @@ public class PCICalculator {
      * @return The UID of the sequence as it should appear in the compressed barcode format.
      *
      */
-    private static String getUid(@Nullable GenusAndSpecies genusAndSpecies, @Nonnull String name) {
+    public static String getUid(@Nullable PCICalculator.GenusAndSpecies genusAndSpecies, @Nonnull String name) {
         String sanitizedName = name.replaceAll("[_\\s]+", "-");
         if(genusAndSpecies == null) {
             return "Unknown_Unknown_" + sanitizedName;
         } else {
             return genusAndSpecies.genus + "_" + genusAndSpecies.species + "_" + sanitizedName;
-        }
-    }
-
-    public static class GenusAndSpecies {
-        final String genus;
-        final String species;
-
-        public GenusAndSpecies(String genus, String species) {
-            this.genus = genus;
-            this.species = species;
         }
     }
 }

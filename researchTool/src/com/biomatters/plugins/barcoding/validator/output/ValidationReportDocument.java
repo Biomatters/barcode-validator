@@ -4,6 +4,7 @@ import com.biomatters.geneious.publicapi.documents.*;
 import com.biomatters.geneious.publicapi.plugin.DocumentOperationException;
 import com.biomatters.geneious.publicapi.plugin.Geneious;
 import com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorOptions;
+import com.biomatters.plugins.barcoding.validator.research.ValidationUtils;
 import jebl.util.ProgressListener;
 import org.jdom.Element;
 
@@ -22,10 +23,6 @@ public class ValidationReportDocument implements PluginDocument, XMLSerializable
     private static final String NAME_KEY = "name";
     private static final String OUTPUT_KEY = "output";
     private static final String OPTION_VALUES_KEY = "optionsValuesUsed";
-    private static final String PCI_VALUES_KEY = "pciValues";
-    private static final String PCI_ENTRY_KEY = "entry";
-    private static final String URN_KEY = "urn";
-    private static final String VALUE_KEY = "pci";
 
     private String name;
     private List<ValidationOutputRecord> outputs;
@@ -101,28 +98,10 @@ public class ValidationReportDocument implements PluginDocument, XMLSerializable
         for (Element child : children) {
             outputs.add(XMLSerializer.classFromXML(child, ValidationOutputRecord.class));
         }
-        Element pciElement = element.getChild(PCI_VALUES_KEY);
+        Element pciElement = element.getChild(ValidationUtils.PCI_VALUES_KEY);
         if(pciElement != null) {
-            pciValues = pciValuesMapFromXml(pciElement);
+            pciValues = ValidationUtils.pciValuesMapFromXml(pciElement, false);
         }
-    }
-
-    private static Map<URN, Double> pciValuesMapFromXml(Element pciElement) throws XMLSerializationException {
-        Map<URN, Double> result = new HashMap<URN, Double>();
-        List<Element> entryElements = pciElement.getChildren(PCI_ENTRY_KEY);
-        for (Element entryElement : entryElements) {
-            String valueText = entryElement.getChildText(VALUE_KEY);
-            try {
-                URN urn = URN.fromXML(entryElement.getChild(URN_KEY));
-                Double pci = Double.valueOf(valueText);
-                result.put(urn, pci);
-            } catch (MalformedURNException e) {
-                throw new XMLSerializationException("Bad URN stored in report document: " + e.getMessage(), e);
-            } catch (NumberFormatException e) {
-                throw new XMLSerializationException("Bad PCI value (" + valueText + ") stored in report document: " + e.getMessage(), e);
-            }
-        }
-        return result;
     }
 
     @Override
@@ -141,20 +120,9 @@ public class ValidationReportDocument implements PluginDocument, XMLSerializable
             element.addContent(XMLSerializer.classToXML(OUTPUT_KEY, output));
         }
         if(pciValues != null) {
-            element.addContent(pciValuesToXml(pciValues));
+            element.addContent(ValidationUtils.pciValuesToXml(pciValues));
         }
         return element;
-    }
-
-    private static Element pciValuesToXml(Map<URN, Double> pciValues) {
-        Element pciElement = new Element(PCI_VALUES_KEY);
-        for (Map.Entry<URN, Double> entry : pciValues.entrySet()) {
-            Element valueElement = new Element(PCI_ENTRY_KEY);
-            valueElement.addContent(entry.getKey().toXML(URN_KEY));
-            valueElement.addContent(new Element(VALUE_KEY).setText(String.valueOf(entry.getValue())));
-            pciElement.addContent(valueElement);
-        }
-        return pciElement;
     }
 
     @Override

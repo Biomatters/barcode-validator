@@ -4,6 +4,7 @@ import com.biomatters.geneious.publicapi.plugin.DocumentOperation;
 import com.biomatters.geneious.publicapi.plugin.DocumentViewerFactory;
 import com.biomatters.geneious.publicapi.plugin.GeneiousPlugin;
 import com.biomatters.plugins.barcoding.validator.research.report.BatchValidationReportViewerFactory;
+import com.biomatters.plugins.barcoding.validator.research.report.PCICalculatorReportViewerFactory;
 import com.biomatters.plugins.barcoding.validator.research.report.ValidationReportViewerFactory;
 
 /**
@@ -50,14 +51,15 @@ public class BarcodeValidatorPlugin extends GeneiousPlugin {
 
     @Override
     public DocumentOperation[] getDocumentOperations() {
-        return new DocumentOperation[] { new BarcodeValidatorOperation() };
+        return new DocumentOperation[] { new BarcodeValidatorOperation(), new PCICalculatorOperation() };
     }
 
     @Override
     public DocumentViewerFactory[] getDocumentViewerFactories() {
         return new DocumentViewerFactory[] {
                 new ValidationReportViewerFactory(),
-                new BatchValidationReportViewerFactory()
+                new BatchValidationReportViewerFactory(),
+                new PCICalculatorReportViewerFactory()
         };
     }
 }
