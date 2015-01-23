@@ -1,5 +1,5 @@
 <ivy-module version="1.0">
-    <info organisation="com.biomatters" module="validation" revision="1.1"/>
+    <info organisation="com.biomatters" module="validation"/>
     <configurations>
         <conf name="build" description="For building the jar file."/>
         <conf name="test" description="For running tests.  Includes the Geneious runtime and test environment."/>
