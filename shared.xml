@@ -46,7 +46,7 @@
 
 
 
-    <target name="run-tests" depends="compile-tests, retrieve-geneious-runtime-dependencies">
+    <target name="run-tests" depends="clean, compile-tests, retrieve-geneious-runtime-dependencies">
         <junit dir="${geneious-runtime-dependencies}" fork="true" maxmemory="1024M" printsummary="on" timeout="180000">
             <batchtest todir="${report}">
                 <fileset dir="${test-classes}">
