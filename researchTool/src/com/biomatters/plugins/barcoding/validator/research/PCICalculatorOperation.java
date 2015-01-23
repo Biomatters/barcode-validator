@@ -15,6 +15,7 @@ import jebl.util.ProgressListener;
 
 import javax.swing.*;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -47,7 +48,7 @@ public class PCICalculatorOperation extends DocumentOperation {
 
     public DocumentSelectionSignature[] getSelectionSignatures() {
         return new DocumentSelectionSignature[]{
-                new DocumentSelectionSignature(Object.class, 0, Integer.MAX_VALUE)
+                new DocumentSelectionSignature(SequenceAlignmentDocument.class, 1, Integer.MAX_VALUE)
         };
     }
 
@@ -67,15 +68,16 @@ public class PCICalculatorOperation extends DocumentOperation {
 
         try {
             for (AnnotatedPluginDocument doc : annotatedPluginDocuments) {
-                if (!(doc.getDocument() instanceof SequenceAlignmentDocument)) {
-                    continue;
-                }
-
                 SequenceAlignmentDocument alignmentDocument = (SequenceAlignmentDocument) doc.getDocument();
                 List<AnnotatedPluginDocument> referencedDocuments = alignmentDocument.getReferencedDocuments();
-                Map<String, PCICalculator.GenusAndSpecies> nameToGenusAndSpeciesMap = ValidationUtils.getNameToGenusAndSpeciesMap(pciCalculatorOptions, referencedDocuments);
-                BiMap<String, AnnotatedPluginDocument> newSamples = getNewSamples(nameToGenusAndSpeciesMap, referencedDocuments);
-                Map<URN, Double> result = PCICalculator.parseAlignment(alignmentDocument, newSamples, composite);
+                Map<URN, Double> result = null;
+                if (referencedDocuments != null && referencedDocuments.size() > 0) {
+                    Map<String, PCICalculator.GenusAndSpecies> nameToGenusAndSpeciesMap = ValidationUtils.getNameToGenusAndSpeciesMap(pciCalculatorOptions, referencedDocuments);
+                    BiMap<String, AnnotatedPluginDocument> newSamples = getNewSamples(nameToGenusAndSpeciesMap, referencedDocuments);
+                    result = PCICalculator.parseAlignment(alignmentDocument, newSamples, composite);
+                }
+
+                result = result == null ? new HashMap<URN, Double>() : result;
                 operationCallback.addDocument(new PCICalculatorReportDocument(alignmentDocument.getName(), result), false, composite);
             }
         } finally {
@@ -89,10 +91,10 @@ public class PCICalculatorOperation extends DocumentOperation {
             String name = apd.getName();
             PCICalculator.GenusAndSpecies genusAndSpecies = nameToGenusAndSpeciesMap.get(name);
 
-            String uidForNewSample = ValidationUtils.getUid(genusAndSpecies, apd.getName());
+            String uidForNewSample = PCICalculator.getUid(genusAndSpecies, apd.getName());
             if (ret.containsKey(uidForNewSample)) {
                 // If there are duplicate names, we'll just give it a random UUID
-                uidForNewSample = ValidationUtils.getUid(genusAndSpecies, UUID.randomUUID().toString());
+                uidForNewSample = PCICalculator.getUid(genusAndSpecies, UUID.randomUUID().toString());
             }
             ret.put(uidForNewSample, apd);
         }

@@ -49,10 +49,6 @@ public class PCICalculatorReportViewer extends DocumentViewer {
             rows.add(new Row(DocumentUtilities.getDocumentByURN(urn).getName(), urn, value));
         }
 
-        if (rows.isEmpty()) {
-            return null;
-        }
-
         GPanel rootPanel = new GPanel(new BorderLayout());
 
         JTextPane textPane = new GTextPane();
@@ -97,7 +93,7 @@ public class PCICalculatorReportViewer extends DocumentViewer {
         private static final SimpleResultColumn NAME_COLUMN = new SimpleResultColumn("Name") {
             @Override
             String getColumnHeader() {
-                return "";
+                return "Name";
             }
 
             @Override

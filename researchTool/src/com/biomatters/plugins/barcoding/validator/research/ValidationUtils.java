@@ -7,8 +7,6 @@ import com.biomatters.plugins.barcoding.validator.output.ValidationOutputRecord;
 import com.biomatters.plugins.barcoding.validator.validation.pci.PCICalculator;
 import org.jdom.Element;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -92,28 +90,6 @@ public class ValidationUtils {
         }
 
         return result;
-    }
-
-    /**
-     * The UID consists of Genus_Species_ID.
-     *
-     * <strong>Note</strong>: Any white space in the sequence name will be replaced by an dash "-".  This is because the
-     * compressed barcode format used as input for the PCI program is based on strict FASTA, which does not have spaces
-     * in the names of sequences.  <a href="http://www.ncbi.nlm.nih.gov/CBBresearch/Spouge/html_ncbi/html/bib/119.html#The%20Format%20of%20an%20Compressed%20Barcode%20File">Details here.</a>.
-     * Underscore is replaced because it is a special character in the UID used as a separator.
-     *
-     * @param genusAndSpecies The genus and species
-     * @param name The name of the sequence
-     * @return The UID of the sequence as it should appear in the compressed barcode format.
-     *
-     */
-    public static String getUid(@Nullable PCICalculator.GenusAndSpecies genusAndSpecies, @Nonnull String name) {
-        String sanitizedName = name.replaceAll("[_\\s]+", "-");
-        if(genusAndSpecies == null) {
-            return "Unknown_Unknown_" + sanitizedName;
-        } else {
-            return genusAndSpecies.genus + "_" + genusAndSpecies.species + "_" + sanitizedName;
-        }
     }
 
     public static Element pciValuesToXml(Map<URN, Double> pciValues) {

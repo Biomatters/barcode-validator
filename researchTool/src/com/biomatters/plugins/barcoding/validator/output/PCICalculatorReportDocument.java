@@ -49,7 +49,7 @@ public class PCICalculatorReportDocument implements PluginDocument, XMLSerializa
 
     @Override
     public String getName() {
-        return name;
+        return "PCI score for " + name;
     }
 
     @Override
