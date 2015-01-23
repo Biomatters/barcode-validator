@@ -137,6 +137,7 @@
 
     <target name="clean" depends="remove-test-folders, remove-module-folders">
         <delete dir="${lib}"/>
+        <delete dir="${repository}"/>
     </target>
 
     <target name="publish" depends="build-module">
