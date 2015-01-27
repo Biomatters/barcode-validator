@@ -4,6 +4,7 @@ import com.biomatters.geneious.publicapi.components.Dialogs;
 import com.biomatters.geneious.publicapi.documents.AnnotatedPluginDocument;
 import com.biomatters.geneious.publicapi.documents.URN;
 import com.biomatters.geneious.publicapi.documents.sequence.SequenceAlignmentDocument;
+import com.biomatters.geneious.publicapi.documents.sequence.SequenceDocument;
 import com.biomatters.geneious.publicapi.plugin.*;
 import com.biomatters.plugins.barcoding.validator.output.PCICalculatorReportDocument;
 import com.biomatters.plugins.barcoding.validator.validation.pci.PCICalculator;
@@ -15,10 +16,7 @@ import jebl.util.ProgressListener;
 
 import javax.swing.*;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author Frank Lee
@@ -69,9 +67,13 @@ public class PCICalculatorOperation extends DocumentOperation {
         try {
             for (AnnotatedPluginDocument doc : annotatedPluginDocuments) {
                 SequenceAlignmentDocument alignmentDocument = (SequenceAlignmentDocument) doc.getDocument();
-                List<AnnotatedPluginDocument> referencedDocuments = alignmentDocument.getReferencedDocuments();
+                List<AnnotatedPluginDocument> referencedDocuments = getReferencedDocs(alignmentDocument);
+                if (referencedDocuments == null) {
+                    return;
+                }
+
                 Map<URN, Double> result = null;
-                if (referencedDocuments != null && referencedDocuments.size() > 0) {
+                if (referencedDocuments.size() > 0) {
                     Map<String, PCICalculator.GenusAndSpecies> nameToGenusAndSpeciesMap = ValidationUtils.getNameToGenusAndSpeciesMap(pciCalculatorOptions, referencedDocuments);
                     BiMap<String, AnnotatedPluginDocument> newSamples = getNewSamples(nameToGenusAndSpeciesMap, referencedDocuments);
                     result = PCICalculator.parseAlignment(alignmentDocument, newSamples, composite);
@@ -83,6 +85,34 @@ public class PCICalculatorOperation extends DocumentOperation {
         } finally {
             composite.setComplete();
         }
+    }
+
+    private List<AnnotatedPluginDocument> getReferencedDocs(SequenceAlignmentDocument alignmentDocument) {
+        List<AnnotatedPluginDocument> ret = new ArrayList<AnnotatedPluginDocument>();
+        List<SequenceDocument> seqs = new ArrayList<SequenceDocument>();
+        for (int i = 0; i < alignmentDocument.getNumberOfSequences(); i++) {
+            AnnotatedPluginDocument referencedDocument = alignmentDocument.getReferencedDocument(i);
+            if (referencedDocument == null) {
+                seqs.add(alignmentDocument.getSequence(i));
+            } else {
+                ret.add(referencedDocument);
+            }
+        }
+
+        if (seqs.size() > 0) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Can not find referenced document for these sequences : \n");
+            for (SequenceDocument seq : seqs) {
+                sb.append(seq.getName()).append("\n");
+            }
+            sb.append("\nDo you want to ignore them and proceed?");
+
+            if (!Dialogs.showOkCancelDialog(sb.toString(), "", null)) {
+                return null;
+            }
+        }
+
+        return ret;
     }
 
     private BiMap<String, AnnotatedPluginDocument> getNewSamples(Map<String, PCICalculator.GenusAndSpecies> nameToGenusAndSpeciesMap, List<AnnotatedPluginDocument> referencedDocuments) throws DocumentOperationException {
