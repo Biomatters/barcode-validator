@@ -250,8 +250,12 @@ public class PCICalculator {
         BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
         try {
             for (int i = 0; i < alignment.getNumberOfSequences(); i++) {
-                SequenceDocument alignedSequence = alignment.getSequence(i);
                 AnnotatedPluginDocument refDoc = alignment.getReferencedDocument(i);
+                if (refDoc == null) {
+                    continue;
+                }
+
+                SequenceDocument alignedSequence = alignment.getSequence(i);
                 String uid = renameMap.get(refDoc);
                 if(uid == null) {
                     uid = alignedSequence.getName();

@@ -16,7 +16,10 @@ import jebl.util.ProgressListener;
 
 import javax.swing.*;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * @author Frank Lee
@@ -79,8 +82,9 @@ public class PCICalculatorOperation extends DocumentOperation {
                     result = PCICalculator.parseAlignment(alignmentDocument, newSamples, composite);
                 }
 
-                result = result == null ? new HashMap<URN, Double>() : result;
-                operationCallback.addDocument(new PCICalculatorReportDocument(alignmentDocument.getName(), result), false, composite);
+                if (result != null) {
+                    operationCallback.addDocument(new PCICalculatorReportDocument(alignmentDocument.getName(), result), false, composite);
+                }
             }
         } finally {
             composite.setComplete();

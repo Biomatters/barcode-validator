@@ -103,7 +103,7 @@ public class PCICalculatorOptions extends Options {
         if(genus == null || species == null) {
             return null;
         } else {
-            return new PCICalculator.GenusAndSpecies(genus, species);
+            return new PCICalculator.GenusAndSpecies(genus.replaceAll("[_\\s]+", "-"), species.replaceAll("[_\\s]+", "-"));
         }
     }
 
