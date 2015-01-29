@@ -54,7 +54,7 @@ public class PCICalculatorReportViewer extends DocumentViewer {
         JTextPane textPane = new GTextPane();
         textPane.setContentType("text/html");
         textPane.setEditable(false);
-        textPane.setText("<h1>PCI score for alignment " + document.getName() + "</h1>");
+        textPane.setText("<h1>" + document.getName() + "</h1>");
         rootPanel.add(textPane, BorderLayout.NORTH);
 
         final RowTableModel model = new RowTableModel(rows);

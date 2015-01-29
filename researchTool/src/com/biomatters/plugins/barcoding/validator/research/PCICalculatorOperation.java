@@ -126,6 +126,10 @@ public class PCICalculatorOperation extends DocumentOperation {
             PCICalculator.GenusAndSpecies genusAndSpecies = nameToGenusAndSpeciesMap.get(name);
 
             String uidForNewSample = PCICalculator.getUid(genusAndSpecies, apd.getName());
+            if (ret.containsValue(apd)) {
+                throw new DocumentOperationException("Multiple sequences refer to the same Document of " + name + ", can not proceed. You must separate the sequences before creating the alignment.");
+            }
+
             if (ret.containsKey(uidForNewSample)) {
                 // If there are duplicate names, we'll just give it a random UUID
                 uidForNewSample = PCICalculator.getUid(genusAndSpecies, UUID.randomUUID().toString());
