@@ -1,0 +1,61 @@
+task wrapper(type: Wrapper) {
+    gradleVersion = "2.2"
+}
+
+
+subprojects {
+    apply plugin: "java"
+
+    repositories {
+        ivy {
+            url "http://assets.geneious.com/developer/geneious/ivy"
+            layout "pattern", {
+                ivy "[organisation]/[module]/ivys/ivy-[revision].xml"
+                artifact "[organisation]/[module]/[type]s/[artifact]-[revision].[ext]"
+            }
+        }
+        mavenCentral()
+    }
+
+    task extractGeneiousRuntimeFiles(type: Copy) {
+        def collection = configurations.testRuntime.filter {
+            it.getName().endsWith(".zip")
+        }
+
+        from {zipTree(collection.singleFile)}
+        into projectDir
+    }
+
+    // Running the test task will depend on making the Geneious Runtime available
+    tasks.test.dependsOn(extractGeneiousRuntimeFiles)
+
+    tasks.test {
+        workingDir files("GeneiousFiles").singleFile
+        jvmArgs "-Xms256M", "-ea", "-XX:MaxNewSize=40M", "-XX:MaxPermSize=256M", "-XX:ReservedCodeCacheSize=128m", "-Xss512K"
+    }
+
+
+    sourceSets {
+        main {
+            java {
+                srcDir 'src'
+            }
+            resources {
+                srcDir 'resources'
+            }
+        }
+
+        test {
+            java {
+                srcDir 'test'
+            }
+            resources {
+                srcDir 'testdata'
+                srcDir "GeneiousFiles/resources"
+            }
+            File geneiousFiles = new File(projectDir, "GeneiousFiles")
+            runtimeClasspath = runtimeClasspath + files(new File(geneiousFiles, "iSeek.jar"))
+            runtimeClasspath = runtimeClasspath + files {new File(geneiousFiles, "lib").listFiles()}
+        }
+    }
+}
