@@ -2,7 +2,6 @@ task wrapper(type: Wrapper) {
     gradleVersion = "2.2"
 }
 
-
 subprojects {
     apply plugin: "java"
 
@@ -23,7 +22,7 @@ subprojects {
         }
 
         from {zipTree(collection.singleFile)}
-        into projectDir
+        into new File(projectDir, "GeneiousFiles")
     }
 
     // Running the test task will depend on making the Geneious Runtime available
@@ -31,9 +30,22 @@ subprojects {
 
     tasks.test {
         workingDir files("GeneiousFiles").singleFile
-        jvmArgs "-Xms256M", "-ea", "-XX:MaxNewSize=40M", "-XX:MaxPermSize=256M", "-XX:ReservedCodeCacheSize=128m", "-Xss512K"
     }
 
+    jar {
+        include "**/*.class"
+        includeEmptyDirs false
+    }
+
+    compileJava {
+        sourceCompatibility "1.6"
+        targetCompatibility "1.6"
+    }
+
+    clean {
+        println new File(projectDir, "GeneiousFiles")
+        new File(projectDir, "GeneiousFiles").deleteDir()
+    }
 
     sourceSets {
         main {

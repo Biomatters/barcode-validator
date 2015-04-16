@@ -1,7 +1,42 @@
 dependencies {
     compile project(':validation')
     testCompile "junit:junit:4.+"
-    testRuntime group: "com.biomatters", name: "geneious.publicapi", version: "7.1.5", configuration: "runtime", type:"resource"
+    testRuntime group: "com.biomatters", name: "geneious.publicapi", version: "7.1.5", configuration: "runtime"
 }
 
-//ant.importBuild 'build.xml'
+def pluginName = "com.biomatters.plugins.barcoding.validator.research.BarcodeValidatorPlugin"
+
+task createPlugin(dependsOn: build, type: Zip) {
+    from {
+        project(":validation").configurations.testCompile.filter {
+            !it.getName().startsWith("GeneiousPublicAPI-") && !it.getName().startsWith("jdom-") && !it.getName().startsWith("jebl-") && !it.getName().startsWith("junit-")
+        }
+
+    }
+
+    from (new File(buildDir, "libs"))
+    from (new File(project(":validation").buildDir, "libs"))
+    from (new File("resources"))
+    from (new File(project(":validation").projectDir, "resources"))
+
+    into (new File(pluginName))
+
+    archiveName "BarcodeValidator" + getPluginVersion() + ".gplugin"
+}
+
+jar {
+    archiveName pluginName + ".jar"
+}
+
+String getPluginVersion() {
+    def p = ~/.*\s+PLUGIN_VERSION\s+=\s+"(\d+\.\d+\.\d+)".*/
+    def ret;
+    new File(project(":researchTool").projectDir, "src/com/biomatters/plugins/barcoding/validator/research/BarcodeValidatorPlugin.java").eachLine { line ->
+        def m = p.matcher(line)
+        if (m.find()) {
+            ret = "_" + m[0][1].replaceAll("\\.", "_")
+        }
+    }
+
+    ret
+}
