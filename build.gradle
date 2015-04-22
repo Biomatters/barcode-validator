@@ -10,7 +10,7 @@ subprojects {
             url "http://assets.geneious.com/developer/geneious/ivy"
             layout "pattern", {
                 ivy "[organisation]/[module]/ivys/ivy-[revision].xml"
-                artifact "[organisation]/[module]/[type]s/[artifact]-[type]-[revision].[ext]"
+                artifact "[organisation]/[module]/[type]s/[artifact]-[revision].[ext]"
             }
         }
         mavenCentral()
