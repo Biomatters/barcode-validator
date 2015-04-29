@@ -22,7 +22,7 @@ subprojects {
         }
 
         from {zipTree(collection.singleFile)}
-        into new File(projectDir, "GeneiousFiles")
+        into projectDir
     }
 
     // Running the test task will depend on making the Geneious Runtime available
