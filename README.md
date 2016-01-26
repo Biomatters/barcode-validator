@@ -7,3 +7,5 @@ It provides tools to asses the quality of sequencing data for the purposes of va
 The project currently contains two modules:
 * Validation - A pipeline that runs on sequencing data and generates a report listing statistics on the quality of the data.
 * Research Tool - A Geneious plugin that provides a user interface for running the validation pipeline in batch for the purposes of identifying ideal thresholds for quality metrics.
+
+For more information see the [wiki](https://github.com/Biomatters/barcode-validator/wiki)
