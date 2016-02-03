@@ -1,5 +1,6 @@
 dependencies {
     compile project(':validation')
+    compile files("resources")
     testCompile "junit:junit:4.+"
     testRuntime group: "com.biomatters", name: "geneious.publicapi", version: "7.1.5", configuration: "runtime"
 }
