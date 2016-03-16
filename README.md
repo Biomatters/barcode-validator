@@ -39,6 +39,7 @@ This will ensure any dependency changes for the new branch are applied and every
 
 ### Modules
 The project currently contains two modules:
+
 * Validation - A pipeline that runs on sequencing data and generates a report listing statistics on the quality of the data.
 * Research Tool - A Geneious plugin that provides a user interface for running the validation pipeline in batch for the purposes of identifying ideal thresholds for quality metrics.  This module depends on the Validation module.
 
