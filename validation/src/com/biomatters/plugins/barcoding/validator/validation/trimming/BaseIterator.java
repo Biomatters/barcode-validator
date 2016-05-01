@@ -8,7 +8,6 @@ import java.util.Iterator;
 
 /**
  * @author Amy Wilson
- * @version $Id$
  *          <p/>
  *          Created on 4/12/2008 4:26:52 PM
  */

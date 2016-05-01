@@ -10,7 +10,6 @@ import java.util.List;
 
 /**
  * @author Matt Kearse
- * @version $Id$
  */
 
 public class CostMatrixOption extends Options.ComboBoxOption<CostMatrixOption.CostMatrixValue> {

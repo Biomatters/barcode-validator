@@ -6,7 +6,6 @@ import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationIn
 
 /**
  * @author Amy Wilson
- * @version $Id$
  *          <p/>
  *          Created on 22/07/2009 10:24:58 AM
  */

@@ -4,7 +4,6 @@ import com.biomatters.geneious.publicapi.utilities.Execution;
 
 /**
  * @author Lars Smits
- * @version $Id$
  *       <p />
  *       Created on 20/12/11 12:53 PM
  */public class Cap3OutputListener extends Execution.OutputListener {

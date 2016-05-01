@@ -4,7 +4,6 @@ import com.biomatters.geneious.publicapi.documents.sequence.SequenceAnnotationIn
 
 /**
  * @author Amy Wilson
- * @version $Id$
  *          <p/>
  *          Created on 3/12/2008 2:26:21 PM
  */

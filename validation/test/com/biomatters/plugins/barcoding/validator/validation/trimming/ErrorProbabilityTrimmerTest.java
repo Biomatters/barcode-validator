@@ -9,7 +9,6 @@ import java.util.*;
 
 /**
  * @author Amy Wilson
- * @version $Id$
  *          <p/>
  *          Created on 8/12/2008 1:08:53 PM
  */

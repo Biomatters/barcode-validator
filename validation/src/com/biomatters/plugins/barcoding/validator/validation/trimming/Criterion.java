@@ -7,7 +7,6 @@ import jebl.evolution.sequences.Nucleotides;
 
 /**
  * @author Amy Wilson
- * @version $Id$
  *          <p/>
  *          Created on 4/12/2008 10:57:12 AM
  */

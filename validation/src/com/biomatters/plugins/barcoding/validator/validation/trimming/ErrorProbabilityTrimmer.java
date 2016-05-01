@@ -5,7 +5,6 @@ import com.biomatters.geneious.publicapi.documents.sequence.NucleotideSequenceDo
 
 /**
  * @author Amy Wilson
- * @version $Id$
  *          <p/>
  *          Created on 8/12/2008 12:18:31 PM
  */

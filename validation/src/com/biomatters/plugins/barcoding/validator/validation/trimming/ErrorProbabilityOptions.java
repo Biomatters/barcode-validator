@@ -8,7 +8,6 @@ import javax.swing.*;
 
 /**
  * @author Amy Wilson
- * @version $Id$
  *          <p/>
  *          Created on 8/12/2008 12:23:10 PM
  */

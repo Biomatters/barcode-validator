@@ -10,7 +10,6 @@ import java.util.List;
 /**
  * Trims by checking whether bases meet particular criteria
  * @author Amy WIlson
- * @version $Id$
  *          <p/>
  *          Created on 16/06/2008 11:52:59
  */
