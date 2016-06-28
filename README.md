@@ -48,4 +48,4 @@ The project currently contains two modules:
 See https://github.com/Biomatters/barcode-validator/releases
 
 ## Contributing
-Report bugs via [https://github.com/Biomatters/barcode-validator/issues](GitHub issues)
+Report bugs via [GitHub issues](https://github.com/Biomatters/barcode-validator/issues)
